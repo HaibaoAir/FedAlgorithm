@@ -9,6 +9,50 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from sko.PSO import PSO
+import numpy as np
+
+a = 4
+print(np.array([a]))
+exit(0)
+
+print(type(np.random.randint(1,4)))
+exit(0)
+a = np.ndarray(5)
+l = []
+l.append(a)
+l.append(a)
+print(type(l[1]))
+exit(0)
+
+
+
+a = 2.25e-06 - 1.98e-06
+print(2.25e-06)
+print(a>0)
+exit(0)
+
+a = np.array([1,2,3])
+b = np.array([2,4,6])
+c = np.array([[1,1],[1,1],[1,1]])
+print(np.sum(c * (a / b).reshape(3,1), axis=0))
+exit(0)
+
+a = np.array([[1,2,3],[4,5,6]])
+print(np.sum(a, axis=0))
+print(a[:, 2])
+exit(0)
+
+exit(0)
+c = torch.tensor([1,2,3])
+print(c.shape)
+d = torch.tensor([4,5,6])
+print(c / d)
+a = torch.tensor([[1,2,3,4],[5,6,7,8],[9,10,11,12]])
+print(a * (c / d).reshape(3,1))
+exit(0)
+b = torch.tensor([1,2]).reshape(2,1)
+print(a * b)
+exit(0)
 
 a = 1
 print(a)
@@ -19,7 +63,7 @@ for i in range(10):
 exit(0)
 
 # a = [1,2,3]
-# b = [4,5,6]
+# b = [4,5,6
 # c = [2,2,2]
 # print(a * b / c)
 # exit(0)

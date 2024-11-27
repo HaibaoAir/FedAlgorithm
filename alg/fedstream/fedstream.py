@@ -17,14 +17,14 @@ from model.cifar import Cifar10_CNN
 from sko.PSO import PSO
 
 args = {
-    'num_client': 10,
-    'num_sample': 10,
+    'num_client': 3,
+    'num_sample': 3,
     'dataset': 'mnist',
     'is_iid': 0,
     'alpha': 1.0,
     'model': 'cnn',
     'learning_rate': 0.01,
-    'num_round': 10,
+    'num_round': 5,
     'num_epoch': 1,
     'batch_size': 32,
     'eval_freq': 1,
@@ -38,30 +38,6 @@ torch.cuda.manual_seed(seed)
 
 class Server(object):
     def __init__(self, args):
-        # 初始化客户端
-        # 初始化网络+参数
-        # 初始化损失函数
-        # 初始化优化器
-        self.init_params(args)
-        
-        # 训练超参数
-        self.num_round = args['num_round']
-        self.num_epoch = args['num_epoch']
-        self.batch_size = args['batch_size']
-        self.eval_freq = args['eval_freq']
-        
-        # 背景超参数
-        self.epsilon_list = [1] * self.num_client #[K] 0-1之间
-        self.avg_delta_list = [1] * self.num_client # [K]
-        self.alpha_list = [0.5] * self.num_client # 收集数据的价格
-        self.beta_list = [0] * self.num_client # 训练数据的价格
-        self.theta = 0.5 # 数据丢弃率
-        self.eps = 1
-        self.fix_max_iter = 50
-        
-        self.p = 0.5
-    
-    def init_params(self, args):
         # 初始化客户端
         self.dev = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.dataset_name = args['dataset']
@@ -83,7 +59,7 @@ class Server(object):
         self.scales = self.client_group.scales
         self.rate = [item / sum(self.scales) for item in self.scales]
         self.test_dataloader = self.client_group.test_dataloader
-        
+ 
         # 定义net
         self.net = None
         if self.dataset_name == 'mnist':
@@ -98,149 +74,272 @@ class Server(object):
                 self.net = Cifar10_CNN()
             else:
                 raise NotImplementedError('{}'.format(args['model']))
-            
+        self.net.to(self.dev)   
+             
+        # 训练超参数
+        self.num_round = args['num_round']
+        self.num_epoch = args['num_epoch']
+        self.batch_size = args['batch_size']
+        self.eval_freq = args['eval_freq']
+
+        # 初始化data_matrix[K,T]
+        self.data_origin_init = [random.randint(50, 100) for _ in range(self.num_client)]
+        self.data_matrix_init = []
+        for k in range(self.num_client):
+            data_list = [self.data_origin_init[k]]
+            for t in range(1, self.num_round):
+                data = random.randint(50, 100)
+                data_list.append(data)
+            self.data_matrix_init.append(data_list)
+        
+        # 初始化phi_list[T]
+        self.phi_list_init = []
+        for t in range(self.num_round):
+            phi = random.random() * 60
+            self.phi_list_init.append(phi)
+        
+        # 背景超参数
+        self.epsilon_list = np.array([1] * self.num_client) #[K] 0-1之间
+        self.delta_list = np.array([1] * self.num_client) # [K]
+        self.alpha_list = [0.5] * self.num_client # 收集数据的价格
+        self.beta_list = [1e-3] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
+        self.theta = 0.5 # 数据丢弃率
+        self.fix_eps = 1
+        self.fix_max_iter = 10000
+        
+        self.kappa_1 = 1
+        self.kappa_2 = 1
+        self.kappa_3 = 8e5 # 重点1
+        self.gamma = 0.5
+        
+        self.lb = 1e2
+        self.ub = 1e3 # 10e6 # 重点2
+        self.pop = 600 # 探索空间划定得越大，需要的粒子就多点，就能找到精确最优解！
+        self.pso_eps = 1e-2
+        self.pso_max_iter = 500
+        
+        """ 
+        配置1：
+        1e-8
+        5e12
+        1e6
+        
+        配置2：修改max √
+        1e-3
+        5e12
+        1e3 - 1e6
+        
+        配置3：
+        1e-3
+        5e10
+        1e6
+        
+        配置4： √
+        1e-3
+        5e6
+        1e2-1e4
+        
+        配置5：√
+        1e-3
+        1e6
+        1e2-1e4
+        """
+
       
-    def online_estimate_R(self,
-                          t,
-                          phi,
-                          data_list,
-                          ):
+    
+    def estimate_D(self, phi_list, reward):
+        # 初始化数据矩阵
+        data_matrix = self.data_matrix_init
+        
+        for idc in range(self.fix_max_iter):
+            # 计算增量矩阵[K,T]
+            increment_matrix = []
+            for k in range(self.num_client):
+                increment_list = []
+                for t in range(0, self.num_round - 1):
+                    item = 0
+                    for tau in range(t + 1, self.num_round):
+                        item1 = pow(self.theta, tau - t - 1)
+                        item2 = self.epsilon_list[k] * reward[0] / (self.delta_list[k] * phi_list[tau])
+                        item3 = 2 * self.beta_list[k] * data_matrix[k][tau]
+                        item += item1 * (item2 - item3)
+                        # if item2 - item3 < 0:
+                        #     print('negative')
+                        #     print(reward[0])
+                        #     print(phi_list)
+                        #     print(phi_list[tau])
+                        #     print(item2)
+                        #     print(item3)
+                        #     exit(0)
+                    increment = 1 / (2 * self.alpha_list[k]) * item
+                    if increment <= 0:
+                        print('dual')
+                    increment = max(0, increment) # 好哇好
+                    increment_list.append(increment)
+                increment_list.append(0)
+                increment_matrix.append(increment_list)
+
+            
+            # 新的数据矩阵[K, T]
+            next_data_matrix = []
+            for k in range(self.num_client):
+                next_data_list = [np.array(self.data_origin_init[k])]
+                for t in range(1, self.num_round):
+                    next_data = self.theta * next_data_list[t - 1] + increment_matrix[k][t - 1]
+                    next_data_list.append(next_data)
+                next_data_matrix.append(next_data_list)
+            # 判断收敛
+            flag = 0
+            for k in range(self.num_client):
+                for t in range(1, self.num_round):
+                    if abs(next_data_matrix[k][t] - data_matrix[k][t]) > self.fix_eps:
+                        flag = 1
+                        break
+                if flag == 1:
+                    break
+            if flag == 1:
+                data_matrix = next_data_matrix
+            else:
+                # print('triumph1, count = {}'.format(idc))
+                return np.array(next_data_matrix)
+        print('failure1')
+        return np.array(next_data_matrix)
+    
+    
+    def estimate_R(self, phi_list):
         
         def func(reward):
-            delta_sum = 0
-            epsilon_sum = 0
-            new_data_list = []
-            new_data_sum = 0
-            for k in range(self.num_client):
-                part_1 = 1 / (2 * self.alpha_list[k])
-                part_2 = self.epsilon_list[k] * reward / (self.avg_delta_list[k] * phi)
-                part_3 = self.beta_list[k] * (1 - pow(self.theta, self.num_round - t)) / (1 - self.theta)
-                increment = part_1 * (part_2 - part_3)
-                new_data = self.theta * data_list[k].cpu() + increment
-                new_data_list.append(new_data)
-                
-                new_data_sum += new_data
-                delta_sum += new_data_list[k] * (self.avg_delta_list[k] ** 2)
-                epsilon_sum += 1 / (self.epsilon_list[k] ** 2)
-
-            self.kappa_1 = 1
-            self.kappa_2 = 1
-            self.kappa_3 = 1e6
-            self.gamma_1 = 1
-            self.gamma_2 = 1e-4 # 权衡因子
-            # Omega不影响
-            item_1 = pow(self.kappa_1, self.num_round - 2 - t)
-            item_2 = self.kappa_2 * delta_sum / new_data_sum
-            item_3 = self.kappa_3 * epsilon_sum / (new_data_sum ** 2)
-            item_4 = reward
-            res_1_origin = item_1 * (item_2 + item_3)
-            res_1 = self.gamma_1 * item_1 * (item_2 + item_3)
-            res_2 = self.gamma_2 * item_4
-            res = res_1 + res_2
-            print('item2:{},item3:{},res_1_origin:{}'.format(item_2, item_3,res_1_origin))
-            print('res_1:{}, res_2:{}'.format(res_1, res_2))
-            return res
-
-        pso = PSO(func=func,
-                   dim=1,
-                   pop=20,
-                   max_iter=100,
-                   lb=[1e3],
-                   ub=[1e6],
-                   eps=0.9)
-        pso.run()
-        reward = pso.gbest_x
-        print(len(pso.gbest_y_hist))
-
-        increment_list = []
-        new_data_list = []
-        for k in range(self.num_client):
-            part_1 = 1 / (2 * self.alpha_list[k])
-            part_2 = self.epsilon_list[k] * reward / (self.avg_delta_list[k] * phi)
-            part_3 = self.beta_list[k] * (1 - pow(self.theta, self.num_round - t)) / (1 - self.theta)
-            increment = part_1 * (part_2 - part_3)
-            increment_list.append(increment)
-            new_data = self.theta * data_list[k].cpu() + increment
-            new_data_list.append(new_data)
-        return reward, increment_list, new_data_list
-
-
-    def online_estimate_phi(self, 
-                            t,
-                            data_list):
-        # 初始化phi
-        phi = random.random() * 60
-        
-        ls_phi = []
-        ls_reward = []
-        ls_increment = []
-        # 计算新的phi
-        for _ in range(self.fix_max_iter):
-            reward, increment_list, new_data_list = self.online_estimate_R(t, phi, data_list)
-            new_phi = sum([self.epsilon_list[k] * increment_list[k] / self.avg_delta_list[k] for k in range(self.num_client)])
-            ls_phi.append(new_phi)
-            ls_reward.append(reward)
-            print('reward:{}'.format(reward))
-            print('increment:{}'.format(increment_list))
-            print('new_phi:{}'.format(new_phi))
-        
-            if new_phi < 0:
-                print('destroy!')
-                exit(0)
-                
-            # 判断收敛
-            if abs(new_phi - phi) > self.eps:
-                phi = new_phi
-                # ls_phi.append(phi)
-                # ls_reward.append(reward)
-                # ls_increment.append(increment_list[0])
+            # 计算单列和
+            data_matrix = self.estimate_D(phi_list, reward) 
+            data_list = [] # [T]
+            for t in range(self.num_round):
+                data = 0
+                for k in range(self.num_client):
+                    data += data_matrix[k][t]
+                data_list.append(data)
             
+            res = 0
+            for t in range(self.num_round):
+                delta_sum = 0
+                epsilon_sum = 0
+                for k in range(self.num_client):
+                    delta_sum += data_matrix[k][t] * (self.delta_list[k] ** 2)
+                    epsilon_sum += 1 / (self.epsilon_list[k] ** 2)
+                    
+                # Omega不影响
+                item_1 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_2 * delta_sum / data_list[t]
+                item_2 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_3 * epsilon_sum / (data_list[t] ** 2)
+                item = (1 - self.gamma) * (item_1 + item_2) + self.gamma * reward
+                res += item
+            return res
+        
+        pso =  PSO(func=func,
+                   dim=1,
+                   pop=self.pop,
+                   max_iter=self.pso_max_iter,
+                   lb=[self.lb],
+                   ub=[self.ub],
+                   eps=self.pso_eps)
+        pso.run()
+        return pso.gbest_x, pso.gbest_y_hist
+    
+    
+    def estimate_phi(self):
+        
+        def func(phi_list, reward):
+            # 计算单列和
+            data_matrix = self.estimate_D(phi_list, reward) 
+            data_list = [] # [T]
+            for t in range(self.num_round):
+                data = 0
+                for k in range(self.num_client):
+                    data += data_matrix[k][t]
+                data_list.append(data)
+            
+            res = 0
+            res_2 = 0
+            for t in range(self.num_round):
+                delta_sum = 0
+                epsilon_sum = 0
+                for k in range(self.num_client):
+                    delta_sum += data_matrix[k][t] * (self.delta_list[k] ** 2)
+                    epsilon_sum += 1 / (self.epsilon_list[k] ** 2)
+                    
+                # Omega不影响
+                item_1 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_2 * delta_sum / data_list[t]
+                item_2 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_3 * epsilon_sum / (data_list[t] ** 2)
+                item = (1 - self.gamma) * (item_1 + item_2) + self.gamma * reward
+                res_2 += item_2
+                res += item
+            return res_2, res
+        
+        # 初始化phi_list
+        phi_list = self.phi_list_init
+        
+        # 计算新的phi_list[T]
+        for idc in range(self.fix_max_iter):
+            reward, res = self.estimate_R(phi_list)
+            data_matrix = self.estimate_D(phi_list, reward)
+            print('******************************************************')
+            print('{}, {}, {}, {}'.format(idc, phi_list, reward, res))
+            print('{}'.format(data_matrix))
+            # print('--------------------------------------')
+            # print('{}'.format(func(reward)[0]))
+            # print('--------------------------------------')
+            # print('{}'.format(func(reward)[1]))
+            # 先epsilon/delta，再施加到data_matrix
+            # print(data_matrix.shape)
+            next_phi_list = np.sum(data_matrix * ((self.epsilon_list / self.delta_list).reshape(self.num_client, 1)), axis=0)
+            # 判断收敛
+            if np.max(np.abs(next_phi_list - phi_list)) > self.fix_eps:
+                phi_list = next_phi_list
+                x = np.arange(self.lb, self.ub, 10)
+                y1 = [np.sum(self.estimate_D(phi_list, np.array([i]))) for i in x]
+                y2 = []
+                y3 = []
+                for i in x:
+                    a, b = func(phi_list, np.array([i]))
+                    y2.append(a)
+                    y3.append(b)
+                plt.subplot(1,3,1)
+                plt.plot(x, y1)
+                plt.subplot(1,3,2)
+                plt.plot(x, y2)
+                plt.subplot(1,3,3)
+                plt.plot(x, y3)
+                plt.savefig('../../logs/fedavg/2.png')
             else:
-                # print(len(ls_phi))
-                # print(ls_phi, '***********')
-                # print(ls_reward, '**********')
-                # print(ls_increment)
-                # plt.plot(ls_phi)
-                # plt.plot(ls_reward)
-                # plt.plot(ls_increment)
-                # plt.savefig('3.png')
-                # print('can end!')
-                return new_phi, increment_list, new_data_list
-        print('-------------------------------')
-        print(ls_phi)
-        ax1 = plt.subplot(121)
-        ax1.plot(ls_phi)
-        ax2 = plt.subplot(122)
-        ax2.plot(ls_reward)
-        plt.savefig('1.png')
-        # print(ls_phi, '***********')
-        # print(ls_reward, '**********')
-        # print(ls_increment)
-        # plt.plot(ls_phi)
-        # plt.plot(ls_reward)
-        # plt.plot(ls_increment)
-        # plt.savefig('3.png')
-        # print('cannot end!')
+                print('triumph2')
+                exit(0)
+                return next_phi_list
+            
+        print('failure2')
+        exit(0)
+        return next_phi_list
 
 
     def online_train(self):
+        
+        # 正式训练前定好一切
+        phi_list = self.estimate_phi() # [T]
+        reward = self.estimate_R(phi_list) # [K, T]
+        data_matrix = self.estimate_D(phi_list, reward)
+        # numpy 切片格式 [:, :]
+        data_sum_list = [sum(data_matrix[:, t]) for t in range(self.num_round)]
+        print(data_matrix)
+        
         # 初始化数据
-        new_data_list = [random.randint(50, 100) for _ in range(self.num_client)]
+        # 临时记录，求平均后是self.delta_list
+        delta_matrix = [[] for k in range(self.num_client)]
         
         self.global_parameter = {}
         for key, var in self.net.state_dict().items():
             self.global_parameter[key] = var.clone()
+            
+        accuracy_list = []
         
         # 训练
         for t in tqdm(range(self.num_round)):
-            
-            # 使用新收集的数据
-            data_list = torch.tensor(new_data_list).to(self.dev)
-            data_sum = sum(data_list).to(self.dev)
-            
-            # 在开始定好R和下一轮的数据，但是不用，因为有一个数据慢慢收集的过程
-            phi, new_increment_list, new_data_list = self.online_estimate_phi(t, data_list) # 1, [K]
-            print('increment: {}'.format(new_increment_list))
             
             # 开始训练
             next_global_parameter = {}
@@ -253,9 +352,9 @@ class Server(object):
                                                                 self.batch_size,
                                                                 self.global_parameter,
                                                                 self.theta,
-                                                                data_list[k])
+                                                                data_matrix[k][t])
                 
-                rate = data_list[k] / data_sum
+                rate = data_matrix[k][t] / data_sum_list[t]
                 local_parameter = item[0]
                 for item in local_parameter.items():
                     if item[0] not in next_global_parameter.keys():
@@ -270,12 +369,37 @@ class Server(object):
             # 求global_parameters
             self.global_parameter = next_global_parameter
             
-            # 求delta，更新历史平均delta
+            # 求delta
             for k in range(self.num_client):
                 delta = rate * torch.sqrt(torch.sum(torch.square(local_grad_list[k] - global_grad))) # 大错，用delta代替Upsilon
-                self.avg_delta_list[k] = (1 - self.p) * self.avg_delta_list[k] + self.p * delta.cpu()
+                delta_matrix[k].append(delta)
+            
+            # 验证
+            if t % self.eval_freq == 0:    
+                correct = 0
+                total = 0
+                self.net.load_state_dict(self.global_parameter)
+                with torch.no_grad():
+                    for batch in self.test_dataloader:
+                        data, label = batch
+                        data = data.to(self.dev)
+                        label = label.to(self.dev)
+                        pred = self.net(data) # [batch_size， 10]，输出的是概率
+                        pred = torch.argmax(pred, dim=1)
+                        correct += (pred == label).sum().item()
+                        total += label.shape[0]
+                acc = correct / total
+                accuracy_list.append(acc)
+        
+        with open('../../logs/fedavg/accuracy.txt', 'a') as file:
+            file.write('{}\n'.format(time.asctime()))
+            for accuracy in accuracy_list:
+                file.write('{:^7.5f} '.format(accuracy))
+            file.write('\n')
+                
         
 server = Server(args)
+# server.estimate_D([1,1,1,1,1], [100])
 server.online_train()
 
 # R(T) = 0怎么保证：最后一轮R强制为0
