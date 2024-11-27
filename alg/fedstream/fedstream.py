@@ -101,53 +101,25 @@ class Server(object):
         # 背景超参数
         self.epsilon_list = np.array([1] * self.num_client) #[K] 0-1之间
         self.delta_list = np.array([1] * self.num_client) # [K]
-        self.alpha_list = [0.5] * self.num_client # 收集数据的价格
-        self.beta_list = [1e-3] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
+        self.alpha_list = [1e-3] * self.num_client # 收集数据的价格
+        self.beta_list = [1e-4] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
         self.theta = 0.5 # 数据丢弃率
         self.fix_eps = 1
         self.fix_max_iter = 10000
         
         self.kappa_1 = 1
         self.kappa_2 = 1
-        self.kappa_3 = 8e5 # 重点1
+        self.kappa_3 = 1e6 # 重点1
         self.gamma = 0.5
         
-        self.lb = 1e2
-        self.ub = 1e3 # 10e6 # 重点2
-        self.pop = 600 # 探索空间划定得越大，需要的粒子就多点，就能找到精确最优解！
+        self.lb = 1
+        self.ub = 100 # 10e6 # 重点2
+        self.pop = 1000 # 探索空间划定得越大，需要的粒子就多点，就能找到精确最优解！
         self.pso_eps = 1e-2
         self.pso_max_iter = 500
-        
-        """ 
-        配置1：
-        1e-8
-        5e12
-        1e6
-        
-        配置2：修改max √
-        1e-3
-        5e12
-        1e3 - 1e6
-        
-        配置3：
-        1e-3
-        5e10
-        1e6
-        
-        配置4： √
-        1e-3
-        5e6
-        1e2-1e4
-        
-        配置5：√
-        1e-3
-        1e6
-        1e2-1e4
-        """
-
-      
+              
     
-    def estimate_D(self, phi_list, reward):
+    def estimate_D(self, phi_list, reward, ind=0):
         # 初始化数据矩阵
         data_matrix = self.data_matrix_init
         
@@ -163,22 +135,16 @@ class Server(object):
                         item2 = self.epsilon_list[k] * reward[0] / (self.delta_list[k] * phi_list[tau])
                         item3 = 2 * self.beta_list[k] * data_matrix[k][tau]
                         item += item1 * (item2 - item3)
-                        # if item2 - item3 < 0:
-                        #     print('negative')
-                        #     print(reward[0])
-                        #     print(phi_list)
-                        #     print(phi_list[tau])
-                        #     print(item2)
-                        #     print(item3)
-                        #     exit(0)
                     increment = 1 / (2 * self.alpha_list[k]) * item
-                    if increment <= 0:
-                        print('dual')
+                    # if increment <= 0:
+                    #     print('dual')
                     increment = max(0, increment) # 好哇好
                     increment_list.append(increment)
                 increment_list.append(0)
                 increment_matrix.append(increment_list)
-
+                
+            if ind == 1:
+                print(np.array(increment_matrix))
             
             # 新的数据矩阵[K, T]
             next_data_matrix = []
@@ -271,7 +237,7 @@ class Server(object):
                 item = (1 - self.gamma) * (item_1 + item_2) + self.gamma * reward
                 res_2 += item_2
                 res += item
-            return res_2, res
+            return data_matrix, res_2, res
         
         # 初始化phi_list
         phi_list = self.phi_list_init
@@ -279,42 +245,40 @@ class Server(object):
         # 计算新的phi_list[T]
         for idc in range(self.fix_max_iter):
             reward, res = self.estimate_R(phi_list)
-            data_matrix = self.estimate_D(phi_list, reward)
+            data_matrix = self.estimate_D(phi_list, reward, 1)
             print('******************************************************')
             print('{}, {}, {}, {}'.format(idc, phi_list, reward, res))
             print('{}'.format(data_matrix))
             # print('--------------------------------------')
-            # print('{}'.format(func(reward)[0]))
-            # print('--------------------------------------')
-            # print('{}'.format(func(reward)[1]))
+            # print('{}'.format(func(phi_list, reward)[0]))
+            # # print('--------------------------------------')
+            # # print('{}'.format(func(phi_list, reward)[1]))
             # 先epsilon/delta，再施加到data_matrix
             # print(data_matrix.shape)
             next_phi_list = np.sum(data_matrix * ((self.epsilon_list / self.delta_list).reshape(self.num_client, 1)), axis=0)
             # 判断收敛
             if np.max(np.abs(next_phi_list - phi_list)) > self.fix_eps:
                 phi_list = next_phi_list
-                x = np.arange(self.lb, self.ub, 10)
+                x = np.arange(self.lb, self.ub, 1)
                 y1 = [np.sum(self.estimate_D(phi_list, np.array([i]))) for i in x]
                 y2 = []
                 y3 = []
                 for i in x:
-                    a, b = func(phi_list, np.array([i]))
+                    _, a, b = func(phi_list, np.array([i]))
                     y2.append(a)
                     y3.append(b)
-                plt.subplot(1,3,1)
+                plt.subplot(2,3,1)
                 plt.plot(x, y1)
-                plt.subplot(1,3,2)
+                plt.subplot(2,3,2)
                 plt.plot(x, y2)
-                plt.subplot(1,3,3)
+                plt.subplot(2,3,3)
                 plt.plot(x, y3)
                 plt.savefig('../../logs/fedavg/2.png')
             else:
                 print('triumph2')
-                exit(0)
                 return next_phi_list
             
         print('failure2')
-        exit(0)
         return next_phi_list
 
 
@@ -322,11 +286,10 @@ class Server(object):
         
         # 正式训练前定好一切
         phi_list = self.estimate_phi() # [T]
-        reward = self.estimate_R(phi_list) # [K, T]
+        reward, res = self.estimate_R(phi_list) # [K, T]
         data_matrix = self.estimate_D(phi_list, reward)
         # numpy 切片格式 [:, :]
         data_sum_list = [sum(data_matrix[:, t]) for t in range(self.num_round)]
-        print(data_matrix)
         
         # 初始化数据
         # 临时记录，求平均后是self.delta_list
@@ -390,6 +353,10 @@ class Server(object):
                         total += label.shape[0]
                 acc = correct / total
                 accuracy_list.append(acc)
+                
+            plt.subplot(2,3,4)
+            plt.plot(accuracy_list)
+            plt.savefig('../../logs/fedavg/2.png')
         
         with open('../../logs/fedavg/accuracy.txt', 'a') as file:
             file.write('{}\n'.format(time.asctime()))
