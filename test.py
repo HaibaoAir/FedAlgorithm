@@ -10,6 +10,31 @@ import torch.nn.functional as F
 import torch.optim as optim
 from sko.PSO import PSO
 import numpy as np
+from matplotlib import pyplot as plt
+
+fig = plt.figure()
+ax = fig.add_subplot(2,2,1,projection='3d')
+a = np.arange(-1, 1, 0.01)
+b = np.arange(-1, 1, 0.01)
+c, d = np.meshgrid(a, b)
+
+e_matrix = []
+for i in range(len(a)):
+    e_list = []
+    for j in range(len(b)):
+        e_list.append(math.cos(c[i][j]) + math.sin(d[i][j]))
+    e_matrix.append(e_list)
+e = np.array(e_matrix)    
+ax.plot_surface(c,d,e, rstride=1, cstride=1, cmap='rainbow')
+plt.savefig('test.png')
+
+exit(0)
+
+b = np.array([[1,2,3],[4,5,6],[7,8,9]])
+
+a = np.array([1,2,3])
+print(b * (1 / a).reshape(3,1))
+exit(0)
 
 a = 4
 print(np.array([a]))

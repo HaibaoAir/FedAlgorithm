@@ -17,8 +17,8 @@ from model.cifar import Cifar10_CNN
 from sko.PSO import PSO
 
 args = {
-    'num_client': 3,
-    'num_sample': 3,
+    'num_client': 5,
+    'num_sample': 5,
     'dataset': 'mnist',
     'is_iid': 0,
     'alpha': 1.0,
@@ -99,30 +99,27 @@ class Server(object):
             self.phi_list_init.append(phi)
         
         # 背景超参数
+        self.epsilon_list = np.array([1] * self.num_client) #[K] 0-1之间
         self.delta_list = np.array([1] * self.num_client) # [K]
-        self.sigma_list = np.array([1] * self.num_client)
-        self.psi = 1
         self.alpha_list = [1e-3] * self.num_client # 收集数据的价格
-        self.beta_list = [5e-6] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
+        self.beta_list = [1e-7] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
+        self.theta = 0.5 # 数据留存率
         self.fix_eps = 1
-        self.fix_max_iter = 1000
+        self.fix_max_iter = 10000
         
         self.kappa_1 = 1
         self.kappa_2 = 1
-        self.kappa_3 = 1e-2 # 1e-2好像好使，因为theta一直是1
-        self.kappa_4 = 1
-        self.gamma = 1e-4
+        self.kappa_3 = 1e6 # 重点1
+        self.gamma = 0.5
         
-        self.reward_lb = 1
-        self.reward_ub = 200 # 10e6 # 重点2
-        self.theta_lb = 0
-        self.theta_ub = 1
-        self.pop = 2000 # 探索空间划定得越大，需要的粒子就多点，就能找到精确最优解！
-        self.pso_eps = 1e-5
+        self.lb = 1
+        self.ub = 100 # 10e6 # 重点2
+        self.pop = 1000 # 探索空间划定得越大，需要的粒子就多点，就能找到精确最优解！
+        self.pso_eps = 1e-3
         self.pso_max_iter = 500
               
     
-    def estimate_D(self, phi_list, reward, theta):
+    def estimate_D(self, phi_list, reward, ind=0):
         # 初始化数据矩阵
         data_matrix = self.data_matrix_init
         
@@ -134,27 +131,29 @@ class Server(object):
                 for t in range(0, self.num_round - 1):
                     item = 0
                     for tau in range(t + 1, self.num_round):
-                        item1 = pow(theta, tau - t - 1)
-                        item2 = reward / (self.delta_list[k] * phi_list[tau])
+                        item1 = pow(self.theta, tau - t - 1)
+                        item2 = self.epsilon_list[k] * reward[0] / (self.delta_list[k] * phi_list[tau])
                         item3 = 2 * self.beta_list[k] * data_matrix[k][tau]
                         item += item1 * (item2 - item3)
                     increment = 1 / (2 * self.alpha_list[k]) * item
-                    if increment <= 0:
-                        print('dual')
+                    # if increment <= 0:
+                    #     print('dual')
                     increment = max(0, increment) # 好哇好
                     increment_list.append(increment)
                 increment_list.append(0)
                 increment_matrix.append(increment_list)
+                
+            if ind == 1:
+                print(np.array(increment_matrix))
             
             # 新的数据矩阵[K, T]
             next_data_matrix = []
             for k in range(self.num_client):
                 next_data_list = [np.array(self.data_origin_init[k])]
                 for t in range(1, self.num_round):
-                    next_data = theta * next_data_list[t - 1] + increment_matrix[k][t - 1]
+                    next_data = self.theta * next_data_list[t - 1] + increment_matrix[k][t - 1]
                     next_data_list.append(next_data)
                 next_data_matrix.append(next_data_list)
-                
             # 判断收敛
             flag = 0
             for k in range(self.num_client):
@@ -168,22 +167,15 @@ class Server(object):
                 data_matrix = next_data_matrix
             else:
                 # print('triumph1, count = {}'.format(idc))
-                stale_matrix = [[1] * self.num_round] * self.num_client
-                for k in range(self.num_client):
-                    for t in range(1, self.num_round):
-                        stale_matrix[k][t] = stale_matrix[k][t-1] * theta * next_data_matrix[k][t-1] / next_data_matrix[k][t] + 1
-                return np.array(increment_matrix), np.array(next_data_matrix), np.array(stale_matrix)
+                return np.array(next_data_matrix)
         print('failure1')
         return np.array(next_data_matrix)
     
-    
-    def estimate_reward_theta(self, phi_list):
+    def estimate_R(self, phi_list):
         
-        def func(var):
-            reward, theta = var
-            
+        def func(reward):
             # 计算单列和
-            _, data_matrix, stale_matrix = self.estimate_D(phi_list, reward, theta) 
+            data_matrix = self.estimate_D(phi_list, reward) 
             data_list = [] # [T]
             for t in range(self.num_round):
                 data = 0
@@ -194,25 +186,24 @@ class Server(object):
             res = 0
             for t in range(self.num_round):
                 delta_sum = 0
-                stale_sum = 0
+                epsilon_sum = 0
                 for k in range(self.num_client):
                     delta_sum += data_matrix[k][t] * (self.delta_list[k] ** 2)
-                    stale_sum += data_matrix[k][t] * stale_matrix[k][t] * (self.sigma_list[k] ** 2)
+                    epsilon_sum += 1 / (self.epsilon_list[k] ** 2)
                     
                 # Omega不影响
-                item_1 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_2 * self.num_client * (self.psi ** 2) / data_list[t]
-                item_2 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_3 * stale_sum / data_list[t]
-                item_3 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_4 * delta_sum / data_list[t]
-                item = (1 - self.gamma) * (item_1 + item_2 + item_3) + self.gamma * reward
+                item_1 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_2 * delta_sum / data_list[t]
+                item_2 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_3 * epsilon_sum / (data_list[t] ** 2)
+                item = (1 - self.gamma) * (item_1 + item_2) + self.gamma * reward
                 res += item
             return res
         
         pso =  PSO(func=func,
-                   dim=2,
+                   dim=1,
                    pop=self.pop,
                    max_iter=self.pso_max_iter,
-                   lb=[self.reward_lb, self.theta_lb],
-                   ub=[self.reward_ub, self.theta_ub],
+                   lb=[self.lb],
+                   ub=[self.ub],
                    eps=self.pso_eps)
         pso.run()
         return pso.gbest_x, pso.gbest_y_hist
@@ -220,9 +211,9 @@ class Server(object):
     
     def estimate_phi(self):
         
-        def func(phi_list, reward, theta):
+        def func1(phi_list, reward):
             # 计算单列和
-            _, data_matrix, stale_matrix = self.estimate_D(phi_list, reward, theta) 
+            data_matrix = self.estimate_D(phi_list, reward) 
             data_list = [] # [T]
             for t in range(self.num_round):
                 data = 0
@@ -230,148 +221,131 @@ class Server(object):
                     data += data_matrix[k][t]
                 data_list.append(data)
             
-            res_1 = 0
-            res_2 = 0
-            res_3 = 0
             res = 0
+            res_2 = 0
             for t in range(self.num_round):
                 delta_sum = 0
-                stale_sum = 0
+                epsilon_sum = 0
                 for k in range(self.num_client):
                     delta_sum += data_matrix[k][t] * (self.delta_list[k] ** 2)
-                    stale_sum += data_matrix[k][t] * stale_matrix[k][t] * (self.sigma_list[k] ** 2)
+                    epsilon_sum += 1 / (self.epsilon_list[k] ** 2)
                     
                 # Omega不影响
-                item_1 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_2 * self.num_client * (self.psi ** 2) / data_list[t]
-                item_2 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_3 * stale_sum / data_list[t]
-                item_3 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_4 * delta_sum / data_list[t]
-                item = (1 - self.gamma) * (item_1 + item_2 + item_3) + self.gamma * reward
-                res += item
-                res_1 += item_1
+                item_1 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_2 * delta_sum / data_list[t]
+                item_2 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_3 * epsilon_sum / (data_list[t] ** 2)
+                item = (1 - self.gamma) * (item_1 + item_2) + self.gamma * reward
                 res_2 += item_2
-                res_3 += item_3
-            return res_1, res_2, res_3, res
+                res += item
+            return data_matrix, res_2, res
+            
+        def func2(phi_list, reward, theta):
+            # 初始化数据矩阵
+            data_matrix = self.data_matrix_init
+            
+            for idc in range(self.fix_max_iter):
+                # 计算增量矩阵[K,T]
+                increment_matrix = []
+                for k in range(self.num_client):
+                    increment_list = []
+                    for t in range(0, self.num_round - 1):
+                        item = 0
+                        for tau in range(t + 1, self.num_round):
+                            item1 = pow(theta, tau - t - 1)
+                            item2 = self.epsilon_list[k] * reward[0] / (self.delta_list[k] * phi_list[tau])
+                            item3 = 2 * self.beta_list[k] * data_matrix[k][tau]
+                            item += item1 * (item2 - item3)
+                        increment = 1 / (2 * self.alpha_list[k]) * item
+                        # if increment <= 0:
+                        #     print('dual')
+                        increment = max(0, increment) # 好哇好
+                        increment_list.append(increment)
+                    increment_list.append(0)
+                    increment_matrix.append(increment_list)
+                
+                # 新的数据矩阵[K, T]
+                next_data_matrix = []
+                for k in range(self.num_client):
+                    next_data_list = [np.array(self.data_origin_init[k])]
+                    for t in range(1, self.num_round):
+                        next_data = theta * next_data_list[t - 1] + increment_matrix[k][t - 1]
+                        next_data_list.append(next_data)
+                    next_data_matrix.append(next_data_list)
+                # 判断收敛
+                flag = 0
+                for k in range(self.num_client):
+                    for t in range(1, self.num_round):
+                        if abs(next_data_matrix[k][t] - data_matrix[k][t]) > self.fix_eps:
+                            flag = 1
+                            break
+                    if flag == 1:
+                        break
+                if flag == 1:
+                    data_matrix = next_data_matrix
+                else:
+                    # 观察一下
+                    obs_matrix = []
+                    for k in range(self.num_client):
+                        obs_list = [1]
+                        for t in range(1, self.num_round):
+                            obs = obs_list[t-1] * (1 - increment_matrix[k][t-1] / next_data_matrix[k][t]) + 1
+                            obs_list.append(obs)
+                        obs_matrix.append(obs_list)
+                    
+                    return np.array(next_data_matrix), np.array(obs_matrix)
+            print('failure1')
+            return np.array(next_data_matrix)
         
         # 初始化phi_list
         phi_list = self.phi_list_init
-        phi_hist = []
-                
+        
         # 计算新的phi_list[T]
+        phi_hist = []
         for idc in range(self.fix_max_iter):
-            var, res = self.estimate_reward_theta(phi_list)
-            reward, theta = var
-            _, data_matrix, _= self.estimate_D(phi_list, reward, theta)
+            phi_hist.append(phi_list[1])
+            reward, res = self.estimate_R(phi_list)
+            data_matrix = self.estimate_D(phi_list, reward, 1)
             print('******************************************************')
-            print('{}, {}, {}, {}, {}'.format(idc, phi_list, reward, theta, res))
+            print('{}, {}, {}, {}'.format(idc, phi_list, reward, res))
             print('{}'.format(data_matrix))
             # print('--------------------------------------')
-            # print('{}'.format(func(phi_list, theta)[1]))
+            # print('{}'.format(func(phi_list, reward)[0]))
             # # print('--------------------------------------')
             # # print('{}'.format(func(phi_list, reward)[1]))
             # 先epsilon/delta，再施加到data_matrix
             # print(data_matrix.shape)
-            next_phi_list = np.sum(data_matrix * ((1 / self.delta_list).reshape(self.num_client, 1)), axis=0)
+            next_phi_list = np.sum(data_matrix * ((self.epsilon_list / self.delta_list).reshape(self.num_client, 1)), axis=0)
             # 判断收敛
             if np.max(np.abs(next_phi_list - phi_list)) > self.fix_eps:
-                phi_list = next_phi_list 
-                
-                x1 = np.arange(self.reward_lb, self.reward_ub, 10)             
-                y1 = []
+                phi_list = next_phi_list
+                x1 = np.arange(self.lb, self.ub, 1)
+                y1 = [np.sum(self.estimate_D(phi_list, np.array([i]))) for i in x1]
                 y2 = []
                 y3 = []
-                y = []
                 for i in x1:
-                    e1, e2, e3, e = func(phi_list, i, theta)
-                    y1.append(e1)
-                    y2.append(e2)
-                    y3.append(e3)
-                    y.append(e)
-                    
-                plt.subplot(2,4,1)
+                    _, a, b = func1(phi_list, np.array([i]))
+                    y2.append(a)
+                    y3.append(b)
+                plt.subplot(2,3,1)
                 plt.plot(x1, y1)
-                plt.subplot(2,4,2)
+                plt.subplot(2,3,2)
                 plt.plot(x1, y2)
-                plt.subplot(2,4,3)
+                plt.subplot(2,3,3)
                 plt.plot(x1, y3)
-                plt.subplot(2,4,4)
-                plt.plot(x1, y)
-                
-                x2 = np.arange(self.theta_lb, self.theta_ub, 0.1)         
-                y1 = []
-                y2 = []
-                y3 = []
-                y = []
-                for i in x2:
-                    e1, e2, e3, e = func(phi_list, reward, i)
-                    y1.append(e1)
-                    y2.append(e2)
-                    y3.append(e3)
-                    y.append(e)
-                    
-                plt.subplot(2,4,5)
-                plt.plot(x2, y1)
-                plt.subplot(2,4,6)
-                plt.plot(x2, y2)
-                plt.subplot(2,4,7)
-                plt.plot(x2, y3)
-                plt.subplot(2,4,8)
-                plt.plot(x2, y)
-                plt.savefig('../../logs/fedavg/3.png')
-                
-                # fig = plt.figure()
-                # X1, X2 = np.meshgrid(x1, x2)
-                # y1_matrix = []
-                # y2_matrix = []
-                # y3_matrix = []
-                # y_matrix = []
-                # for i in range(len(x1)):
-                #     y1_list = []
-                #     y2_list = []
-                #     y3_list = []
-                #     y_list = []
-                #     for j in range(len(x2)):
-                #         e1, e2, e3, e = func(phi_list, X1[i][j], X2[i][j])
-                #         y1_list.append(e1)
-                #         y2_list.append(e2)
-                #         y3_list.append(e3)
-                #         y_list.append(e)
-                #     y1_matrix.append(y1_list)
-                #     y2_matrix.append(y2_list)
-                #     y3_matrix.append(y3_list)
-                #     y_matrix.append(y_list)
-                # y1_matrix = np.array(y1_matrix)
-                # y2_matrix = np.array(y2_matrix)
-                # y3_matrix = np.array(y3_matrix)
-                # y_matrix = np.array(y_matrix)
-                # ax1 = fig.add_subplot(2,2,1, projection='3d')
-                # ax1.plot_surface(X1, X2, y1_matrix, rstride=1, cstride=1, cmap='rainbow')
-                # ax2 = fig.add_subplot(2,2,2, projection='3d')
-                # ax2.plot_surface(X1, X2, y2_matrix, rstride=1, cstride=1, cmap='rainbow')
-                # ax3 = fig.add_subplot(2,2,3, projection='3d')
-                # ax3.plot_surface(X1, X2, y3_matrix, rstride=1, cstride=1, cmap='rainbow')
-                # ax4 = fig.add_subplot(2,2,4, projection='3d')
-                # ax4.plot_surface(X1, X2, y_matrix, rstride=1, cstride=1, cmap='rainbow')
-                # fig.savefig('../../logs/fedavg/4.png')
+                plt.savefig('../../logs/fedavg/2.png')  
                 
             else:
-                # c = [[1] * self.num_round] * self.num_client
-                # for k in range(self.num_client):
-                #     for t in range(1, self.num_round):
-                #         c[k][t] = c[k][t-1] * i * b[k][t-1] / b[k][t] + 1
-                
-                # x = np.arange(0, 1, 0.05)
-                # for i in x:
-                #     a, b, c = self.estimate_D(phi_list, np.array([i]))
-                #     plt.subplot(3,3,5)
-                #     plt.plot(a[1])
-                #     plt.subplot(3,3,6)
-                #     plt.plot(b[1])
-                #     plt.subplot(3,3,7)
-                #     plt.plot(c[1])
-                #     plt.savefig('../../logs/fedavg/1.png')
-                
+                x2 = np.arange(0, 1, 0.1)
+                y4 = []
+                for i in x2:
+                    _, c = func2(phi_list, reward, i)
+                    plt.subplot(2,3,5)
+                    plt.plot(c[1])
+                    plt.savefig('../../logs/fedavg/2.png')    
+                    
+                plt.subplot(2,3,6)
+                plt.plot(phi_hist)
+                plt.savefig('../../logs/fedavg/2.png')
                 print('triumph2')
-                exit(0)
                 return next_phi_list
             
         print('failure2')
@@ -382,10 +356,8 @@ class Server(object):
         
         # 正式训练前定好一切
         phi_list = self.estimate_phi() # [T]
-        var, res = self.estimate_reward_theta(phi_list) # [K, T]
-        reward = var[0]
-        theta = var[1]
-        data_matrix = self.estimate_D(phi_list, reward, theta)
+        reward, res = self.estimate_R(phi_list) # [K, T]
+        data_matrix = self.estimate_D(phi_list, reward)
         # numpy 切片格式 [:, :]
         data_sum_list = [sum(data_matrix[:, t]) for t in range(self.num_round)]
         
