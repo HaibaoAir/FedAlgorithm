@@ -17,8 +17,8 @@ from model.cifar import Cifar10_CNN
 from sko.PSO import PSO
 
 args = {
-    'num_client': 5,
-    'num_sample': 5,
+    'num_client': 3,
+    'num_sample': 3,
     'dataset': 'mnist',
     'is_iid': 0,
     'alpha': 1.0,

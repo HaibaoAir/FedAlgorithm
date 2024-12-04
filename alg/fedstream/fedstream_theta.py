@@ -24,7 +24,7 @@ args = {
     'alpha': 1.0,
     'model': 'cnn',
     'learning_rate': 0.01,
-    'num_round': 20,
+    'num_round': 5,
     'num_epoch': 1,
     'batch_size': 32,
     'eval_freq': 1,
