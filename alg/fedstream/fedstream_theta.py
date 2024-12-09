@@ -17,14 +17,14 @@ from model.cifar import Cifar10_CNN
 from sko.PSO import PSO
 
 args = {
-    'num_client': 3,
-    'num_sample': 3,
+    'num_client': 5,
+    'num_sample': 5,
     'dataset': 'mnist',
     'is_iid': 0,
     'alpha': 1.0,
     'model': 'cnn',
     'learning_rate': 0.01,
-    'num_round': 5,
+    'num_round': 20,
     'num_epoch': 1,
     'batch_size': 32,
     'eval_freq': 1,
@@ -99,31 +99,32 @@ class Server(object):
             self.phi_list_init.append(phi)
         
         # 背景超参数
-        self.epsilon_list = np.array([1] * self.num_client) #[K] 0-1之间
         self.delta_list = np.array([1] * self.num_client) # [K]
         self.psi = 1
         self.sigma_list = np.array([1] * self.num_client) # [K]
         self.alpha_list = [1e-2] * self.num_client # 收集数据的价格
-        self.beta_list = [1e-4] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
-        # self.theta = 0.5 # 数据留存率
-        self.R = 35 # 奖励
-        self.fix_eps = 1
+        self.beta_list = [5e-6] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
+        self.R = None # 奖励
+        self.fix_eps_1 = 1e-2
+        self.fix_eps_2 = 5
         self.fix_max_iter = 1000
         
         self.kappa_1 = 1
         self.kappa_2 = 1
-        self.kappa_3 = 5e-2 # 重点1
+        self.kappa_3 = 1e-2 # 重点1
         self.kappa_4 = 1
-        self.gamma = 0.5
+        self.gamma = 1e-3
         
         self.lb = 0
         self.ub = 1 # 10e6 # 重点2
         self.pop = 1000 # 探索空间划定得越大，需要的粒子就多点，就能找到精确最优解！
         self.pso_eps = 1e-2
         self.pso_max_iter = 500
+        
+        self.save_path = '../../logs/fedavg/2.png'
               
     
-    def estimate_D(self, phi_list, theta, ind=0):
+    def estimate_D(self, phi_list, theta):
         # 初始化数据矩阵
         data_matrix = self.data_matrix_init
         theta = theta[0]
@@ -161,7 +162,7 @@ class Server(object):
             flag = 0
             for k in range(self.num_client):
                 for t in range(1, self.num_round):
-                    if abs(next_data_matrix[k][t] - data_matrix[k][t]) > self.fix_eps:
+                    if abs(next_data_matrix[k][t] - data_matrix[k][t]) > self.fix_eps_1:
                         flag = 1
                         break
                 if flag == 1:
@@ -253,61 +254,51 @@ class Server(object):
         
         # 初始化phi_list
         phi_list = self.phi_list_init
-                
+        phi_hist = []
+        theta_hist = []
+        increment_hist = []
+        data_hist = []
+        stale_hist = []         
         # 计算新的phi_list[T]
         for idc in range(self.fix_max_iter):
             theta, res = self.estimate_theta(phi_list)
-            _, data_matrix, stale_matrix = self.estimate_D(phi_list, theta)
+            increment_matrix, data_matrix, stale_matrix = self.estimate_D(phi_list, theta)
             print('******************************************************')
             print('{}, {}, {}, {}'.format(idc, phi_list, theta, res))
             print('{}'.format(data_matrix))
-            # print('--------------------------------------')
-            # print('{}'.format(func(phi_list, theta)[1]))
-            # # print('--------------------------------------')
-            # # print('{}'.format(func(phi_list, reward)[1]))
-            # 先epsilon/delta，再施加到data_matrix
-            # print(data_matrix.shape)
+            
             next_phi_list = np.sum(data_matrix * ((1 / self.delta_list).reshape(self.num_client, 1)), axis=0)
             # 判断收敛
-            if np.max(np.abs(next_phi_list - phi_list)) > self.fix_eps:
-                phi_list = next_phi_list                
-                x = np.arange(0, 1, 0.1)
-                y1 = []
-                y2 = []
-                y3 = []
-                y = []
-                for i in x:
-                    e1, e2, e3, e = func(phi_list, np.array([i]))
-                    y1.append(e1)
-                    y2.append(e2)
-                    y3.append(e3)
-                    y.append(e)
-                    
-                plt.subplot(3,3,1)
-                plt.plot(x, y1)
-                plt.subplot(3,3,2)
-                plt.plot(x, y2)
-                plt.subplot(3,3,3)
-                plt.plot(x, y3)
-                plt.subplot(3,3,4)
-                plt.plot(x, y)
-                plt.savefig('../../logs/fedavg/1.png')
+            if np.max(np.abs(next_phi_list - phi_list)) > self.fix_eps_2:
+                print('phi_diff_max = {}'.format(np.max(np.abs(next_phi_list - phi_list))))
+                phi_list = next_phi_list  
+                              
+                if idc == 0:
+                    continue
+                phi_hist.append(phi_list)
+                theta_hist.append(theta)
+                increment_hist.append(np.mean(increment_matrix, axis=0))
+                data_hist.append(np.mean(data_matrix, axis=0))
+                stale_hist.append(np.mean(stale_matrix, axis=0))
+                
+                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 1))
+                plt.plot(phi_hist)
+                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 2))
+                plt.plot(theta_hist)
+                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 3))
+                plt.plot(increment_hist)
+                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 4))
+                plt.plot(data_hist)
+                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 5))
+                plt.plot(stale_hist)
+                plt.savefig(self.save_path)
                 
             else:
-                # c = [[1] * self.num_round] * self.num_client
-                # for k in range(self.num_client):
-                #     for t in range(1, self.num_round):
-                #         c[k][t] = c[k][t-1] * i * b[k][t-1] / b[k][t] + 1
-                x = np.arange(0, 1, 0.05)
-                for i in x:
-                    a, b, c = self.estimate_D(phi_list, np.array([i]))
-                    plt.subplot(3,3,5)
-                    plt.plot(a[1])
-                    plt.subplot(3,3,6)
-                    plt.plot(b[1])
-                    plt.subplot(3,3,7)
-                    plt.plot(c[1])
-                    plt.savefig('../../logs/fedavg/1.png')
+                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 6))
+                plt.plot(np.mean(increment_matrix, axis=0))
+                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 7))
+                plt.plot(np.mean(data_matrix, axis=0))
+                plt.savefig(self.save_path)
                 
                 print('triumph2')
                 return next_phi_list
@@ -317,6 +308,14 @@ class Server(object):
 
 
     def online_train(self):
+        # 一口口试出来的
+        # self.R = 1000
+        # self.estimate_phi()
+        # exit(0)
+        for item in range(400, 1200, 200):
+            self.R = item
+            phi_list = self.estimate_phi()
+        exit(0)
         
         # 正式训练前定好一切
         phi_list = self.estimate_phi() # [T]
@@ -390,7 +389,7 @@ class Server(object):
                 
             plt.subplot(2,3,4)
             plt.plot(accuracy_list)
-            plt.savefig('../../logs/fedavg/2.png')
+            plt.savefig(self.save_path)
         
         with open('../../logs/fedavg/accuracy.txt', 'a') as file:
             file.write('{}\n'.format(time.asctime()))

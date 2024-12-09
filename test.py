@@ -12,6 +12,16 @@ from sko.PSO import PSO
 import numpy as np
 from matplotlib import pyplot as plt
 
+
+x = np.arange(1,10,1)
+y = np.arange(1,10,1)
+
+
+for k in range(0, 1, 0.2):
+    print(k)
+    
+exit(0)
+
 fig = plt.figure()
 ax = fig.add_subplot(2,2,1,projection='3d')
 a = np.arange(-1, 1, 0.01)

@@ -17,17 +17,18 @@ from model.cifar import Cifar10_CNN
 from sko.PSO import PSO
 
 args = {
-    'num_client': 3,
-    'num_sample': 3,
+    'num_client': 5,
+    'num_sample': 5,
     'dataset': 'mnist',
     'is_iid': 0,
     'alpha': 1.0,
     'model': 'cnn',
     'learning_rate': 0.01,
-    'num_round': 5,
+    'num_round': 10,
     'num_epoch': 1,
     'batch_size': 32,
     'eval_freq': 1,
+    'save_path': '../../logs/fedavg/4.png',
 }
 
 seed = 10
@@ -81,6 +82,7 @@ class Server(object):
         self.num_epoch = args['num_epoch']
         self.batch_size = args['batch_size']
         self.eval_freq = args['eval_freq']
+        self.save_path = args['save_path']
 
         # 初始化data_matrix[K,T]
         self.data_origin_init = [random.randint(50, 100) for _ in range(self.num_client)]
@@ -104,37 +106,47 @@ class Server(object):
         self.psi = 1
         self.alpha_list = [1e-3] * self.num_client # 收集数据的价格
         self.beta_list = [5e-6] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
-        self.fix_eps_1 = 0.1
-        self.fix_eps_2 = 5
-        self.fix_max_iter = 1000
+        self.fix_eps_1 = 1e-2
+        self.fix_max_iter_1 = 1000
         
+        # --------------估计R,theta-----------------
         self.kappa_1 = 1
         self.kappa_2 = 1
         self.kappa_3 = 1e-2
         self.kappa_4 = 1
         self.gamma = 1e-4
         
-        # 一阶段
-        self.reward_lb = 1
-        self.reward_ub = 100
-        self.theta_lb = 0
-        self.theta_ub = 1
+        # # 一阶段
+        # self.reward_lb = 1
+        # self.reward_ub = 100
+        # self.theta_lb = 0
+        # self.theta_ub = 1
+        # self.pop = 1000
+        # self.pso_eps = 1e-5
+        # self.pso_max_iter = 500
+
+        # self.fix_eps_2 = 5
+        # self.fix_max_iter_2 = 1000
         
-        # # 二阶段
-        # self.reward_lb = 50
-        # self.reward_ub = 60
-        # self.theta_lb = 0.4
-        # self.theta_ub = 0.5
-        self.pop = 500 # 探索空间划定得越大，需要的粒子就多点，就能找到精确最优解！
-        self.pso_eps = 1e-10
+        
+        # 二阶段
+        self.reward_lb = 65
+        self.reward_ub = 75
+        self.theta_lb = 0.35
+        self.theta_ub = 0.45
+        self.pop = 3000
+        self.pso_eps = 1e-5
         self.pso_max_iter = 500
+
+        self.fix_eps_2 = 4
+        self.fix_max_iter_2 = 1000
               
     
     def estimate_D(self, phi_list, reward, theta):
         # 初始化数据矩阵
         data_matrix = self.data_matrix_init
         
-        for idc in range(self.fix_max_iter):
+        for idc in range(self.fix_max_iter_1):
             # 计算增量矩阵[K,T]
             increment_matrix = []
             for k in range(self.num_client):
@@ -238,9 +250,7 @@ class Server(object):
                     data += data_matrix[k][t]
                 data_list.append(data)
             
-            res_1 = 0
-            res_2 = 0
-            res_3 = 0
+            tmp = 0
             res = 0
             for t in range(self.num_round):
                 delta_sum = 0
@@ -255,34 +265,20 @@ class Server(object):
                 item_3 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_4 * delta_sum / data_list[t]
                 item = (1 - self.gamma) * (item_1 + item_2 + item_3) + self.gamma * reward
                 res += item
-                res_1 += item_1
-                res_2 += item_2
-                res_3 += item_3
-            return res_1, res_2, res_3, res, np.sum(increment_matrix), np.sum(data_matrix)
+                tmp += (item_1 + item_2 + item_3)
+            return tmp, res
         
         # 初始化phi_list
         phi_list = self.phi_list_init
         phi_hist = []
         reward_hist = []
         theta_hist = []
-        last_reward = 0
-        last_theta = 0
-        flag = 0
-        # 计算新的phi_list[T]
-        for idc in range(self.fix_max_iter):
+        max_diff_hist = []
+        fig = plt.figure()
+        # 计算新的phi_list
+        for idc in range(self.fix_max_iter_2):
             var, res = self.estimate_reward_theta(phi_list)
             reward, theta = var
-            if flag == 0 and abs(reward - last_reward) <= 3 and abs(theta - last_theta) <= 0.05:
-                print('model')
-                time.sleep(5)
-                self.reward_lb = reward - 7
-                self.reward_ub = reward + 7
-                self.theta_lb = theta - 0.1
-                self.theta_ub = theta + 0.1
-                self.pop = self.pop * 10
-                flag = 1
-            last_reward = reward
-            last_theta = theta
             increment_matrix, data_matrix, _= self.estimate_D(phi_list, reward, theta)
             print('******************************************************')
             print('{}, {}, {}, {}, {}'.format(idc, phi_list, reward, theta, res))
@@ -290,142 +286,68 @@ class Server(object):
             
             next_phi_list = np.sum(data_matrix * ((1 / self.delta_list).reshape(self.num_client, 1)), axis=0)
             # 判断收敛
-            if np.max(np.abs(next_phi_list - phi_list)) > self.fix_eps_2:
+            max_diff = np.max(np.abs(next_phi_list - phi_list))
+            print('max_diff_phi:{}'.format(max_diff))
+            
+            if max_diff > self.fix_eps_2:
                 phi_list = next_phi_list 
                 
                 if idc == 0 or idc == 1:
                     continue
-                x1 = np.arange(self.reward_lb, self.reward_ub, 1)             
-                y1 = []
-                y2 = []
-                y3 = []
-                y = []
-                F1 = []
-                F2 = []
-                for i in x1:
-                    e1, e2, e3, e, f1, f2 = func(phi_list, i, theta)
-                    
-                    y1.append(e1)
-                    y2.append(e2)
-                    y3.append(e3)
-                    y.append(e)
-                    F1.append(f1)
-                    F2.append(f2)
-                plt.subplot(3,6,1)
-                plt.plot(x1, y1)
-                plt.subplot(3,6,2)
-                plt.plot(x1, y2)
-                plt.subplot(3,6,3)
-                plt.plot(x1, y3)
-                plt.subplot(3,6,4)
-                plt.plot(x1, y)
-                plt.subplot(3,6,5)
-                plt.plot(x1, F1)
-                plt.subplot(3,6,6)
-                plt.plot(x1, F2)
-                
-                x2 = np.arange(self.theta_lb, self.theta_ub, 0.1)         
-                y1 = []
-                y2 = []
-                y3 = []
-                y = []
-                F1 = []
-                F2 = []
-                for i in x2:
-                    e1, e2, e3, e, f1, f2 = func(phi_list, reward, i)
-                    y1.append(e1)
-                    y2.append(e2)
-                    y3.append(e3)
-                    y.append(e)
-                    F1.append(f1)
-                    F2.append(f2)
-                    
-                plt.subplot(3,6,7)
-                plt.plot(x2, y1)
-                plt.subplot(3,6,8)
-                plt.plot(x2, y2)
-                plt.subplot(3,6,9)
-                plt.plot(x2, y3)
-                plt.subplot(3,6,10)
-                plt.plot(x2, y)
-                plt.subplot(3,6,11)
-                plt.plot(x2, F1)
-                plt.subplot(3,6,12)
-                plt.plot(x2, F2)
                 
                 phi_hist.append(phi_list)
                 reward_hist.append(reward)
                 theta_hist.append(theta)
-                plt.subplot(3,6,13)
+                max_diff_hist.append(max_diff)
+                plt.subplot(2,4,1)
+                plt.title('phi_iterate')
+                plt.legend()
                 plt.plot(phi_hist)
-                plt.subplot(3,6,14)
+                plt.subplot(2,4,2)
+                plt.title('reward_iterate')
                 plt.plot(reward_hist)
-                plt.subplot(3,6,15)
+                plt.subplot(2,4,3)
+                plt.title('theta_iterate')
                 plt.plot(theta_hist)
+                plt.subplot(2,4,4)
+                plt.title('max_diff_iterate')
+                plt.plot(max_diff_hist)
                 
-                plt.savefig('../../logs/fedavg/3.png')
-                
-                
-                # fig = plt.figure()
-                # X1, X2 = np.meshgrid(x1, x2)
-                # # print(len(x1))
-                # # print(len(x2))
-                # # print(X1.shape)
-                # # print(X2.shape)
-                # # exit(0)
-                # y1_matrix = []
-                # y2_matrix = []
-                # y3_matrix = []
-                # y_matrix = []
-                # for i in range(len(x2)):
-                #     y1_list = []
-                #     y2_list = []
-                #     y3_list = []
-                #     y_list = []
-                #     for j in range(len(x1)):
-                #         e1, e2, e3, e, _ = func(phi_list, X1[i][j], X2[i][j])
-                #         y1_list.append(e1)
-                #         y2_list.append(e2)
-                #         y3_list.append(e3)
-                #         y_list.append(e)
-                #     y1_matrix.append(y1_list)
-                #     y2_matrix.append(y2_list)
-                #     y3_matrix.append(y3_list)
-                #     y_matrix.append(y_list)
-                # y1_matrix = np.array(y1_matrix)
-                # y2_matrix = np.array(y2_matrix)
-                # y3_matrix = np.array(y3_matrix)
-                # y_matrix = np.array(y_matrix)
-                # ax1 = fig.add_subplot(3,5,11, projection='3d')
-                # ax1.plot_surface(X1, X2, y1_matrix, rstride=1, cstride=1, cmap='rainbow')
-                # ax2 = fig.add_subplot(3,5,12, projection='3d')
-                # ax2.plot_surface(X1, X2, y2_matrix, rstride=1, cstride=1, cmap='rainbow')
-                # ax3 = fig.add_subplot(3,5,13, projection='3d')
-                # ax3.plot_surface(X1, X2, y3_matrix, rstride=1, cstride=1, cmap='rainbow')
-                # ax4 = fig.add_subplot(3,5,14, projection='3d')
-                # ax4.plot_surface(X1, X2, y_matrix, rstride=1, cstride=1, cmap='rainbow')
-                # fig.savefig('../../logs/fedavg/3.png')
+                plt.savefig(self.save_path)
                 
             else:
-                # c = [[1] * self.num_round] * self.num_client
-                # for k in range(self.num_client):
-                #     for t in range(1, self.num_round):
-                #         c[k][t] = c[k][t-1] * i * b[k][t-1] / b[k][t] + 1
+                # 绘制三维图
+                x1 = np.arange(self.reward_lb, self.reward_ub, (self.reward_ub - self.reward_lb) / 100)
+                x2 = np.arange(self.theta_lb, self.theta_ub, (self.theta_ub - self.theta_lb) / 100)
+                X1, X2 = np.meshgrid(x1, x2)
+                tmp_matrix = []
+                res_matrix = []
+                for i in range(len(x2)):
+                    tmp_list = []
+                    res_list = []
+                    for j in range(len(x1)):
+                        tmp, res = func(phi_list, X1[i][j], X2[i][j])
+                        tmp_list.append(tmp)
+                        res_list.append(res)
+                    tmp_matrix.append(tmp_list)
+                    res_matrix.append(res_list)
+                tmp_matrix = np.array(tmp_matrix)
+                res_matrix = np.array(res_matrix)
+            
+                ax3 = fig.add_subplot(2,4,6, projection='3d')
+                ax3.plot_surface(X1, X2, tmp_matrix, rstride=1, cstride=1, cmap='rainbow')
+                ax3.contour(X1, X2, tmp_matrix)
+                ax4 = fig.add_subplot(2,4,7, projection='3d')
+                ax4.plot_surface(X1, X2, res_matrix, rstride=1, cstride=1, cmap='rainbow')
+                ax4.contour(X1, X2, tmp_matrix)
+                fig.savefig(self.save_path)
                 
-                x = np.arange(0, 1, 0.05)
-                for i in x:
-                    a, b, c = self.estimate_D(phi_list, reward, i)
-                    plt.subplot(3,6,16)
-                    plt.plot(a[1])
-                    plt.subplot(3,6,17)
-                    plt.plot(b[1])
-                    plt.subplot(3,6,18)
-                    plt.plot(c[1])
-                    plt.savefig('../../logs/fedavg/3.png')
-                with open('../../logs/fedavg/phi_{}.txt'.format(self.reward_ub), 'a') as file:
-                    for item in phi_hist:
-                        file.write('{}\n'.format(item))   
-                    file.write('------------------')                 
+                max_diff_hist.append(max_diff)
+                plt.subplot(2,4,4)
+                plt.title('max_diff_iterate')
+                plt.plot(max_diff_hist)
+                plt.savefig(self.save_path)
+                
                 print('triumph2')
                 return next_phi_list
             
@@ -507,9 +429,9 @@ class Server(object):
                 acc = correct / total
                 accuracy_list.append(acc)
                 
-            plt.subplot(3,6,18)
+            plt.subplot(2,4,5)
             plt.plot(accuracy_list)
-            plt.savefig('../../logs/fedavg/3.png')
+            plt.savefig(self.save_path)
         
         with open('../../logs/fedavg/accuracy.txt', 'a') as file:
             file.write('{}\n'.format(time.asctime()))
