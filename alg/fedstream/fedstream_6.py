@@ -17,19 +17,19 @@ from model.cifar import Cifar10_CNN
 from sko.PSO import PSO
 
 args = {
-    'num_client': 5,
-    'num_sample': 5,
+    'num_client': 10,
+    'num_sample': 10,
     'dataset': 'mnist',
     'is_iid': 0,
     'alpha': 1.0,
     'model': 'cnn',
     'learning_rate': 0.01,
-    'num_round': 20,
+    'num_round': 30,
     'num_epoch': 1,
     'batch_size': 32,
     'eval_freq': 1,
-    'save_path': '../../logs/fedavg/5.png',
-    'save_path_3D': '../../logs/fedavg/5_3D.png',
+    'save_path': '../../logs/fedavg/6.png',
+    'save_path_3D': '../../logs/fedavg/6_3D.png',
 }
 
 seed = 10
@@ -118,30 +118,30 @@ class Server(object):
         self.kappa_4 = 1
         self.gamma = 1e-4
         
-        # # 一阶段
-        # self.reward_lb = 0
-        # self.reward_ub = 100
-        # self.theta_lb = 0
-        # self.theta_ub = 1
-        # self.pop = 300
-        # self.pso_eps = 1e-5
-        # self.pso_max_iter = 500
-
-        # self.fix_eps_2 = 5
-        # self.fix_max_iter_2 = 1000
-        
-        
-        # 二阶段
-        self.reward_lb = 72
-        self.reward_ub = 77
-        self.theta_lb = 0.32
-        self.theta_ub = 0.37
-        self.pop = 5000
+        # 一阶段
+        self.reward_lb = 0
+        self.reward_ub = 100
+        self.theta_lb = 0
+        self.theta_ub = 1
+        self.pop = 300
         self.pso_eps = 1e-5
         self.pso_max_iter = 500
 
-        self.fix_eps_2 = self.num_client
+        self.fix_eps_2 = 5
         self.fix_max_iter_2 = 1000
+        
+        
+        # # 二阶段
+        # self.reward_lb = 72
+        # self.reward_ub = 77
+        # self.theta_lb = 0.32
+        # self.theta_ub = 0.37
+        # self.pop = 5000
+        # self.pso_eps = 1e-5
+        # self.pso_max_iter = 500
+
+        # self.fix_eps_2 = self.num_client
+        # self.fix_max_iter_2 = 1000
               
     
     def estimate_D(self, phi_list, reward, theta):

@@ -29,6 +29,7 @@ args = {
     'batch_size': 32,
     'eval_freq': 1,
     'save_path': '../../logs/fedavg/3.png',
+    'save_path_3D': '../../logs/fedavg/3_3D.png',
 }
 
 seed = 10
@@ -83,6 +84,7 @@ class Server(object):
         self.batch_size = args['batch_size']
         self.eval_freq = args['eval_freq']
         self.save_path = args['save_path']
+        self.save_path_3D = args['save_path_3D']
 
         # 初始化data_matrix[K,T]
         self.data_origin_init = [random.randint(50, 100) for _ in range(self.num_client)]
@@ -125,7 +127,7 @@ class Server(object):
         # self.pso_eps = 1e-5
         # self.pso_max_iter = 500
 
-        # self.fix_eps_2 = 5
+        # self.fix_eps_2 = 1
         # self.fix_max_iter_2 = 1000
         
         
@@ -134,11 +136,11 @@ class Server(object):
         self.reward_ub = 60
         self.theta_lb = 0.4
         self.theta_ub = 0.5
-        self.pop = 5000 
+        self.pop = 3000 
         self.pso_eps = 1e-5
         self.pso_max_iter = 500
 
-        self.fix_eps_2 = 4
+        self.fix_eps_2 = self.num_client
         self.fix_max_iter_2 = 1000
               
     
@@ -274,7 +276,7 @@ class Server(object):
         reward_hist = []
         theta_hist = []
         max_diff_hist = []
-        fig = plt.figure()
+        
         # 计算新的phi_list[T]
         for idc in range(self.fix_max_iter_2):
             var, res = self.estimate_reward_theta(phi_list)
@@ -295,32 +297,42 @@ class Server(object):
                 if idc == 0 or idc == 1:
                     continue
                 
-                phi_hist.append(phi_list)
+                phi_hist.append(phi_list[-1])
                 reward_hist.append(reward)
                 theta_hist.append(theta)
                 max_diff_hist.append(max_diff)
-                plt.subplot(2,4,1)
-                plt.title('phi_iterate')
-                plt.legend()
-                plt.plot(phi_hist)
-                plt.subplot(2,4,2)
-                plt.title('reward_iterate')
-                plt.plot(reward_hist)
-                plt.subplot(2,4,3)
-                plt.title('theta_iterate')
-                plt.plot(theta_hist)
-                plt.subplot(2,4,4)
-                plt.title('max_diff_iterate')
-                plt.plot(max_diff_hist)
                 
-                plt.savefig(self.save_path)
+                fig = plt.figure()
+                ax1 = fig.add_subplot(2,1,1)
+                ax1.set_xlabel('iterations')
+                ax1.set_ylabel('phi')
+                ax1.plot(phi_hist, 'k-')
+                
+                ax2 = fig.add_subplot(2,1,2)
+                ax2.set_xlabel('iterations')
+                ax2.set_ylabel('reward')
+                ax2.spines['left'].set_edgecolor('C0')
+                ax2.yaxis.label.set_color('C0')
+                ax2.tick_params(axis='y', colors='C0')
+                line_2 = ax2.plot(reward_hist, color='C0', linestyle='-', label='reward')
+                
+                ax3 = ax2.twinx()
+                ax3.set_ylabel('theta')
+                ax3.spines['right'].set_edgecolor('red')
+                ax3.yaxis.label.set_color('red')
+                ax3.tick_params(axis='y', colors='red')
+                line_3 = ax3.plot(theta_hist, 'r--', label='theta')
+                
+                lines = line_2 + line_3
+                labs = [label.get_label() for label in lines]
+                ax3.legend(lines,labs, frameon=False, loc=4)
+                
+                fig.tight_layout()
+                fig.savefig(self.save_path, dpi=200)
+                plt.close()
                 
             else:           
                 max_diff_hist.append(max_diff)
-                plt.subplot(2,4,4)
-                plt.title('max_diff_iterate')
-                plt.plot(max_diff_hist)
-                plt.savefig(self.save_path)
                 
                 # 绘制三维图
                 x1 = np.arange(self.reward_lb, self.reward_ub, (self.reward_ub - self.reward_lb) / 100)
@@ -339,14 +351,22 @@ class Server(object):
                     res_matrix.append(res_list)
                 tmp_matrix = np.array(tmp_matrix)
                 res_matrix = np.array(res_matrix)
-            
-                ax3 = fig.add_subplot(2,4,6, projection='3d')
-                ax3.plot_surface(X1, X2, tmp_matrix, rstride=1, cstride=1, cmap='rainbow')
-                ax3.contour(X1, X2, tmp_matrix)
-                ax4 = fig.add_subplot(2,4,7, projection='3d')
-                ax4.plot_surface(X1, X2, res_matrix, rstride=1, cstride=1, cmap='rainbow')
+                
+                fig = plt.figure()
+                ax4 = fig.add_subplot(1,2,1, projection='3d')
+                ax4.set_xlabel('reward')
+                ax4.set_ylabel('theta')
+                ax4.set_zlabel('loss')
+                ax4.plot_surface(X1, X2, tmp_matrix, rstride=1, cstride=1, cmap='rainbow')
                 ax4.contour(X1, X2, tmp_matrix)
-                fig.savefig(self.save_path)
+                ax5 = fig.add_subplot(1,2,2, projection='3d')
+                ax5.set_xlabel('reward')
+                ax5.set_ylabel('theta')
+                ax5.set_zlabel('cost')
+                ax5.plot_surface(X1, X2, res_matrix, rstride=1, cstride=1, cmap='rainbow')
+                ax5.contour(X1, X2, tmp_matrix)
+                fig.tight_layout()
+                fig.savefig(self.save_path_3D, dpi=200)
                 
                 print('triumph2')
                 return next_phi_list
@@ -359,6 +379,7 @@ class Server(object):
         
         # 正式训练前定好一切
         phi_list = self.estimate_phi() # [T]
+        exit(0)
         var, res = self.estimate_reward_theta(phi_list) # [K, T]
         reward = var[0]
         theta = var[1]

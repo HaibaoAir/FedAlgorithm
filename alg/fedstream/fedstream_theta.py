@@ -17,17 +17,39 @@ from model.cifar import Cifar10_CNN
 from sko.PSO import PSO
 
 args = {
-    'num_client': 5,
-    'num_sample': 5,
+    'num_client': 3,
+    'num_sample': 3,
     'dataset': 'mnist',
     'is_iid': 0,
     'alpha': 1.0,
     'model': 'cnn',
     'learning_rate': 0.01,
-    'num_round': 20,
+    'num_round': 5,
     'num_epoch': 1,
     'batch_size': 32,
     'eval_freq': 1,
+    
+    'delta': 1,
+    'psi': 1,
+    'sigma': 1,
+    'alpha': 1e-2,
+    'beta': 5e-6,
+    
+    'kappa_1': 1,
+    'kappa_2': 1,
+    'kappa_3': 1e-2,
+    'kappa_4': 1,
+    'gamma': 1e-3,
+    
+    'lb': 0, # 1
+    'ub': 1, 
+    'pop': 1000, # 2
+    'pso_eps': 1e-2,
+    'pso_max_iter': 500,
+    
+    'fix_eps_1': 1e-2,
+    'fix_eps_2': 3, # 3
+    'fix_max_iter': 1000,
 }
 
 seed = 10
@@ -83,12 +105,12 @@ class Server(object):
         self.eval_freq = args['eval_freq']
 
         # 初始化data_matrix[K,T]
-        self.data_origin_init = [random.randint(50, 100) for _ in range(self.num_client)]
+        self.data_origin_init = [random.randint(10, 20) for _ in range(self.num_client)]
         self.data_matrix_init = []
         for k in range(self.num_client):
             data_list = [self.data_origin_init[k]]
             for t in range(1, self.num_round):
-                data = random.randint(50, 100)
+                data = random.randint(5, 10)
                 data_list.append(data)
             self.data_matrix_init.append(data_list)
         
@@ -99,29 +121,30 @@ class Server(object):
             self.phi_list_init.append(phi)
         
         # 背景超参数
-        self.delta_list = np.array([1] * self.num_client) # [K]
-        self.psi = 1
-        self.sigma_list = np.array([1] * self.num_client) # [K]
-        self.alpha_list = [1e-2] * self.num_client # 收集数据的价格
-        self.beta_list = [5e-6] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
+        self.delta_list = np.array([args['delta']] * self.num_client) # [K]
+        self.psi = args['psi']
+        self.sigma_list = np.array([args['sigma']] * self.num_client) # [K]
+        self.alpha_list = [args['alpha']] * self.num_client # 收集数据的价格
+        self.beta_list = [args['beta']] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
         self.R = None # 奖励
-        self.fix_eps_1 = 1e-2
-        self.fix_eps_2 = 5
-        self.fix_max_iter = 1000
         
-        self.kappa_1 = 1
-        self.kappa_2 = 1
-        self.kappa_3 = 1e-2 # 重点1
-        self.kappa_4 = 1
-        self.gamma = 1e-3
+        self.fix_eps_1 = args['fix_eps_1']
+        self.fix_eps_2 = args['fix_eps_2']
+        self.fix_max_iter = args['fix_max_iter']
         
-        self.lb = 0
-        self.ub = 1 # 10e6 # 重点2
-        self.pop = 1000 # 探索空间划定得越大，需要的粒子就多点，就能找到精确最优解！
-        self.pso_eps = 1e-2
-        self.pso_max_iter = 500
+        self.kappa_1 = args['kappa_1']
+        self.kappa_2 = args['kappa_2']
+        self.kappa_3 = args['kappa_3'] # 重点1
+        self.kappa_4 = args['kappa_4']
+        self.gamma = args['gamma']
         
-        self.save_path = '../../logs/fedavg/2.png'
+        self.lb = args['lb']
+        self.ub = args['ub'] # 10e6 # 重点2
+        self.pop = args['pop'] # 探索空间划定得越大，需要的粒子就多点，就能找到精确最优解！
+        self.pso_eps = args['pso_eps']
+        self.pso_max_iter = args['pso_max_iter']
+        
+        self.save_path_dir = '../../logs/fedavg/2'
               
     
     def estimate_D(self, phi_list, theta):
@@ -281,40 +304,72 @@ class Server(object):
                 data_hist.append(np.mean(data_matrix, axis=0))
                 stale_hist.append(np.mean(stale_matrix, axis=0))
                 
-                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 1))
-                plt.plot(phi_hist)
-                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 2))
-                plt.plot(theta_hist)
-                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 3))
-                plt.plot(increment_hist)
-                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 4))
-                plt.plot(data_hist)
-                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 5))
-                plt.plot(stale_hist)
-                plt.savefig(self.save_path)
+                # plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 1))
+                # plt.plot(phi_hist)
+                # plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 2))
+                # plt.plot(theta_hist)
+                # plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 3))
+                # plt.plot(increment_hist)
+                # plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 4))
+                # plt.plot(data_hist)
+                # plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 5))
+                # plt.plot(stale_hist)
+                # plt.savefig(self.save_path)
+                # plt.close()
                 
             else:
-                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 6))
-                plt.plot(np.mean(increment_matrix, axis=0))
-                plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 7))
-                plt.plot(np.mean(data_matrix, axis=0))
-                plt.savefig(self.save_path)
+                # plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 6))
+                # plt.plot(np.mean(increment_matrix, axis=0))
+                # plt.subplot(4,7,int((self.R / 200 - 2) * 7 + 7))
+                # plt.plot(np.mean(data_matrix, axis=0))
+                # plt.savefig(self.save_path)
+                # plt.close()
                 
                 print('triumph2')
-                return next_phi_list
+                return next_phi_list, theta[0], np.mean(increment_matrix, axis=0), np.mean(data_matrix, axis=0), np.mean(stale_matrix, axis=0)
             
         print('failure2')
         return next_phi_list
 
 
     def online_train(self):
-        # 一口口试出来的
-        # self.R = 1000
-        # self.estimate_phi()
-        # exit(0)
+            
+        styles = {
+            400: '^-',
+            600: 'D-',
+            800: 'o-',
+            1000: 'x-',
+        }
+        reward_list = []
+        theta_list = []
         for item in range(400, 1200, 200):
             self.R = item
-            phi_list = self.estimate_phi()
+            var = self.estimate_phi()
+            reward_list.append(self.R)
+            theta_list.append(var[1])
+            # color, marker, linestyle
+            # xlabel, ylable, title, legend的fontfamily, 高清度
+            plt.subplot(2,2,1)
+            plt.xlabel('reward', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            plt.ylabel('theta', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            plt.bar(reward_list, theta_list, width=75)
+            plt.plot(reward_list, theta_list, 'o--')
+            plt.subplot(2,2,2)
+            plt.xlabel('round', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            plt.ylabel('increment', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            plt.plot(var[2], styles[self.R], label='{}'.format(self.R))
+            plt.subplot(2,2,3)
+            plt.xlabel('round', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            plt.ylabel('data', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            plt.plot(var[3], styles[self.R], label='{}'.format(self.R))
+            plt.subplot(2,2,4)
+            plt.xlabel('round', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            plt.ylabel('stale', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            plt.plot(var[4], styles[self.R], label='{}'.format(self.R))
+            plt.legend(prop={'family':'Times New Roman', 'weight':'bold'})
+            plt.tight_layout()
+            plt.savefig(self.save_path_dir + '_{}_{}.png'.format(self.num_client, self.num_round), dpi=200)
+        plt.close()
         exit(0)
         
         # 正式训练前定好一切

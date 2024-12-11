@@ -11,6 +11,19 @@ import torch.optim as optim
 from sko.PSO import PSO
 import numpy as np
 from matplotlib import pyplot as plt
+import numpy as np
+
+seed = 10
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+
+a = np.random.randint(10)
+print(a)
+b = np.random.randint(10)
+print(b)
+exit(0)
 
 
 x = np.arange(1,10,1)
