@@ -21,7 +21,7 @@ args = {
     'num_sample': 5,
     'dataset': 'mnist',
     'is_iid': 0,
-    'alpha': 1.0,
+    'a': 1.0,
     'model': 'cnn',
     'learning_rate': 0.01,
     'num_round': 10,
@@ -30,6 +30,44 @@ args = {
     'eval_freq': 1,
     'save_path': '../../logs/fedavg/4.png',
     'save_path_3D': '../../logs/fedavg/4_3D.png',
+    
+    'delta': 1,
+    'psi': 1,
+    'sigma': 1,
+    'alpha': 1e-3,
+    'beta': 5e-6,
+    
+    'kappa_1': 1,
+    'kappa_2': 1,
+    'kappa_3': 1e-2,
+    'kappa_4': 1e-2,
+    'gamma': 1e-4,
+    
+    # # 一阶段
+    # 'reward_lb': 1,
+    # 'reward_ub': 100,
+    # 'theta_lb': 0,
+    # 'theta_ub': 1,
+    # 'pop': 1000, 
+    # 'pso_eps': 1e-5,
+    # 'pso_max_iter': 500,
+    
+    # 'fix_eps_1': 1e-2,
+    # 'fix_eps_2': 5,
+    # 'fix_max_iter': 1000,
+    
+    # 二阶段
+    'reward_lb': 65,
+    'reward_ub': 75,
+    'theta_lb': 0.35,
+    'theta_ub': 0.45,
+    'pop': 3000, 
+    'pso_eps': 1e-5,
+    'pso_max_iter': 500,
+    
+    'fix_eps_1': 1e-2,
+    'fix_eps_2': 5,
+    'fix_max_iter': 1000,
 }
 
 seed = 10
@@ -44,20 +82,22 @@ class Server(object):
         self.dev = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.dataset_name = args['dataset']
         self.is_iid = args['is_iid']
-        self.alpha = args['alpha']
+        self.a = args['a']
         self.num_client = args['num_client']
         self.num_sample = args['num_sample']
         self.net_name = args['model']
         self.learning_rate = args['learning_rate']
         self.eta = self.learning_rate
+        print(1)
         self.client_group = Client_Group(self.dev,
                                          self.num_client,
                                          self.dataset_name,
                                          self.is_iid,
-                                         self.alpha,
+                                         self.a,
                                          self.net_name,
                                          self.learning_rate,
                                          )
+        print(2)
         self.scales = self.client_group.scales
         self.rate = [item / sum(self.scales) for item in self.scales]
         self.test_dataloader = self.client_group.test_dataloader
@@ -103,52 +143,36 @@ class Server(object):
             self.phi_list_init.append(phi)
         
         # 背景超参数
-        self.delta_list = np.array([1] * self.num_client) # [K]
-        self.sigma_list = np.array([1] * self.num_client)
-        self.psi = 1
-        self.alpha_list = [1e-3] * self.num_client # 收集数据的价格
-        self.beta_list = [5e-6] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
-        self.fix_eps_1 = 1e-2
-        self.fix_max_iter_1 = 1000
+        self.delta_list = np.array([args['delta']] * self.num_client) # [K]
+        self.psi = args['psi']
+        self.sigma_list = np.array([args['sigma']] * self.num_client) # [K]
+        self.alpha_list = [args['alpha']] * self.num_client # 收集数据的价格
+        self.beta_list = [args['beta']] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
+            
+        self.kappa_1 = args['kappa_1']
+        self.kappa_2 = args['kappa_2']
+        self.kappa_3 = args['kappa_3']
+        self.kappa_4 = args['kappa_4']
+        self.gamma = args['gamma']
         
-        # --------------估计R,theta-----------------
-        self.kappa_1 = 1
-        self.kappa_2 = 1
-        self.kappa_3 = 1e-2
-        self.kappa_4 = 1
-        self.gamma = 1e-4
+        self.reward_lb = args['reward_lb'] # 反正不看过程只看结果，原来1-100得50
+        self.reward_ub = args['reward_ub']
+        self.theta_lb = args['theta_lb']
+        self.theta_ub = args['theta_ub']
+        self.pop = args['pop']
+        self.pso_eps = args['pso_eps']
+        self.pso_max_iter = args['pso_max_iter']
         
-        # # 一阶段
-        # self.reward_lb = 1
-        # self.reward_ub = 100
-        # self.theta_lb = 0
-        # self.theta_ub = 1
-        # self.pop = 1000
-        # self.pso_eps = 1e-5
-        # self.pso_max_iter = 500
-
-        # self.fix_eps_2 = 5
-        # self.fix_max_iter_2 = 1000
-        
-        
-        # 二阶段
-        self.reward_lb = 65
-        self.reward_ub = 75
-        self.theta_lb = 0.35
-        self.theta_ub = 0.45
-        self.pop = 3000
-        self.pso_eps = 1e-5
-        self.pso_max_iter = 500
-
-        self.fix_eps_2 = self.num_client
-        self.fix_max_iter_2 = 1000
+        self.fix_eps_1 = args['fix_eps_1']
+        self.fix_eps_2 = args['fix_eps_2']
+        self.fix_max_iter = args['fix_max_iter']
               
     
     def estimate_D(self, phi_list, reward, theta):
         # 初始化数据矩阵
         data_matrix = self.data_matrix_init
         
-        for idc in range(self.fix_max_iter_1):
+        for idc in range(self.fix_max_iter):
             # 计算增量矩阵[K,T]
             increment_matrix = []
             for k in range(self.num_client):
@@ -278,7 +302,7 @@ class Server(object):
         max_diff_hist = []
         fig = plt.figure()
         # 计算新的phi_list
-        for idc in range(self.fix_max_iter_2):
+        for idc in range(self.fix_max_iter):
             var, res = self.estimate_reward_theta(phi_list)
             reward, theta = var
             increment_matrix, data_matrix, _= self.estimate_D(phi_list, reward, theta)

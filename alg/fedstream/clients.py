@@ -14,6 +14,11 @@ sys.path.append('../..')
 from model.mnist import MNIST_Linear, MNIST_CNN
 from model.cifar import Cifar10_CNN
 
+seed = 10
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
 
 class Local_Dataset(Dataset):
     def __init__(self,
