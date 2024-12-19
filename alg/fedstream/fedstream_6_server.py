@@ -12,30 +12,27 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from copy import deepcopy
 
-from alg.fedstream.clients_new import Client_Group
+from alg.fedstream.clients_old import Client_Group
 from model.mnist import MNIST_Linear, MNIST_CNN
 from model.cifar import Cifar10_CNN
-from torch.utils.data import DataLoader
 
 from sko.PSO import PSO
 
 args = {
-    'num_client': 3,
-    'num_sample': 3,
+    'num_client': 5,
+    'num_sample': 5,
     'dataset': 'mnist',
-    'is_iid': 2,
+    'is_iid': 0,
     'a': 1.0,
     'model': 'cnn',
     'learning_rate': 0.01,
-    'num_round': 5,
+    'num_round': 30,
     'num_epoch': 1,
     'batch_size': 32,
     'eval_freq': 1,
-    'save_path': '../../logs/fedstream/3_server.png',
-    'save_path_2': '../../logs/fedstream/3_server_2.png',
-    'save_path_3': '../../logs/fedstream/3_server_3.png',
-    'pre_estimate_path_1': '../../logs/fedstream/pre_estimate_3_1.npy',
-    'pre_estimate_path_2': '../../logs/fedstream/pre_estimate_3_2.npy',
+    'save_path': '../../logs/fedstream/6_server.png',
+    'pre_estimate_path_1': '../../logs/fedstream/pre_estimate_6_1.npy',
+    'pre_estimate_path_2': '../../logs/fedstream/pre_estimate_6_2.npy',
     
     'delta': 1,
     'psi': 1,
@@ -49,27 +46,27 @@ args = {
     'kappa_4': 1e-2,
     'gamma': 1e-4,
     
-    # # 一阶段
-    # self.reward_lb = 1
-    # self.reward_ub = 100
-    # self.theta_lb = 0
-    # self.theta_ub = 1
-    # self.pop = 1000
-    # self.pso_eps = 1e-5
-    # self.pso_max_iter = 500
-    
-    # 二阶段
-    'reward_lb': 30,
-    'reward_ub': 80,
-    'theta_lb': 0.1,
+    # 一阶段
+    'reward_lb': 1,
+    'reward_ub': 1000,
+    'theta_lb': 0,
     'theta_ub': 1,
-    'pop': 3000, 
+    'pop': 300, 
     'pso_eps': 1e-5,
     'pso_max_iter': 500,
     
+    # # 二阶段
+    # 'reward_lb': 70,
+    # 'reward_ub': 80,
+    # 'theta_lb': 0.3,
+    # 'theta_ub': 0.4,
+    # 'pop': 3000, 
+    # 'pso_eps': 1e-5,
+    # 'pso_max_iter': 500,
+    
     'fix_eps_1': 1e-2,
     'fix_eps_2': 5,
-    'fix_max_iter': 1000,
+    'fix_max_iter': 1000000,
 }
 
 seed = 10
@@ -98,8 +95,6 @@ class Server(object):
         self.batch_size = args['batch_size']
         self.eval_freq = args['eval_freq']
         self.save_path = args['save_path']
-        self.save_path_2 = args['save_path_2']
-        self.save_path_3 = args['save_path_3']
         self.pre_estimate_path_1 = args['pre_estimate_path_1']
         self.pre_estimate_path_2 = args['pre_estimate_path_2']
 
@@ -154,11 +149,9 @@ class Server(object):
                                          self.net_name,
                                          self.learning_rate,
                                          )
-        self.test_data_list = self.client_group.test_data_list
-        # for item in self.test_data_list[2]:
-        #     print(item[-1])
-        # exit(0)
-            
+        self.scales = self.client_group.scales
+        self.rate = [item / sum(self.scales) for item in self.scales]
+        self.test_dataloader = self.client_group.test_dataloader
  
         # 定义net
         self.net = None
@@ -343,6 +336,34 @@ class Server(object):
             
         print('failure2')
         return next_phi_list
+    
+    # # 给定R和theta，估计phi和delta ---------------------------------------------------
+    # def estimate_direct_phi(self, reward, theta):
+        
+    #     # 初始化phi_list
+    #     phi_list = self.phi_list_init
+        
+    #     # 计算新的phi_list[T]
+    #     for idc in range(self.fix_max_iter):
+    #         increment_matrix, data_matrix, stale_matrix = self.estimate_D(phi_list, reward, theta)
+    #         # print('******************************************************')
+    #         # print('{}, {}, {}, {}'.format(idc, phi_list, self.reward, self.theta))
+    #         # print('{}'.format(data_matrix))
+            
+    #         next_phi_list = np.sum(data_matrix * ((1 / self.delta_list).reshape(self.num_client, 1)), axis=0)
+    #         # 判断收敛
+    #         max_diff = np.max(np.abs(next_phi_list - phi_list))
+    #         # print('max_diff_phi:{}'.format(max_diff))
+            
+    #         if max_diff > self.fix_eps_2:
+    #             phi_list = next_phi_list 
+    #         else:
+    #             print('triumph2')
+    #             return next_phi_list, increment_matrix, data_matrix, stale_matrix
+            
+    #     print('failure2')
+    #     return next_phi_list
+    
 
     def direct_func(self, reward, data_matrix, stale_matrix):        
         # 计算单列和
@@ -379,6 +400,7 @@ class Server(object):
 
 
     def online_train(self):
+        
         # 正式训练前定好一切
         if os.path.exists(self.pre_estimate_path_1) == False:
             phi_list = self.estimate_phi() # [T]
@@ -392,6 +414,11 @@ class Server(object):
         theta = result[0][1]
         res = result[1][1]
         
+        fig = plt.figure()
+        ax1 = fig.add_subplot(1,1,1)
+        ax2 = ax1.twinx()
+        flag = 0
+        
         delta_list = []
         res_list = []
         los_list = []
@@ -402,16 +429,12 @@ class Server(object):
         res4_list = []
         delta_reward_list = []
         delta_theta_list = []
-        flag = 0
         # enum = [[-40, 0], [-20, 0], [0, 0], [20, 0], [40, 0]]
-        enum = [[0, 0.4], [0, 0.3], [0, 0], [0, -0.2], [0, -0.3]]
-        # enum = [[-30, -0.3], [-15, -0.15], [0, 0], [15, 0.15], [30, 0.3]]
-        for idx in range(len(enum)):
-            delta_com = enum[idx]
+        enum = [[0, -0.4], [0, -0.2], [0, 0], [0, 0.2], [0, 0.4]]
+        # enum = [[-30, -0.3], [-20, -0.2], [-10, -0.1], [0, 0], [10, 0.1], [20, 0.2], [30, 0.3]]
+        for delta_com in enum:
             new_reward = reward + delta_com[0]
             new_theta = theta + delta_com[1]
-            print(new_reward)
-            print(new_theta)
             delta_list.append('{}'.format(delta_com))
             delta_reward_list.append(delta_com[0])
             delta_theta_list.append(delta_com[1])
@@ -426,10 +449,6 @@ class Server(object):
             res2_list.append(res2)
             res3_list.append(res3)
             res4_list.append(res4)
-            print('increment')
-            print(np.mean(increment_matrix, axis=0))
-            print('data')
-            print(np.mean(data_matrix, axis=0))
 
             # 初始化数据
             self.init_data_net()
@@ -496,9 +515,7 @@ class Server(object):
                     total = 0
                     self.net.load_state_dict(self.global_parameter)
                     with torch.no_grad():
-                        tau = t % 3
-                        test_dataloader = DataLoader(self.test_data_list[tau], batch_size=100, shuffle=False)
-                        for batch in test_dataloader:
+                        for batch in self.test_dataloader:
                             data, label = batch
                             data = data.to(self.dev)
                             label = label.to(self.dev)
@@ -508,41 +525,31 @@ class Server(object):
                             total += label.shape[0]
                     acc = correct / total
                     accuracy_list.append(acc)
-                    
-                plt.subplot(1,2,1)
-                plt.plot(global_loss_list)
-                plt.subplot(1,2,2)
-                plt.plot(accuracy_list)
-                plt.savefig(self.save_path_3)
-                
+                    # ax1.plot(accuracy_list)
+                    # plt.savefig(self.save_path, dpi=200)
             los_list.append(global_loss_list[-1])
             acc_list.append(accuracy_list[-1])
             
-            with open('../../logs/fedstream/accuracy.txt', 'a') as file:
-                file.write('{}\n'.format(time.asctime()))
-                for accuracy in accuracy_list:
-                    file.write('{:^7.5f} '.format(accuracy))
-                file.write('\n')
-
-            # # # theta专用
-            # # width = 0.04
-            # # x = np.array(delta_theta_list)
-            # # labels = [r'$(R^*, \theta^* - 0.4)$', r'$(R^*, \theta^* - 0.2)$', r'$(R^*, \theta^*)$', r'$(R^*, \theta^* + 0.2)$', r'$(R^*, \theta^* + 0.4)$']
+            width = 0.08
+            # ax1.set_ylim(0.175, 0.225)
+            # ax2.set_ylim(0, 1) # loss不用
+            x = np.array(delta_theta_list)
+            ax1.bar(x - width/2, res_list, color='C0', width=width, label='res')
+            # ax2.plot(x, res1_list, color='C2', label='sample')
+            # ax2.plot(x, res2_list, color='C3', label='stale')
+            # ax2.plot(x, res3_list, color='C4', label='delta')
+            # ax2.plot(x, res4_list, color='C5', label='reward')
+            ax2.bar(x + width/2, los_list, color='C1', width=width, label='acc')
+            if flag == 0:
+                ax2.legend()
+                flag = 1
+            plt.savefig(self.save_path, dpi=200)
             
-            # # reward专用
-            # width = 4
-            # x = np.array(delta_reward_list)
-            # labels = [r'$R^* - 40, \theta^*$', r'$(R^* - 20, \theta^*)$', r'$(R^*, \theta^*)$', r'$(R^* + 20, \theta^*)$', r'$(R^* + 40, \theta^*)$']
-            # plt.bar(x - 1.5 * width, res_list, color='C0', width=width, label='cost')
-            # plt.bar(x - 0.5 * width, res1_list, color='C1', width=width, label='sample error')
-            # plt.bar(x + 0.5 * width, res2_list, color='C2', width=width, label='staleness')
-            # plt.bar(x + 1.5 * width, res4_list, color='C4', width=width, label='reward')
-            # plt.xticks(x, labels[:len(x)])
-            # # plt.bar(x + width/2, los_list, color='C1', width=width, label='acc')
-            # if flag == 0:
-            #     plt.legend()
-            #     flag = 1
-            # plt.savefig(self.save_path_2, dpi=200)
+        with open('../../logs/fedstream/accuracy.txt', 'a') as file:
+            file.write('{}\n'.format(time.asctime()))
+            for accuracy in accuracy_list:
+                file.write('{:^7.5f} '.format(accuracy))
+            file.write('\n')
                 
         
 server = Server(args)

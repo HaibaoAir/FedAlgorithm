@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from copy import deepcopy
 
-from clients import Client_Group
+from alg.fedstream.clients_old import Client_Group
 from model.mnist import MNIST_Linear, MNIST_CNN
 from model.cifar import Cifar10_CNN
 
@@ -28,6 +28,7 @@ args = {
     'num_epoch': 1,
     'batch_size': 32,
     'eval_freq': 1,
+    'save_path_dir': '../../logs/fedavg/2',
     
     'delta': 1,
     'psi': 1,
@@ -146,7 +147,7 @@ class Server(object):
         self.fix_eps_2 = args['fix_eps_2']
         self.fix_max_iter = args['fix_max_iter']
         
-        self.save_path_dir = '../../logs/fedavg/2'
+        self.save_path_dir = args['save_path_dir']
               
     
     def estimate_D(self, phi_list, theta):
