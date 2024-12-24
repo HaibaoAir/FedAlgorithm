@@ -48,9 +48,16 @@ class Client(object):
         self.dataset_name = dataset_name
         self.datasource_list = dataset # 数据源，是列表
         self.new_datasource_list = []
-        self.new_datasource_list.append(ConcatDataset([self.datasource_list[0], self.datasource_list[5], self.datasource_list[9]]))
-        self.new_datasource_list.append(ConcatDataset([self.datasource_list[1], self.datasource_list[6], self.datasource_list[8]]))
-        self.new_datasource_list.append(ConcatDataset([self.datasource_list[2], self.datasource_list[3], self.datasource_list[4], self.datasource_list[7]]))
+        self.new_datasource_list.append(ConcatDataset([self.datasource_list[0], self.datasource_list[1]]))
+        self.new_datasource_list.append(ConcatDataset([self.datasource_list[2], self.datasource_list[3], self.datasource_list[4]]))
+        self.new_datasource_list.append(ConcatDataset([self.datasource_list[5], self.datasource_list[6], self.datasource_list[7], self.datasource_list[8], self.datasource_list[9]]))
+        # self.new_datasource_list.append(ConcatDataset([self.datasource_list[0], self.datasource_list[1], self.datasource_list[2], self.datasource_list[3], self.datasource_list[4]]))
+        # self.new_datasource_list.append(self.datasource_list[5])
+        # self.new_datasource_list.append(self.datasource_list[6])
+        # self.new_datasource_list.append(self.datasource_list[7])
+        # self.new_datasource_list.append(self.datasource_list[8])
+        # self.new_datasource_list.append(self.datasource_list[9])
+        self.cycle = 3
         self.datasource_list = self.new_datasource_list
         self.dev = dev
         self.data = None
@@ -90,7 +97,13 @@ class Client(object):
         self.data = Subset(self.data, idcs)
     
     def collect_data(self, t, k, increment):
-        tau = t % 3
+        tau = None
+        if t < 10:
+            tau = 0
+        elif t < 15:
+            tau = 1
+        else:
+            tau = 2
         idcs = [idc for idc in range(len(self.datasource_list[tau]))]
         used = random.sample(idcs, increment)
         # print('left:{}, increment:{}'.format(len(idcs),increment))
@@ -115,10 +128,12 @@ class Client(object):
 
         # 收集数据
         increment = int(datasize - theta * len(self.data)) if self.data != None else int(datasize)
-        self.discard_data(theta) if self.data != None else None
+        if t != 0:
+            a = theta * len(self.data)
+            self.discard_data(theta)
+            print('real conserve datasize:{}, should conserve datasize:{}'.format(len(self.data), a))
         self.collect_data(t, k, increment)
-        # print(len(self.data))
-        # print(datasize)
+        print('real datasize:{}, should datasize:{}'.format(len(self.data), datasize))
         
         # 训练
         # 计算Omega_Part2
@@ -250,8 +265,8 @@ class Client_Group(object):
             self.test_data_list.append(tmp_dataset)
         
         self.new_test_data_list = []
-        self.new_test_data_list.append(ConcatDataset([self.test_data_list[0], self.test_data_list[5], self.test_data_list[9]]))
-        self.new_test_data_list.append(ConcatDataset([self.test_data_list[1], self.test_data_list[6], self.test_data_list[8]]))
-        self.new_test_data_list.append(ConcatDataset([self.test_data_list[2], self.test_data_list[3], self.test_data_list[4], self.test_data_list[7]]))
-        
+        self.new_test_data_list.append(ConcatDataset([self.test_data_list[0], self.test_data_list[1]]))
+        self.new_test_data_list.append(ConcatDataset([self.test_data_list[2], self.test_data_list[3], self.test_data_list[4]]))
+        self.new_test_data_list.append(ConcatDataset([self.test_data_list[5], self.test_data_list[6], self.test_data_list[7], self.test_data_list[8], self.test_data_list[9]]))
+
         self.test_data_list = self.new_test_data_list

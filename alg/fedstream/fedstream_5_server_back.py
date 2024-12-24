@@ -27,16 +27,15 @@ args = {
     'a': 1.0,
     'model': 'cnn',
     'learning_rate': 0.01,
-    'num_round': 10,
+    'num_round': 20,
     'num_epoch': 1,
     'batch_size': 32,
     'eval_freq': 1,
-    'save_path': '../../logs/fedstream/4_server.png',
-    'save_path_1': '../../logs/fedstream/4_server_1.png',
-    'save_path_2': '../../logs/fedstream/4_server_2.png',
-    'save_path_3': '../../logs/fedstream/4_server_3.png',
-    'pre_estimate_path_1': '../../logs/fedstream/pre_estimate_4_1.npy',
-    'pre_estimate_path_2': '../../logs/fedstream/pre_estimate_4_2.npy',
+    'save_path': '../../logs/fedstream/5_server.png',
+    'save_path_2': '../../logs/fedstream/5_server_2.png',
+    'save_path_3': '../../logs/fedstream/5_server_3.png',
+    'pre_estimate_path_1': '../../logs/fedstream/pre_estimate_5_1.npy',
+    'pre_estimate_path_2': '../../logs/fedstream/pre_estimate_5_2.npy',
     
     'delta': 1,
     'psi': 1,
@@ -60,8 +59,8 @@ args = {
     # self.pso_max_iter = 500
     
     # 二阶段
-    'reward_lb': 1,
-    'reward_ub': 100,
+    'reward_lb': 30,
+    'reward_ub': 80,
     'theta_lb': 0.1,
     'theta_ub': 1,
     'pop': 3000, 
@@ -70,7 +69,7 @@ args = {
     
     'fix_eps_1': 1e-2,
     'fix_eps_2': 5,
-    'fix_max_iter': 10000,
+    'fix_max_iter': 1000,
 }
 
 seed = 10
@@ -99,7 +98,6 @@ class Server(object):
         self.batch_size = args['batch_size']
         self.eval_freq = args['eval_freq']
         self.save_path = args['save_path']
-        self.save_path_1 = args['save_path_1']
         self.save_path_2 = args['save_path_2']
         self.save_path_3 = args['save_path_3']
         self.pre_estimate_path_1 = args['pre_estimate_path_1']
@@ -345,37 +343,8 @@ class Server(object):
             
         print('failure2')
         return next_phi_list
-    
-    
-    # 给定R和theta，估计phi和delta ---------------------------------------------------
-    def estimate_direct_phi(self, reward, theta):
-        
-        # 初始化phi_list
-        phi_list = self.phi_list_init
-        
-        # 计算新的phi_list[T]
-        for idc in range(self.fix_max_iter):
-            increment_matrix, data_matrix, stale_matrix = self.estimate_D(phi_list, reward, theta)
-            # print('******************************************************')
-            # print('{}, {}, {}, {}'.format(idc, phi_list, self.reward, self.theta))
-            # print('{}'.format(data_matrix))
-            
-            next_phi_list = np.sum(data_matrix * ((1 / self.delta_list).reshape(self.num_client, 1)), axis=0)
-            # 判断收敛
-            max_diff = np.max(np.abs(next_phi_list - phi_list))
-            # print('max_diff_phi:{}'.format(max_diff))
-            
-            if max_diff > self.fix_eps_2:
-                phi_list = next_phi_list
-            else:
-                print('triumph2')
-                return next_phi_list, increment_matrix, data_matrix, stale_matrix
-            
-        print('failure2')
-        return next_phi_list
 
-
-    def estimate_direct_func(self, reward, data_matrix, stale_matrix):        
+    def direct_func(self, reward, data_matrix, stale_matrix):        
         # 计算单列和
         data_list = [] # [T]
         for t in range(self.num_round):
@@ -434,7 +403,6 @@ class Server(object):
         delta_reward_list = []
         delta_theta_list = []
         flag = 0
-        styles = ['^-', 'D-', 'o-', 'x-', 'v-']
         # enum = [[-40, 0], [-20, 0], [0, 0], [20, 0], [40, 0]]
         enum = [[0, -0.3], [0, -0.15], [0, 0], [0, 0.25], [0, 0.5]]
         # enum = [[-30, -0.3], [-15, -0.15], [0, 0], [15, 0.15], [30, 0.3]]
@@ -448,59 +416,20 @@ class Server(object):
             delta_reward_list.append(delta_com[0])
             delta_theta_list.append(delta_com[1])
 
-            var = self.estimate_direct_phi(new_reward, new_theta)
-            phi_list = var[0]
-            increment_matrix = var[1]
-            data_matrix = var[2]
-            stale_matrix = var[3]
-            res, res1, res2, res3, res4 = self.estimate_direct_func(new_reward, data_matrix, stale_matrix)
+            var = self.estimate_D(phi_list, new_reward, new_theta)
+            increment_matrix = var[0]
+            data_matrix = var[1]
+            stale_matrix = var[2]
+            res, res1, res2, res3, res4 = self.direct_func(new_reward, data_matrix, stale_matrix)
             res_list.append(res)
             res1_list.append(res1)
             res2_list.append(res2)
             res3_list.append(res3)
             res4_list.append(res4)
-            # print('increment')
-            # print(np.mean(increment_matrix, axis=0))
-            # print('data')
-            # print(np.mean(data_matrix, axis=0))
-            
-            # # theta专用
-            # width = 0.02
-            # x = np.array(delta_theta_list)
-            # labels = [r'$(R^*, \theta^* - 0.3)$', r'$(R^*, \theta^* - 0.15)$', r'$(R^*, \theta^*)$', r'$(R^*, \theta^* + 0.25)$', r'$(R^*, \theta^* + 0.5)$']
-            
-            # # # reward专用
-            # # width = 4
-            # # x = np.array(delta_reward_list)
-            # # labels = [r'$R^* - 40, \theta^*$', r'$(R^* - 20, \theta^*)$', r'$(R^*, \theta^*)$', r'$(R^* + 20, \theta^*)$', r'$(R^* + 40, \theta^*)$']
-            
-            # plt.bar(x - 1.5 * width, res_list, color='C0', width=width, label='cost')
-            # plt.bar(x - 0.5 * width, res1_list, color='C1', width=width, label='sample error')
-            # plt.bar(x + 0.5 * width, res2_list, color='C2', width=width, label='staleness')
-            # plt.bar(x + 1.5 * width, res4_list, color='C4', width=width, label='reward')
-            # plt.xticks(x, labels[:len(x)])
-            # # plt.bar(x + width/2, los_list, color='C1', width=width, label='acc')
-            # # ax1.legend()
-            # if flag == 0:
-            #     plt.legend()
-            #     flag = 1
-            # plt.savefig(self.save_path_2, dpi=200)
-            
-            plt.subplot(2,2,1)
-            plt.plot(np.mean(increment_matrix, axis=0), styles[idx], label=r'$\theta^*+{}$'.format(delta_com[1]))
-            plt.ylabel(r'$\Delta$')
-            plt.subplot(2,2,2)
-            plt.plot(np.mean(data_matrix, axis=0), styles[idx], label=r'$\theta^*+{}$'.format(delta_com[1]))
-            plt.ylabel(r'$D$')
-            plt.subplot(2,2,3)
-            plt.plot(np.mean(stale_matrix, axis=0), styles[idx], label=r'$\theta^*+{}$'.format(delta_com[1]))
-            plt.ylabel(r'$S$')
-            plt.legend()
-            if flag == 0:
-                plt.legend()
-                flag = 1
-            plt.tight_layout()
-            plt.savefig(self.save_path_1, dpi=200)
+            print('increment')
+            print(np.mean(increment_matrix, axis=0))
+            print('data')
+            print(np.mean(data_matrix, axis=0))
 
             # # 初始化数据
             # self.init_data_net()
@@ -594,6 +523,27 @@ class Server(object):
             #     for accuracy in accuracy_list:
             #         file.write('{:^7.5f} '.format(accuracy))
             #     file.write('\n')
+
+            # theta专用
+            width = 0.04
+            x = np.array(delta_theta_list)
+            labels = [r'$(R^*, \theta^* - 0.3)$', r'$(R^*, \theta^* - 0.15)$', r'$(R^*, \theta^*)$', r'$(R^*, \theta^* + 0.25)$', r'$(R^*, \theta^* + 0.5)$']
+            
+            # # reward专用
+            # width = 4
+            # x = np.array(delta_reward_list)
+            # labels = [r'$R^* - 40, \theta^*$', r'$(R^* - 20, \theta^*)$', r'$(R^*, \theta^*)$', r'$(R^* + 20, \theta^*)$', r'$(R^* + 40, \theta^*)$']
+            
+            plt.bar(x - 1.5 * width, res_list, color='C0', width=width, label='cost')
+            plt.bar(x - 0.5 * width, res1_list, color='C1', width=width, label='sample error')
+            plt.bar(x + 0.5 * width, res2_list, color='C2', width=width, label='staleness')
+            plt.bar(x + 1.5 * width, res4_list, color='C4', width=width, label='reward')
+            plt.xticks(x, labels[:len(x)])
+            # plt.bar(x + width/2, los_list, color='C1', width=width, label='acc')
+            if flag == 0:
+                plt.legend()
+                flag = 1
+            plt.savefig(self.save_path_2, dpi=200)
                 
         
 server = Server(args)

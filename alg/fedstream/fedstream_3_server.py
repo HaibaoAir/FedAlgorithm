@@ -32,6 +32,7 @@ args = {
     'batch_size': 32,
     'eval_freq': 1,
     'save_path': '../../logs/fedstream/3_server.png',
+    'save_path_1': '../../logs/fedstream/3_server_1.png',
     'save_path_2': '../../logs/fedstream/3_server_2.png',
     'save_path_3': '../../logs/fedstream/3_server_3.png',
     'pre_estimate_path_1': '../../logs/fedstream/pre_estimate_3_1.npy',
@@ -98,6 +99,7 @@ class Server(object):
         self.batch_size = args['batch_size']
         self.eval_freq = args['eval_freq']
         self.save_path = args['save_path']
+        self.save_path_1 = args['save_path_1']
         self.save_path_2 = args['save_path_2']
         self.save_path_3 = args['save_path_3']
         self.pre_estimate_path_1 = args['pre_estimate_path_1']
@@ -343,8 +345,37 @@ class Server(object):
             
         print('failure2')
         return next_phi_list
+    
+    
+    # 给定R和theta，估计phi和delta ---------------------------------------------------
+    def estimate_direct_phi(self, reward, theta):
+        
+        # 初始化phi_list
+        phi_list = self.phi_list_init
+        
+        # 计算新的phi_list[T]
+        for idc in range(self.fix_max_iter):
+            increment_matrix, data_matrix, stale_matrix = self.estimate_D(phi_list, reward, theta)
+            # print('******************************************************')
+            # print('{}, {}, {}, {}'.format(idc, phi_list, self.reward, self.theta))
+            # print('{}'.format(data_matrix))
+            
+            next_phi_list = np.sum(data_matrix * ((1 / self.delta_list).reshape(self.num_client, 1)), axis=0)
+            # 判断收敛
+            max_diff = np.max(np.abs(next_phi_list - phi_list))
+            # print('max_diff_phi:{}'.format(max_diff))
+            
+            if max_diff > self.fix_eps_2:
+                phi_list = next_phi_list
+            else:
+                print('triumph2')
+                return next_phi_list, increment_matrix, data_matrix, stale_matrix
+            
+        print('failure2')
+        return next_phi_list
 
-    def direct_func(self, reward, data_matrix, stale_matrix):        
+
+    def estimate_direct_func(self, reward, data_matrix, stale_matrix):        
         # 计算单列和
         data_list = [] # [T]
         for t in range(self.num_round):
@@ -403,8 +434,9 @@ class Server(object):
         delta_reward_list = []
         delta_theta_list = []
         flag = 0
+        styles = ['^-', 'D-', 'o-', 'x-', 'v-']
         # enum = [[-40, 0], [-20, 0], [0, 0], [20, 0], [40, 0]]
-        enum = [[0, 0.4], [0, 0.3], [0, 0], [0, -0.2], [0, -0.3]]
+        enum = [[0, -0.3], [0, -0.15], [0, 0], [0, 0.15], [0, 0.3]]
         # enum = [[-30, -0.3], [-15, -0.15], [0, 0], [15, 0.15], [30, 0.3]]
         for idx in range(len(enum)):
             delta_com = enum[idx]
@@ -416,133 +448,152 @@ class Server(object):
             delta_reward_list.append(delta_com[0])
             delta_theta_list.append(delta_com[1])
 
-            var = self.estimate_D(phi_list, new_reward, new_theta)
-            increment_matrix = var[0]
-            data_matrix = var[1]
-            stale_matrix = var[2]
-            res, res1, res2, res3, res4 = self.direct_func(new_reward, data_matrix, stale_matrix)
+            var = self.estimate_direct_phi(new_reward, new_theta)
+            phi_list = var[0]
+            increment_matrix = var[1]
+            data_matrix = var[2]
+            stale_matrix = var[3]
+            res, res1, res2, res3, res4 = self.estimate_direct_func(new_reward, data_matrix, stale_matrix)
             res_list.append(res)
             res1_list.append(res1)
             res2_list.append(res2)
             res3_list.append(res3)
             res4_list.append(res4)
-            print('increment')
-            print(np.mean(increment_matrix, axis=0))
-            print('data')
-            print(np.mean(data_matrix, axis=0))
-
-            # 初始化数据
-            self.init_data_net()
-            # numpy 切片格式 [:, :]
-            data_sum_list = [sum(data_matrix[:, t]) for t in range(self.num_round)]
-            # 临时记录，求平均后是self.delta_list
-            delta_matrix = [[] for k in range(self.num_client)]
+            # print('increment')
+            # print(np.mean(increment_matrix, axis=0))
+            # print('data')
+            # print(np.mean(data_matrix, axis=0))
             
-            self.global_parameter = {}
-            for key, var in self.net.state_dict().items():
-                self.global_parameter[key] = var.clone()
-            
-            global_loss_list = []
-            accuracy_list = []
-            
-            # 训练
-            for t in tqdm(range(self.num_round)):
-                
-                # 开始训练
-                next_global_parameter = {}
-                local_grad_list = []
-                local_loss_list = []
-                global_grad = 0
-                global_loss = 0
-                for k in range(self.num_client):
-                    result = self.client_group.clients[k].local_update(t,
-                                                                    k,
-                                                                    self.num_epoch,
-                                                                    self.batch_size,
-                                                                    self.global_parameter,
-                                                                    theta,
-                                                                    data_matrix[k][t])
-                    
-                    rate = data_matrix[k][t] / data_sum_list[t]
-                    local_parameter = result[0]
-                    for item in local_parameter.items():
-                        if item[0] not in next_global_parameter.keys():
-                            next_global_parameter[item[0]] = rate * item[1]
-                        else:
-                            next_global_parameter[item[0]] += rate * item[1]
-                            
-                    local_grad = result[1]
-                    local_grad_list.append(local_grad)
-                    global_grad += rate * local_grad
-                    
-                    local_loss = result[2]
-                    local_loss_list.append(local_loss)
-                    global_loss += rate * local_loss
-                    
-                # 求global_parameters
-                self.global_parameter = next_global_parameter
-                
-                # 求delta
-                for k in range(self.num_client):
-                    delta = rate * torch.sqrt(torch.sum(torch.square(local_grad_list[k] - global_grad))) # 大错，用delta代替Upsilon
-                    delta_matrix[k].append(delta)
-                    
-                # 加入global_loss_list
-                global_loss_list.append(global_loss)
-                
-                # 验证
-                if t % self.eval_freq == 0:
-                    correct = 0
-                    total = 0
-                    self.net.load_state_dict(self.global_parameter)
-                    with torch.no_grad():
-                        tau = t % 3
-                        test_dataloader = DataLoader(self.test_data_list[tau], batch_size=100, shuffle=False)
-                        for batch in test_dataloader:
-                            data, label = batch
-                            data = data.to(self.dev)
-                            label = label.to(self.dev)
-                            pred = self.net(data) # [batch_size， 10]，输出的是概率
-                            pred = torch.argmax(pred, dim=1)
-                            correct += (pred == label).sum().item()
-                            total += label.shape[0]
-                    acc = correct / total
-                    accuracy_list.append(acc)
-                    
-                plt.subplot(1,2,1)
-                plt.plot(global_loss_list)
-                plt.subplot(1,2,2)
-                plt.plot(accuracy_list)
-                plt.savefig(self.save_path_3)
-                
-            los_list.append(global_loss_list[-1])
-            acc_list.append(accuracy_list[-1])
-            
-            with open('../../logs/fedstream/accuracy.txt', 'a') as file:
-                file.write('{}\n'.format(time.asctime()))
-                for accuracy in accuracy_list:
-                    file.write('{:^7.5f} '.format(accuracy))
-                file.write('\n')
-
-            # # # theta专用
-            # # width = 0.04
-            # # x = np.array(delta_theta_list)
-            # # labels = [r'$(R^*, \theta^* - 0.4)$', r'$(R^*, \theta^* - 0.2)$', r'$(R^*, \theta^*)$', r'$(R^*, \theta^* + 0.2)$', r'$(R^*, \theta^* + 0.4)$']
+            # theta专用
+            width = 0.03
+            x = np.array(delta_theta_list)
+            labels = [r'$(R^*, \theta^* - 0.3)$', r'$(R^*, \theta^* - 0.15)$', r'$(R^*, \theta^*)$', r'$(R^*, \theta^* + 0.15)$', r'$(R^*, \theta^* + 0.3)$']
             
             # # reward专用
             # width = 4
             # x = np.array(delta_reward_list)
             # labels = [r'$R^* - 40, \theta^*$', r'$(R^* - 20, \theta^*)$', r'$(R^*, \theta^*)$', r'$(R^* + 20, \theta^*)$', r'$(R^* + 40, \theta^*)$']
+            
             # plt.bar(x - 1.5 * width, res_list, color='C0', width=width, label='cost')
             # plt.bar(x - 0.5 * width, res1_list, color='C1', width=width, label='sample error')
             # plt.bar(x + 0.5 * width, res2_list, color='C2', width=width, label='staleness')
             # plt.bar(x + 1.5 * width, res4_list, color='C4', width=width, label='reward')
-            # plt.xticks(x, labels[:len(x)])
+            # plt.set_xticks(x, labels[:len(x)])
             # # plt.bar(x + width/2, los_list, color='C1', width=width, label='acc')
+            # # ax1.legend()
             # if flag == 0:
             #     plt.legend()
             #     flag = 1
             # plt.savefig(self.save_path_2, dpi=200)
+            
+            plt.subplot(2,2,1)
+            plt.plot(np.mean(increment_matrix, axis=0), styles[idx], label=r'$\theta^*+{}$'.format(delta_com[1]))
+            plt.ylabel(r'$\Delta$')
+            plt.subplot(2,2,2)
+            plt.plot(np.mean(data_matrix, axis=0), styles[idx], label=r'$\theta^*+{}$'.format(delta_com[1]))
+            plt.ylabel(r'$D$')
+            plt.subplot(2,2,3)
+            plt.plot(np.mean(stale_matrix, axis=0), styles[idx], label=r'$\theta^*+{}$'.format(delta_com[1]))
+            plt.ylabel(r'$S$')
+            plt.legend()
+            if flag == 0:
+                plt.legend()
+                flag = 1
+            plt.tight_layout()
+            plt.savefig(self.save_path_1, dpi=200)
+
+            # # 初始化数据
+            # self.init_data_net()
+            # # numpy 切片格式 [:, :]
+            # data_sum_list = [sum(data_matrix[:, t]) for t in range(self.num_round)]
+            # # 临时记录，求平均后是self.delta_list
+            # delta_matrix = [[] for k in range(self.num_client)]
+            
+            # self.global_parameter = {}
+            # for key, var in self.net.state_dict().items():
+            #     self.global_parameter[key] = var.clone()
+            
+            # global_loss_list = []
+            # accuracy_list = []
+            
+            # # 训练
+            # for t in tqdm(range(self.num_round)):
+                
+            #     # 开始训练
+            #     next_global_parameter = {}
+            #     local_grad_list = []
+            #     local_loss_list = []
+            #     global_grad = 0
+            #     global_loss = 0
+            #     for k in range(self.num_client):
+            #         result = self.client_group.clients[k].local_update(t,
+            #                                                         k,
+            #                                                         self.num_epoch,
+            #                                                         self.batch_size,
+            #                                                         self.global_parameter,
+            #                                                         theta,
+            #                                                         data_matrix[k][t])
+                    
+            #         rate = data_matrix[k][t] / data_sum_list[t]
+            #         local_parameter = result[0]
+            #         for item in local_parameter.items():
+            #             if item[0] not in next_global_parameter.keys():
+            #                 next_global_parameter[item[0]] = rate * item[1]
+            #             else:
+            #                 next_global_parameter[item[0]] += rate * item[1]
+                            
+            #         local_grad = result[1]
+            #         local_grad_list.append(local_grad)
+            #         global_grad += rate * local_grad
+                    
+            #         local_loss = result[2]
+            #         local_loss_list.append(local_loss)
+            #         global_loss += rate * local_loss
+                    
+            #     # 求global_parameters
+            #     self.global_parameter = next_global_parameter
+                
+            #     # 求delta
+            #     for k in range(self.num_client):
+            #         delta = rate * torch.sqrt(torch.sum(torch.square(local_grad_list[k] - global_grad))) # 大错，用delta代替Upsilon
+            #         delta_matrix[k].append(delta)
+                    
+            #     # 加入global_loss_list
+            #     global_loss_list.append(global_loss)
+                
+            #     # 验证
+            #     if t % self.eval_freq == 0:
+            #         correct = 0
+            #         total = 0
+            #         self.net.load_state_dict(self.global_parameter)
+            #         with torch.no_grad():
+            #             tau = t % 3
+            #             test_dataloader = DataLoader(self.test_data_list[tau], batch_size=100, shuffle=False)
+            #             for batch in test_dataloader:
+            #                 data, label = batch
+            #                 data = data.to(self.dev)
+            #                 label = label.to(self.dev)
+            #                 pred = self.net(data) # [batch_size， 10]，输出的是概率
+            #                 pred = torch.argmax(pred, dim=1)
+            #                 correct += (pred == label).sum().item()
+            #                 total += label.shape[0]
+            #         acc = correct / total
+            #         accuracy_list.append(acc)
+                    
+            #     plt.subplot(1,2,1)
+            #     plt.plot(global_loss_list)
+            #     plt.subplot(1,2,2)
+            #     plt.plot(accuracy_list)
+            #     plt.savefig(self.save_path_3)
+                
+            # los_list.append(global_loss_list[-1])
+            # acc_list.append(accuracy_list[-1])
+            
+            # with open('../../logs/fedstream/accuracy.txt', 'a') as file:
+            #     file.write('{}\n'.format(time.asctime()))
+            #     for accuracy in accuracy_list:
+            #         file.write('{:^7.5f} '.format(accuracy))
+            #     file.write('\n')
                 
         
 server = Server(args)
