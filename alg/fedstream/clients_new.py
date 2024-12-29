@@ -20,6 +20,7 @@ np.random.seed(seed)
 torch.manual_seed(seed)
 torch.cuda.manual_seed(seed)
 
+
 class Local_Dataset(Dataset):
     def __init__(self,
                  local_data,
@@ -36,6 +37,23 @@ class Local_Dataset(Dataset):
     
     def __len__(self):
         return self.local_label.shape[0]
+    
+    
+class Shuffle_Dataset(Dataset):
+    def __init__(self,
+                 local_data,
+                 local_label,
+                 ):
+        self.local_data = local_data
+        self.local_label = local_label
+        
+    def __getitem__(self, index):
+        data = self.local_data[index]
+        label = self.local_label[index]
+        return data, label
+    
+    def __len__(self):
+        return len(self.local_label)
 
 
 class Client(object):
@@ -48,23 +66,16 @@ class Client(object):
         self.dataset_name = dataset_name
         self.datasource_list = dataset # 数据源，是列表
         self.new_datasource_list = []
-        self.new_datasource_list.append(ConcatDataset([self.datasource_list[0], self.datasource_list[1]]))
-        self.new_datasource_list.append(ConcatDataset([self.datasource_list[2], self.datasource_list[3], self.datasource_list[4]]))
-        self.new_datasource_list.append(ConcatDataset([self.datasource_list[5], self.datasource_list[6], self.datasource_list[7], self.datasource_list[8], self.datasource_list[9]]))
-        # self.new_datasource_list.append(ConcatDataset([self.datasource_list[0], self.datasource_list[1], self.datasource_list[2], self.datasource_list[3], self.datasource_list[4]]))
-        # self.new_datasource_list.append(self.datasource_list[5])
-        # self.new_datasource_list.append(self.datasource_list[6])
-        # self.new_datasource_list.append(self.datasource_list[7])
-        # self.new_datasource_list.append(self.datasource_list[8])
-        # self.new_datasource_list.append(self.datasource_list[9])
-        self.cycle = 3
+        self.new_datasource_list.append(ConcatDataset([self.datasource_list[0], self.datasource_list[3], self.datasource_list[6]]))
+        self.new_datasource_list.append(ConcatDataset([self.datasource_list[1], self.datasource_list[4], self.datasource_list[7]]))
+        self.new_datasource_list.append(ConcatDataset([self.datasource_list[2], self.datasource_list[5], self.datasource_list[8], self.datasource_list[9]]))
+        self.cycle = 2
         self.datasource_list = self.new_datasource_list
         self.dev = dev
         self.data = None
         self.global_parameters = None # 下发的全局模型
         self.local_parameters = None # 上传的本地模型
 
-        # 定义net
         self.net = None
         if self.dataset_name == 'mnist':
             if net_name == 'linear':
@@ -82,11 +93,33 @@ class Client(object):
             raise NotImplementedError('{}'.format(net_name))
         self.net.to(self.dev)
         
-        # 定义loss function
         self.criterion = F.cross_entropy # 交叉熵：softmax + NLLLoss 参考知乎
-        
-        # 定义optimizer
         self.optim = torch.optim.SGD(self.net.parameters(), learning_rate)
+        
+        self.x_list = []
+        self.y_list = []
+        
+    def init_data(self, t, k, datasize):
+        independent_size = int(datasize / self.cycle)
+        for tau in range(self.cycle):
+            idcs = [idc for idc in range(len(self.datasource_list[tau]))]
+            used = random.sample(idcs, independent_size)
+            # print('left:{}, increment:{}'.format(len(idcs),increment))
+            for item in used:
+                idcs.remove(item)
+            newdata = Subset(self.datasource_list[tau], used)
+            self.data = ConcatDataset([self.data, newdata]) if self.data != None else newdata
+            self.datasource_list[tau] = Subset(self.datasource_list[tau], idcs)
+        
+        data_list = []
+        label_list = []
+        for item in self.data:
+            data = item[0]
+            label = item[1]
+            data_list.append(data)
+            label_list.append(label)
+        random.shuffle(label_list)
+        self.data = Shuffle_Dataset(data_list, label_list)
         
     def discard_data(self, theta):
         size = int(len(self.data) * (1 - theta))
@@ -98,43 +131,69 @@ class Client(object):
     
     def collect_data(self, t, k, increment):
         tau = None
+        # if t < 7:
+        #     tau = 0
+        # elif t < 14:
+        #     tau = 1
+        # else:
+        #     tau = 2
         if t < 10:
             tau = 0
-        elif t < 15:
-            tau = 1
         else:
-            tau = 2
+            tau = 1
         idcs = [idc for idc in range(len(self.datasource_list[tau]))]
         used = random.sample(idcs, increment)
-        # print('left:{}, increment:{}'.format(len(idcs),increment))
         for item in used:
             idcs.remove(item)
         newdata = Subset(self.datasource_list[tau], used)
-        self.data = ConcatDataset([self.data, newdata]) if self.data != None else newdata
+        self.data = ConcatDataset([self.data, newdata])
         self.datasource_list[tau] = Subset(self.datasource_list[tau], idcs)
-        # for item in self.data:
-        #     print('client {}, round {}, target {}'.format(k, t, item[1]))
         
     def local_update(self,
                      t,
                      k,
-                     num_epoch, 
-                     batch_size, 
+                     num_epoch,
+                     batch_size,
                      global_parameters,
                      theta,
+                     increment_next,
                      datasize):
 
         self.global_parameters = global_parameters
 
         # 收集数据
-        increment = int(datasize - theta * len(self.data)) if self.data != None else int(datasize)
-        if t != 0:
-            a = theta * len(self.data)
+        if t == 0:
+            datasize = int(datasize)
+            self.init_data(t, k, datasize)
+            # print('init_data_1:{}, init_data_2:{}, increment_next:{}'.format(datasize, len(self.data), increment_next))
+        else:
+            # print('origin', len(self.data))
             self.discard_data(theta)
-            print('real conserve datasize:{}, should conserve datasize:{}'.format(len(self.data), a))
-        self.collect_data(t, k, increment)
-        print('real datasize:{}, should datasize:{}'.format(len(self.data), datasize))
+            # print('decay', len(self.data))
+            # increment = int(datasize - theta * len(self.data)) 串联了呀
+            increment = int(datasize - len(self.data))
+            self.collect_data(t, k, increment)
+            # print('accumu', len(self.data)) 
+            # print('res_data_1:{}, res_data_2:{}, theta:{}, increment:{}, increment_next:{}'.format(datasize, len(self.data), theta, increment, increment_next))
         
+        # if k == 0:
+        #     dic = {}
+        #     for item in self.data:
+        #         key = int(item[1])
+        #         if key not in dic.keys():
+        #             dic[key] = 1
+        #         else:
+        #             dic[int(item[1])] += 1
+            
+        #     by_value = sorted(dic.items(),key = lambda item:item[1],reverse=True)
+        #     x = []
+        #     y = []
+        #     for d in by_value:
+        #         x.append(d[0])
+        #         y.append(d[1])
+        #     plt.bar(x, y)
+        #     plt.savefig('../../logs/fedstream/data_distribution.png')
+                
         # 训练
         # 计算Omega_Part2
         grad_list = []
@@ -165,7 +224,7 @@ class Client(object):
 
         self.local_parameters = deepcopy(self.net.state_dict())
         return self.local_parameters, new_grad, new_loss
-            
+
 
 class Client_Group(object):
     def __init__(self,
@@ -186,7 +245,6 @@ class Client_Group(object):
         self.net_name = net_name
         self.learning_rate = learning_rate
         self.dataset_allocation()
-    
     
     def load_mnist(self):
         # 下载：[60000, 28, 28], tensor + tensor
@@ -265,8 +323,7 @@ class Client_Group(object):
             self.test_data_list.append(tmp_dataset)
         
         self.new_test_data_list = []
-        self.new_test_data_list.append(ConcatDataset([self.test_data_list[0], self.test_data_list[1]]))
-        self.new_test_data_list.append(ConcatDataset([self.test_data_list[2], self.test_data_list[3], self.test_data_list[4]]))
-        self.new_test_data_list.append(ConcatDataset([self.test_data_list[5], self.test_data_list[6], self.test_data_list[7], self.test_data_list[8], self.test_data_list[9]]))
-
+        self.new_test_data_list.append(ConcatDataset([self.test_data_list[0], self.test_data_list[3], self.test_data_list[6]]))
+        self.new_test_data_list.append(ConcatDataset([self.test_data_list[1], self.test_data_list[4], self.test_data_list[7]]))
+        self.new_test_data_list.append(ConcatDataset([self.test_data_list[2], self.test_data_list[5], self.test_data_list[8], self.test_data_list[9]]))
         self.test_data_list = self.new_test_data_list

@@ -13,6 +13,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 import numpy as np
 
+a = [random.randint(500, 1000) for _ in range(30)]
+print(a)
+
+b = [random.uniform(0, 200) for _ in range(30)]
+print(b)
+exit(0)
+
 seed = 10
 random.seed(seed)
 np.random.seed(seed)
