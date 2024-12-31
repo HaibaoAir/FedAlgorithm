@@ -8,14 +8,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import ConcatDataset, DataLoader # 三件套
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from copy import deepcopy
 
-from alg.fedstream.clients_new import Client_Group
+from alg.fedstream.clients import Client_Group
 from model.mnist import MNIST_Linear, MNIST_CNN
 from model.cifar import Cifar10_CNN
-from torch.utils.data import DataLoader
 
 from sko.PSO import PSO
 
@@ -122,7 +122,7 @@ class Server(object):
         self.pre_estimate_path_2 = args['pre_estimate_path_2']
 
         # 初始化data_matrix[K,T]
-        self.data_origin_init = [random.randint(500, 1000) for _ in range(self.num_client)]
+        self.data_origin_init = [random.randint(1500, 1600) for _ in range(self.num_client)]
         self.data_matrix_init = []
         for k in range(self.num_client):
             data_list = [self.data_origin_init[k]]
@@ -560,7 +560,9 @@ class Server(object):
                 global_grad = 0
                 global_loss = 0
                 for k in range(self.num_client):
-                    result = self.client_group.clients[k].local_update(t,
+                    result = self.client_group.clients[k].local_update(
+                                                                    idx, 
+                                                                    t,
                                                                     k,
                                                                     self.num_epoch,
                                                                     self.batch_size,
@@ -602,21 +604,11 @@ class Server(object):
                     total = 0
                     self.net.load_state_dict(self.global_parameter)
                     with torch.no_grad():
-                        tau = None
-                        # if t < 7:
-                        #     tau = 0
-                        # elif t < 14:
-                        #     tau = 1
-                        # else:
-                        #     tau = 2
-                        if t < 10:
-                            tau = 0
-                        else:
-                            tau = 1
-                        test_dataloader = DataLoader(self.test_data_list[tau], batch_size=100, shuffle=False)
+                        # 固定哦
+                        test_dataloader = DataLoader(ConcatDataset(self.test_data_list), batch_size=100, shuffle=False)
                         for batch in test_dataloader:
                             data, label = batch
-                            print(label)
+                            # print(label)
                             data = data.to(self.dev)
                             label = label.to(self.dev)
                             pred = self.net(data) # [batch_size， 10]，输出的是概率

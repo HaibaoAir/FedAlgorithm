@@ -8,14 +8,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import ConcatDataset, DataLoader # 三件套
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from copy import deepcopy
 
-from alg.fedstream.clients import Client_Group
+from alg.fedstream.clients_copy import Client_Group
 from model.mnist import MNIST_Linear, MNIST_CNN
 from model.cifar import Cifar10_CNN
-from torch.utils.data import DataLoader
 
 from sko.PSO import PSO
 
@@ -27,20 +27,27 @@ args = {
     'a': 1.0,
     'model': 'cnn',
     'learning_rate': 0.01,
-    'num_round': 10,
-    'num_epoch': 1,
+    'num_round': 20,
+    'num_epoch': 2,
     'batch_size': 32,
     'eval_freq': 1,
-    'save_path': '../../logs/fedstream/4_server.png',
-    'save_path_1': '../../logs/fedstream/4_server_1.png',
-    'save_path_2': '../../logs/fedstream/4_server_2.png',
-    'save_path_3': '../../logs/fedstream/4_server_3.png',
-    'pre_estimate_path_1': '../../logs/fedstream/pre_estimate_4_1.npy',
-    'pre_estimate_path_2': '../../logs/fedstream/pre_estimate_4_2.npy',
+    'save_path': '../../logs/fedstream/5_server.png',
+    'save_path_1': '../../logs/fedstream/5_server_1.png',
+    'save_path_1_delta': '../../logs/fedstream/5_server_1_delta.png',
+    'save_path_1_data': '../../logs/fedstream/5_server_1_data.png',
+    'save_path_1_stale': '../../logs/fedstream/5_server_1_stale.png',
+    'save_path_2': '../../logs/fedstream/5_server_2.png',
+    'save_path_2_9': '../../logs/fedstream/5_server_2_9.png',
+    'save_path_2_19': '../../logs/fedstream/5_server_2_19.png',
+    'save_path_3': '../../logs/fedstream/5_server_3.png',
+    'save_path_3_loss': '../../logs/fedstream/5_server_3_loss.png',
+    'save_path_3_acc': '../../logs/fedstream/5_server_3_acc.png',
+    'save_path_4': '../../logs/fedstream/5_server_4.png',
+    'pre_estimate_path_1': '../../logs/fedstream/pre_estimate_5_1',
+    'pre_estimate_path_2': '../../logs/fedstream/pre_estimate_5_2',
     
     'delta': 1,
     'psi': 1,
-    'sigma': 1,
     'alpha': 1e-3,
     'beta': 5e-6,
     
@@ -64,13 +71,13 @@ args = {
     'reward_ub': 100,
     'theta_lb': 0.1,
     'theta_ub': 1,
-    'pop': 3000, 
+    'pop': 3000,
     'pso_eps': 1e-5,
     'pso_max_iter': 500,
     
     'fix_eps_1': 1e-2,
     'fix_eps_2': 5,
-    'fix_max_iter': 10000,
+    'fix_max_iter': 100000,
 }
 
 seed = 10
@@ -100,18 +107,26 @@ class Server(object):
         self.eval_freq = args['eval_freq']
         self.save_path = args['save_path']
         self.save_path_1 = args['save_path_1']
+        self.save_path_1_delta = args['save_path_1_delta']
+        self.save_path_1_data = args['save_path_1_data']
+        self.save_path_1_stale = args['save_path_1_stale']
         self.save_path_2 = args['save_path_2']
+        self.save_path_2_9 = args['save_path_2_9']
+        self.save_path_2_19 = args['save_path_2_19']
         self.save_path_3 = args['save_path_3']
+        self.save_path_3_loss = args['save_path_3_loss']
+        self.save_path_3_acc = args['save_path_3_acc']
+        self.save_path_4 = args['save_path_4']
         self.pre_estimate_path_1 = args['pre_estimate_path_1']
         self.pre_estimate_path_2 = args['pre_estimate_path_2']
 
         # 初始化data_matrix[K,T]
-        self.data_origin_init = [random.randint(50, 100) for _ in range(self.num_client)]
+        self.data_origin_init = [random.randint(800, 900) for _ in range(self.num_client)]
         self.data_matrix_init = []
         for k in range(self.num_client):
             data_list = [self.data_origin_init[k]]
             for t in range(1, self.num_round):
-                data = random.randint(50, 100)
+                data = random.randint(500, 1000)
                 data_list.append(data)
             self.data_matrix_init.append(data_list)
         
@@ -124,7 +139,6 @@ class Server(object):
         # 背景超参数
         self.delta_list = np.array([args['delta']] * self.num_client) # [K]
         self.psi = args['psi']
-        self.sigma_list = np.array([args['sigma']] * self.num_client) # [K]
         self.alpha_list = [args['alpha']] * self.num_client # 收集数据的价格
         self.beta_list = [args['beta']] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
                   
@@ -254,7 +268,7 @@ class Server(object):
                 stale_sum = 0
                 for k in range(self.num_client):
                     delta_sum += data_matrix[k][t] * (self.delta_list[k] ** 2)
-                    stale_sum += data_matrix[k][t] * stale_matrix[k][t] * (self.sigma_list[k] ** 2)
+                    stale_sum += data_matrix[k][t] * stale_matrix[k][t] * (self.sigma ** 2)
                     
                 # Omega不影响
                 item_1 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_2 * self.num_client * (self.psi ** 2) / data_list[t]
@@ -394,7 +408,7 @@ class Server(object):
             stale_sum = 0
             for k in range(self.num_client):
                 delta_sum += data_matrix[k][t] * (self.delta_list[k] ** 2)
-                stale_sum += data_matrix[k][t] * stale_matrix[k][t] * (self.sigma_list[k] ** 2)
+                stale_sum += data_matrix[k][t] * stale_matrix[k][t] * (self.sigma ** 2)
                 
             # Omega不影响
             item_1 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_2 * self.num_client * (self.psi ** 2) / data_list[t]
@@ -411,33 +425,40 @@ class Server(object):
 
     def online_train(self):
         # 正式训练前定好一切
-        if os.path.exists(self.pre_estimate_path_1) == False:
+        pre_estimate_path_1 = self.pre_estimate_path_1 + str('_{}.npy'.format(self.sigma))
+        pre_estimate_path_2 = self.pre_estimate_path_2 + str('_{}.npy'.format(self.sigma))
+        if os.path.exists(pre_estimate_path_1) == False:
             phi_list = self.estimate_phi() # [T]
             result = self.estimate_reward_theta(phi_list) # [K, T]
-            np.save(self.pre_estimate_path_1, phi_list)
-            np.save(self.pre_estimate_path_2, result)
+            np.save(pre_estimate_path_1, phi_list)
+            np.save(pre_estimate_path_2, result)
         
-        phi_list = np.load(self.pre_estimate_path_1)
-        result = np.load(self.pre_estimate_path_2)
+        phi_list = np.load(pre_estimate_path_1)
+        result = np.load(pre_estimate_path_2)
         reward = result[0][0]
         theta = result[0][1]
         res = result[1][1]
         
         delta_list = []
         res_list = []
-        los_list = []
-        acc_list = []
+        los_list_9 = []
+        acc_list_9 = []
+        los_list_19 = []
+        acc_list_19 = []
         res1_list = []
         res2_list = []
         res3_list = []
         res4_list = []
         delta_reward_list = []
         delta_theta_list = []
+        hist_increment_matrix = []
+        hist_data_matrix = []
+        hist_stale_matrix = []
+        hist_loss_matrix = []
+        hist_acc_matrix = []
         flag = 0
-        styles = ['^-', 'D-', 'o-', 'x-', 'v-']
-        # enum = [[-40, 0], [-20, 0], [0, 0], [20, 0], [40, 0]]
-        enum = [[0, -0.3], [0, -0.15], [0, 0], [0, 0.25], [0, 0.5]]
-        # enum = [[-30, -0.3], [-15, -0.15], [0, 0], [15, 0.15], [30, 0.3]]
+        styles = ['^-', 'D-', 'o--', 'x', 'v-', 's-']
+        enum = [[0, -0.3], [0, -0.2], [0, 0], [0, 0.3], [0, 0.45], [0, 0.6]]
         for idx in range(len(enum)):
             delta_com = enum[idx]
             new_reward = reward + delta_com[0]
@@ -453,152 +474,232 @@ class Server(object):
             increment_matrix = var[1]
             data_matrix = var[2]
             stale_matrix = var[3]
+            hist_increment_matrix.append(np.mean(increment_matrix, axis=0))
+            hist_data_matrix.append(np.mean(data_matrix, axis=0))
+            hist_stale_matrix.append(np.mean(stale_matrix, axis=0))
+            
             res, res1, res2, res3, res4 = self.estimate_direct_func(new_reward, data_matrix, stale_matrix)
             res_list.append(res)
             res1_list.append(res1)
             res2_list.append(res2)
             res3_list.append(res3)
             res4_list.append(res4)
-            # print('increment')
-            # print(np.mean(increment_matrix, axis=0))
-            # print('data')
-            # print(np.mean(data_matrix, axis=0))
             
-            # # theta专用
-            # width = 0.02
-            # x = np.array(delta_theta_list)
-            # labels = [r'$(R^*, \theta^* - 0.3)$', r'$(R^*, \theta^* - 0.15)$', r'$(R^*, \theta^*)$', r'$(R^*, \theta^* + 0.25)$', r'$(R^*, \theta^* + 0.5)$']
-            
-            # # # reward专用
-            # # width = 4
-            # # x = np.array(delta_reward_list)
-            # # labels = [r'$R^* - 40, \theta^*$', r'$(R^* - 20, \theta^*)$', r'$(R^*, \theta^*)$', r'$(R^* + 20, \theta^*)$', r'$(R^* + 40, \theta^*)$']
-            
-            # plt.bar(x - 1.5 * width, res_list, color='C0', width=width, label='cost')
-            # plt.bar(x - 0.5 * width, res1_list, color='C1', width=width, label='sample error')
-            # plt.bar(x + 0.5 * width, res2_list, color='C2', width=width, label='staleness')
-            # plt.bar(x + 1.5 * width, res4_list, color='C4', width=width, label='reward')
-            # plt.xticks(x, labels[:len(x)])
-            # # plt.bar(x + width/2, los_list, color='C1', width=width, label='acc')
-            # # ax1.legend()
-            # if flag == 0:
-            #     plt.legend()
-            #     flag = 1
-            # plt.savefig(self.save_path_2, dpi=200)
-            
-            plt.subplot(2,2,1)
-            plt.plot(np.mean(increment_matrix, axis=0), styles[idx], label=r'$\theta^*+{}$'.format(delta_com[1]))
-            plt.ylabel(r'$\Delta$')
-            plt.subplot(2,2,2)
-            plt.plot(np.mean(data_matrix, axis=0), styles[idx], label=r'$\theta^*+{}$'.format(delta_com[1]))
-            plt.ylabel(r'$D$')
-            plt.subplot(2,2,3)
-            plt.plot(np.mean(stale_matrix, axis=0), styles[idx], label=r'$\theta^*+{}$'.format(delta_com[1]))
-            plt.ylabel(r'$S$')
-            plt.legend()
-            if flag == 0:
-                plt.legend()
-                flag = 1
-            plt.tight_layout()
-            plt.savefig(self.save_path_1, dpi=200)
+            # # 画图1
+            # for n in range(idx+1):
+            #     if delta_theta_list[n] < 0:
+            #         label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
+            #     elif delta_theta_list[n] == 0:
+            #         label = r'$(R^*, \theta^*$)'
+            #     else:
+            #         label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
+            #     plt.yticks(fontproperties = 'Times New Roman', size = 14)
+            #     plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
+            #     plt.plot(hist_increment_matrix[n], styles[n], label=label)
+            #     plt.ylabel(r'Increment $\Delta$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.legend(frameon=False)
+            #     plt.savefig(self.save_path_1_delta, dpi=200)
+            # plt.close()
 
-            # # 初始化数据
-            # self.init_data_net()
-            # # numpy 切片格式 [:, :]
-            # data_sum_list = [sum(data_matrix[:, t]) for t in range(self.num_round)]
-            # # 临时记录，求平均后是self.delta_list
-            # delta_matrix = [[] for k in range(self.num_client)]
+            # for n in range(idx+1):
+            #     if delta_theta_list[n] < 0:
+            #         label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
+            #     elif delta_theta_list[n] == 0:
+            #         label = r'$(R^*, \theta^*$)'
+            #     else:
+            #         label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
+            #     plt.yticks(fontproperties = 'Times New Roman', size = 14)
+            #     plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
+            #     plt.plot(hist_data_matrix[n], styles[n], label=label)
+            #     plt.ylabel(r'Datasize $D$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.legend(frameon=False)
+            #     plt.savefig(self.save_path_1_data, dpi=200)
+            # plt.close()
             
-            # self.global_parameter = {}
-            # for key, var in self.net.state_dict().items():
-            #     self.global_parameter[key] = var.clone()
+            # for n in range(idx+1):
+            #     if delta_theta_list[n] < 0:
+            #         label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
+            #     elif delta_theta_list[n] == 0:
+            #         label = r'$(R^*, \theta^*$)'
+            #     else:
+            #         label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
+            #     plt.ylim(0, 10)
+            #     plt.yticks(fontproperties = 'Times New Roman', size = 14)
+            #     plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
+            #     plt.plot(hist_stale_matrix[n], styles[n], label=label)
+            #     plt.ylabel(r'Staleness $S$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.legend(frameon=False)
+            #     plt.savefig(self.save_path_1_stale, dpi=200)
+            # plt.close()
+
+
+            # 初始化数据
+            self.init_data_net()
+            # numpy 切片格式 [:, :]
+            data_sum_list = [sum(data_matrix[:, t]) for t in range(self.num_round)]
+            # 临时记录，求平均后是self.delta_list
+            delta_matrix = [[] for k in range(self.num_client)]
             
-            # global_loss_list = []
-            # accuracy_list = []
+            self.global_parameter = {}
+            for key, var in self.net.state_dict().items():
+                self.global_parameter[key] = var.clone()
             
-            # # 训练
-            # for t in tqdm(range(self.num_round)):
+            global_loss_list = []
+            accuracy_list = []
+            
+            # 训练
+            for t in tqdm(range(self.num_round)):
                 
-            #     # 开始训练
-            #     next_global_parameter = {}
-            #     local_grad_list = []
-            #     local_loss_list = []
-            #     global_grad = 0
-            #     global_loss = 0
-            #     for k in range(self.num_client):
-            #         result = self.client_group.clients[k].local_update(t,
-            #                                                         k,
-            #                                                         self.num_epoch,
-            #                                                         self.batch_size,
-            #                                                         self.global_parameter,
-            #                                                         theta,
-            #                                                         data_matrix[k][t])
-                    
-            #         rate = data_matrix[k][t] / data_sum_list[t]
-            #         local_parameter = result[0]
-            #         for item in local_parameter.items():
-            #             if item[0] not in next_global_parameter.keys():
-            #                 next_global_parameter[item[0]] = rate * item[1]
-            #             else:
-            #                 next_global_parameter[item[0]] += rate * item[1]
+                # 开始训练
+                next_global_parameter = {}
+                local_grad_list = []
+                local_loss_list = []
+                global_grad = 0
+                global_loss = 0
+                for k in range(self.num_client):
+                    result = self.client_group.clients[k].local_update(
+                                                                    idx, 
+                                                                    t,
+                                                                    k,
+                                                                    self.sigma,
+                                                                    self.num_epoch,
+                                                                    self.batch_size,
+                                                                    self.global_parameter,
+                                                                    new_theta, # 妈的是new的不是旧的
+                                                                    increment_matrix[k][t],
+                                                                    data_matrix[k][t])
+                    rate = data_matrix[k][t] / data_sum_list[t]
+                    local_parameter = result[0]
+                    for item in local_parameter.items():
+                        if item[0] not in next_global_parameter.keys():
+                            next_global_parameter[item[0]] = rate * item[1]
+                        else:
+                            next_global_parameter[item[0]] += rate * item[1]
                             
-            #         local_grad = result[1]
-            #         local_grad_list.append(local_grad)
-            #         global_grad += rate * local_grad
+                    local_grad = result[1]
+                    local_grad_list.append(local_grad)
+                    global_grad += rate * local_grad
                     
-            #         local_loss = result[2]
-            #         local_loss_list.append(local_loss)
-            #         global_loss += rate * local_loss
+                    local_loss = result[2]
+                    local_loss_list.append(local_loss)
+                    global_loss += rate * local_loss
                     
-            #     # 求global_parameters
-            #     self.global_parameter = next_global_parameter
+                # 求global_parameters
+                self.global_parameter = next_global_parameter
                 
-            #     # 求delta
-            #     for k in range(self.num_client):
-            #         delta = rate * torch.sqrt(torch.sum(torch.square(local_grad_list[k] - global_grad))) # 大错，用delta代替Upsilon
-            #         delta_matrix[k].append(delta)
+                # 求delta
+                for k in range(self.num_client):
+                    delta = rate * torch.sqrt(torch.sum(torch.square(local_grad_list[k] - global_grad))) # 大错，用delta代替Upsilon
+                    delta_matrix[k].append(delta)
                     
-            #     # 加入global_loss_list
-            #     global_loss_list.append(global_loss)
+                # 加入global_loss_list
+                global_loss_list.append(global_loss)
                 
-            #     # 验证
-            #     if t % self.eval_freq == 0:
-            #         correct = 0
-            #         total = 0
-            #         self.net.load_state_dict(self.global_parameter)
-            #         with torch.no_grad():
-            #             tau = t % 3
-            #             test_dataloader = DataLoader(self.test_data_list[tau], batch_size=100, shuffle=False)
-            #             for batch in test_dataloader:
-            #                 data, label = batch
-            #                 data = data.to(self.dev)
-            #                 label = label.to(self.dev)
-            #                 pred = self.net(data) # [batch_size， 10]，输出的是概率
-            #                 pred = torch.argmax(pred, dim=1)
-            #                 correct += (pred == label).sum().item()
-            #                 total += label.shape[0]
-            #         acc = correct / total
-            #         accuracy_list.append(acc)
+                # 验证
+                if t % self.eval_freq == 0:
+                    correct = 0
+                    total = 0
+                    self.net.load_state_dict(self.global_parameter)
+                    with torch.no_grad():
+                        # 固定哦
+                        test_dataloader = DataLoader(ConcatDataset(self.test_data_list), batch_size=100, shuffle=False)
+                        for batch in test_dataloader:
+                            data, label = batch
+                            # print(label)
+                            data = data.to(self.dev)
+                            label = label.to(self.dev)
+                            pred = self.net(data) # [batch_size， 10]，输出的是概率
+                            pred = torch.argmax(pred, dim=1)
+                            correct += (pred == label).sum().item()
+                            total += label.shape[0]
+                    acc = correct / total
+                    accuracy_list.append(acc)
                     
-            #     plt.subplot(1,2,1)
-            #     plt.plot(global_loss_list)
-            #     plt.subplot(1,2,2)
-            #     plt.plot(accuracy_list)
-            #     plt.savefig(self.save_path_3)
-                
-            # los_list.append(global_loss_list[-1])
-            # acc_list.append(accuracy_list[-1])
+                # # 画图2                    
+                # if t == 9:
+                #     los_list_9.append(global_loss_list[-1])
+                #     acc_list_9.append(accuracy_list[-1])   
+                    
+                #     width = 0.8
+                #     x = range(len(delta_reward_list))
+                #     labels = [r'$(R^*, \theta^*-0.3)$', r'$(R^*, \theta^*-0.15)$', r'$(R^*, \theta^*)$', r'$(R^*, \theta^*+0.25)$', r'$(R^*, \theta^*+0.5)$']
+                #     new_gamma = 5e-3
+                #     print('los_list_9', los_list_9)
+                #     cost_1_list = (1 - new_gamma) * np.array(los_list_9)
+                #     cost_2_list = new_gamma * (np.array(delta_reward_list) + reward)
+                #     # plt.bar(x - 1.5 * width, cost_list, color='C0', width=width, label='cost')
+                #     plt.bar(x, cost_1_list, color='C0', width=width, label='loss')
+                #     plt.bar(x, cost_2_list, color='C3', width=width, label='reward', bottom=cost_1_list)
+                #     # plt.bar(x + 1.5 * width, acc_list, color='C3', width=width, label='acc')
+                #     plt.xticks(x, labels[:len(x)])
+                #     plt.ylabel(r'Realistic Cost of Server $U$')
+                #     plt.legend(frameon=False)
+                #     plt.savefig(self.save_path_2_9, dpi=200)
+                #     plt.close()
+                    
+                # if t == 19:
+                #     los_list_19.append(global_loss_list[-1])
+                #     acc_list_19.append(accuracy_list[-1])   
+                    
+                #     width = 0.8
+                #     x = range(len(delta_reward_list))
+                #     labels = [r'$(R^*, \theta^*-0.3)$', r'$(R^*, \theta^*-0.15)$', r'$(R^*, \theta^*)$', r'$(R^*, \theta^*+0.25)$', r'$(R^*, \theta^*+0.5)$']
+                #     new_gamma = 5e-3
+                #     print('los_list_19', los_list_19)
+                #     cost_1_list = (1 - new_gamma) * np.array(los_list_19)
+                #     cost_2_list = new_gamma * (np.array(delta_reward_list) + reward)
+                #     # plt.bar(x - 1.5 * width, cost_list, color='C0', width=width, label='cost')
+                #     plt.bar(x, cost_1_list, color='C0', width=width, label='loss')
+                #     plt.bar(x, cost_2_list, color='C3', width=width, label='reward', bottom=cost_1_list)
+                #     # plt.bar(x + 1.5 * width, acc_list, color='C3', width=width, label='acc')
+                #     plt.xticks(x, labels[:len(x)])
+                #     plt.ylabel(r'Realistic Cost of Server $U$')
+                #     plt.legend(frameon=False)
+                #     plt.savefig(self.save_path_2_19, dpi=200)
+                #     plt.close()
             
-            # with open('../../logs/fedstream/accuracy.txt', 'a') as file:
-            #     file.write('{}\n'.format(time.asctime()))
-            #     for accuracy in accuracy_list:
-            #         file.write('{:^7.5f} '.format(accuracy))
-            #     file.write('\n')
+            # 画图3
+            hist_loss_matrix.append(global_loss_list)
+            hist_acc_matrix.append(accuracy_list)
+            for n in range(idx+1):
+                if delta_theta_list[n] < 0:
+                    label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
+                elif delta_theta_list[n] == 0:
+                    label = r'$(R^*, \theta^*$)'
+                else:
+                    label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])   
+                plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
+                plt.plot(hist_loss_matrix[n], styles[n], color='C{}'.format(n), label=label)
+                plt.ylabel('Loss', fontproperties = 'Times New Roman', size = 14)
+                plt.xlabel('Round', fontproperties = 'Times New Roman', size = 14)
+                plt.legend()
+                plt.savefig(self.save_path_3_loss, dpi=200)
+            plt.close()
+            
+            for n in range(idx+1):
+                if delta_theta_list[n] < 0:
+                    label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
+                elif delta_theta_list[n] == 0:
+                    label = r'$(R^*, \theta^*$)'
+                else:
+                    label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])  
+                plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
+                plt.plot(hist_acc_matrix[n], styles[n], color='C{}'.format(n), label=label)
+                plt.ylabel('Accuracy', fontproperties = 'Times New Roman', size = 14)
+                plt.xlabel('Round', fontproperties = 'Times New Roman', size = 14)
+                plt.legend()
+                plt.savefig(self.save_path_3_acc, dpi=200)
+            plt.close()
                 
         
 server = Server(args)
-# server.estimate_D([1,1,1,1,1], [100])
-server.online_train()
+enum = [0, 0.3, 0.6, 1]
+for item in enum:
+    server.sigma = item
+    server.online_train()
 
 # R(T) = 0怎么保证：最后一轮R强制为0
 # 初始化你搞的好一点

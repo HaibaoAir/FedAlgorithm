@@ -1,11 +1,11 @@
+from matplotlib import pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
-from torch.utils.data import Dataset, Subset, ConcatDataset, DataLoader # 三件套
 from torchvision import transforms
-import matplotlib.pyplot as plt
+from torch.utils.data import Dataset, Subset, ConcatDataset, DataLoader # 三件套
 import random
 from copy import deepcopy
 
@@ -49,7 +49,7 @@ class Shuffle_Dataset(Dataset):
         
     def __getitem__(self, index):
         data = self.local_data[index]
-        label = self.local_label[index]
+        label = self.local_label[index]+10
         return data, label
     
     def __len__(self):
@@ -65,12 +65,14 @@ class Client(object):
                  learning_rate):
         self.dataset_name = dataset_name
         self.datasource_list = dataset # 数据源，是列表
-        self.new_datasource_list = []
-        self.new_datasource_list.append(ConcatDataset([self.datasource_list[0], self.datasource_list[3], self.datasource_list[6]]))
-        self.new_datasource_list.append(ConcatDataset([self.datasource_list[1], self.datasource_list[4], self.datasource_list[7]]))
-        self.new_datasource_list.append(ConcatDataset([self.datasource_list[2], self.datasource_list[5], self.datasource_list[8], self.datasource_list[9]]))
-        self.cycle = 2
-        self.datasource_list = self.new_datasource_list
+        # 三个一组
+        # self.new_datasource_list = []
+        # self.new_datasource_list.append(ConcatDataset([self.datasource_list[0], self.datasource_list[3], self.datasource_list[6]]))
+        # self.new_datasource_list.append(ConcatDataset([self.datasource_list[1], self.datasource_list[4], self.datasource_list[7]]))
+        # self.new_datasource_list.append(ConcatDataset([self.datasource_list[2], self.datasource_list[5], self.datasource_list[8], self.datasource_list[9]]))
+        # self.datasource_list = self.new_datasource_list
+        # self.cycle = 3
+        
         self.dev = dev
         self.data = None
         self.global_parameters = None # 下发的全局模型
@@ -92,16 +94,29 @@ class Client(object):
         else:
             raise NotImplementedError('{}'.format(net_name))
         self.net.to(self.dev)
-        
         self.criterion = F.cross_entropy # 交叉熵：softmax + NLLLoss 参考知乎
         self.optim = torch.optim.SGD(self.net.parameters(), learning_rate)
         
-        self.x_list = []
-        self.y_list = []
+    def poison(self, sigma):
+        idcs = [idc for idc in range(len(self.data))]
+        poison = random.sample(idcs, int(len(self.data) * sigma))
+        for item in poison:
+            idcs.remove(item)
+        health_data = Subset(self.data, idcs)
+        poison_data = Subset(self.data, poison)
+        data_list = []
+        label_list = []
+        for item in poison_data:
+            data = item[0]
+            label = item[1]
+            data_list.append(data)
+            label_list.append((label+1) % 10)
+        poison_data = Shuffle_Dataset(data_list, label_list)
+        self.data = ConcatDataset([health_data, poison_data])
         
     def init_data(self, t, k, datasize):
-        independent_size = int(datasize / self.cycle)
-        for tau in range(self.cycle):
+        independent_size = datasize // 10
+        for tau in range(10):
             idcs = [idc for idc in range(len(self.datasource_list[tau]))]
             used = random.sample(idcs, independent_size)
             # print('left:{}, increment:{}'.format(len(idcs),increment))
@@ -110,16 +125,6 @@ class Client(object):
             newdata = Subset(self.datasource_list[tau], used)
             self.data = ConcatDataset([self.data, newdata]) if self.data != None else newdata
             self.datasource_list[tau] = Subset(self.datasource_list[tau], idcs)
-        
-        data_list = []
-        label_list = []
-        for item in self.data:
-            data = item[0]
-            label = item[1]
-            data_list.append(data)
-            label_list.append(label)
-        random.shuffle(label_list)
-        self.data = Shuffle_Dataset(data_list, label_list)
         
     def discard_data(self, theta):
         size = int(len(self.data) * (1 - theta))
@@ -130,28 +135,22 @@ class Client(object):
         self.data = Subset(self.data, idcs)
     
     def collect_data(self, t, k, increment):
-        tau = None
-        # if t < 7:
-        #     tau = 0
-        # elif t < 14:
-        #     tau = 1
-        # else:
-        #     tau = 2
-        if t < 10:
-            tau = 0
-        else:
-            tau = 1
-        idcs = [idc for idc in range(len(self.datasource_list[tau]))]
-        used = random.sample(idcs, increment)
-        for item in used:
-            idcs.remove(item)
-        newdata = Subset(self.datasource_list[tau], used)
-        self.data = ConcatDataset([self.data, newdata])
-        self.datasource_list[tau] = Subset(self.datasource_list[tau], idcs)
+        independent_size = increment // 10
+        for tau in range(10):
+            idcs = [idc for idc in range(len(self.datasource_list[tau]))]
+            used = random.sample(idcs, independent_size)
+            # print('left:{}, increment:{}'.format(len(idcs),increment))
+            for item in used:
+                idcs.remove(item)
+            newdata = Subset(self.datasource_list[tau], used)
+            self.data = ConcatDataset([self.data, newdata]) if self.data != None else newdata
+            self.datasource_list[tau] = Subset(self.datasource_list[tau], idcs)
         
     def local_update(self,
+                     idx,
                      t,
                      k,
+                     sigma,
                      num_epoch,
                      batch_size,
                      global_parameters,
@@ -160,13 +159,15 @@ class Client(object):
                      datasize):
 
         self.global_parameters = global_parameters
-
+        
         # 收集数据
         if t == 0:
             datasize = int(datasize)
             self.init_data(t, k, datasize)
+            self.poison(sigma) # 本身的有毒性
             # print('init_data_1:{}, init_data_2:{}, increment_next:{}'.format(datasize, len(self.data), increment_next))
         else:
+            self.poison(sigma) # 后续的有毒性
             # print('origin', len(self.data))
             self.discard_data(theta)
             # print('decay', len(self.data))
@@ -176,24 +177,36 @@ class Client(object):
             # print('accumu', len(self.data)) 
             # print('res_data_1:{}, res_data_2:{}, theta:{}, increment:{}, increment_next:{}'.format(datasize, len(self.data), theta, increment, increment_next))
         
-        # if k == 0:
-        #     dic = {}
-        #     for item in self.data:
-        #         key = int(item[1])
-        #         if key not in dic.keys():
-        #             dic[key] = 1
-        #         else:
-        #             dic[int(item[1])] += 1
+        
+        if t == 0:
+            self.count_matrix = []
             
-        #     by_value = sorted(dic.items(),key = lambda item:item[1],reverse=True)
-        #     x = []
-        #     y = []
-        #     for d in by_value:
-        #         x.append(d[0])
-        #         y.append(d[1])
-        #     plt.bar(x, y)
-        #     plt.savefig('../../logs/fedstream/data_distribution.png')
-                
+        width = 0.4
+        if k == 0:
+            # 数据分布
+            count_dict = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0}
+            for item in self.data:
+                label = item[1].item()
+                if label < 10:
+                    count_dict[label] += 1
+                else:
+                    count_dict[10] += 1
+            print(count_dict)
+            self.count_matrix.append(list(count_dict.values()))
+            material = np.array(self.count_matrix)
+            for target in range(11):
+                if target == 0:
+                    plt.bar(np.array(range(material.shape[0])), material[:, target], width = width, label='{}'.format(target)) 
+                elif target < 10:
+                    plt.bar(np.array(range(material.shape[0])), material[:, target], width = width, bottom=np.sum(material[:, tar] for tar in range(target)), label='{}'.format(target))
+                else:
+                    plt.bar(np.array(range(material.shape[0])), material[:, target], width = width, bottom=np.sum(material[:, tar] for tar in range(10)), color='white', edgecolor='black', hatch='/', label='{}'.format('poison'))
+            plt.xlabel('Round')
+            plt.ylabel('Data Distribution')
+            plt.legend()
+            plt.savefig('../../logs/fedstream/data_distribution_{}.png'.format(idx), dpi=200)
+            plt.close()
+             
         # 训练
         # 计算Omega_Part2
         grad_list = []
@@ -204,6 +217,7 @@ class Client(object):
             for batch in dataloader:
                 data, label = batch
                 data = data.to(self.dev)
+                label %= 10
                 label = label.to(self.dev)
                 pred = self.net(data)
                 loss = self.criterion(pred, label)
@@ -321,9 +335,9 @@ class Client_Group(object):
             tmp_label = test_label[idcs]
             tmp_dataset = Local_Dataset(tmp_data, tmp_label, trans)
             self.test_data_list.append(tmp_dataset)
-        
-        self.new_test_data_list = []
-        self.new_test_data_list.append(ConcatDataset([self.test_data_list[0], self.test_data_list[3], self.test_data_list[6]]))
-        self.new_test_data_list.append(ConcatDataset([self.test_data_list[1], self.test_data_list[4], self.test_data_list[7]]))
-        self.new_test_data_list.append(ConcatDataset([self.test_data_list[2], self.test_data_list[5], self.test_data_list[8], self.test_data_list[9]]))
-        self.test_data_list = self.new_test_data_list
+        # 3个一组
+        # self.new_test_data_list = []
+        # self.new_test_data_list.append(ConcatDataset([self.test_data_list[0], self.test_data_list[3], self.test_data_list[6]]))
+        # self.new_test_data_list.append(ConcatDataset([self.test_data_list[1], self.test_data_list[4], self.test_data_list[7]]))
+        # self.new_test_data_list.append(ConcatDataset([self.test_data_list[2], self.test_data_list[5], self.test_data_list[8], self.test_data_list[9]]))
+        # self.test_data_list = self.new_test_data_list

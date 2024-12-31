@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from copy import deepcopy
 
-from alg.fedstream.clients_new import Client_Group
+from alg.fedstream.clients import Client_Group
 from model.mnist import MNIST_Linear, MNIST_CNN
 from model.cifar import Cifar10_CNN
 from torch.utils.data import DataLoader
@@ -40,7 +40,6 @@ args = {
     
     'delta': 1,
     'psi': 1,
-    'sigma': 1,
     'alpha': 1e-3,
     'beta': 5e-6,
     
@@ -124,7 +123,6 @@ class Server(object):
         # 背景超参数
         self.delta_list = np.array([args['delta']] * self.num_client) # [K]
         self.psi = args['psi']
-        self.sigma_list = np.array([args['sigma']] * self.num_client) # [K]
         self.alpha_list = [args['alpha']] * self.num_client # 收集数据的价格
         self.beta_list = [args['beta']] * self.num_client # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
                   
@@ -254,7 +252,7 @@ class Server(object):
                 stale_sum = 0
                 for k in range(self.num_client):
                     delta_sum += data_matrix[k][t] * (self.delta_list[k] ** 2)
-                    stale_sum += data_matrix[k][t] * stale_matrix[k][t] * (self.sigma_list[k] ** 2)
+                    stale_sum += data_matrix[k][t] * stale_matrix[k][t] * (self.sigma ** 2)
                     
                 # Omega不影响
                 item_1 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_2 * self.num_client * (self.psi ** 2) / data_list[t]
@@ -394,7 +392,7 @@ class Server(object):
             stale_sum = 0
             for k in range(self.num_client):
                 delta_sum += data_matrix[k][t] * (self.delta_list[k] ** 2)
-                stale_sum += data_matrix[k][t] * stale_matrix[k][t] * (self.sigma_list[k] ** 2)
+                stale_sum += data_matrix[k][t] * stale_matrix[k][t] * (self.sigma ** 2)
                 
             # Omega不影响
             item_1 = pow(self.kappa_1, self.num_round - 1 - t) * self.kappa_2 * self.num_client * (self.psi ** 2) / data_list[t]
@@ -411,17 +409,19 @@ class Server(object):
 
     def online_train(self):
         # 正式训练前定好一切
-        if os.path.exists(self.pre_estimate_path_1) == False:
-            phi_list = self.estimate_phi() # [T]
-            result = self.estimate_reward_theta(phi_list) # [K, T]
-            np.save(self.pre_estimate_path_1, phi_list)
-            np.save(self.pre_estimate_path_2, result)
+        # if os.path.exists(self.pre_estimate_path_1) == False:
+        phi_list = self.estimate_phi() # [T]
+        result = self.estimate_reward_theta(phi_list) # [K, T]
+        np.save(self.pre_estimate_path_1, phi_list)
+        np.save(self.pre_estimate_path_2, result)
         
         phi_list = np.load(self.pre_estimate_path_1)
         result = np.load(self.pre_estimate_path_2)
         reward = result[0][0]
         theta = result[0][1]
         res = result[1][1]
+        print('reward:{}, theta:{}'.format(reward, theta))
+        time.sleep(3)
         
         delta_list = []
         res_list = []
@@ -597,8 +597,10 @@ class Server(object):
                 
         
 server = Server(args)
-# server.estimate_D([1,1,1,1,1], [100])
-server.online_train()
+enum = [1, 0.6, 0.3, 0]
+for item in enum:
+    server.sigma = item
+    server.online_train()
 
 # R(T) = 0怎么保证：最后一轮R强制为0
 # 初始化你搞的好一点

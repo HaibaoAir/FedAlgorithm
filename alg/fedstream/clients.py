@@ -1,11 +1,11 @@
+from matplotlib import pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
-from torch.utils.data import Dataset, Subset, ConcatDataset, DataLoader # 三件套
 from torchvision import transforms
-import matplotlib.pyplot as plt
+from torch.utils.data import Dataset, Subset, ConcatDataset, DataLoader # 三件套
 import random
 from copy import deepcopy
 
@@ -19,6 +19,7 @@ random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
 torch.cuda.manual_seed(seed)
+
 
 class Local_Dataset(Dataset):
     def __init__(self,
@@ -36,6 +37,23 @@ class Local_Dataset(Dataset):
     
     def __len__(self):
         return self.local_label.shape[0]
+    
+    
+class Shuffle_Dataset(Dataset):
+    def __init__(self,
+                 local_data,
+                 local_label,
+                 ):
+        self.local_data = local_data
+        self.local_label = local_label
+        
+    def __getitem__(self, index):
+        data = self.local_data[index]
+        label = self.local_label[index]
+        return data, label
+    
+    def __len__(self):
+        return len(self.local_label)
 
 
 class Client(object):
@@ -47,12 +65,19 @@ class Client(object):
                  learning_rate):
         self.dataset_name = dataset_name
         self.datasource_list = dataset # 数据源，是列表
+        # 三个一组
+        # self.new_datasource_list = []
+        # self.new_datasource_list.append(ConcatDataset([self.datasource_list[0], self.datasource_list[3], self.datasource_list[6]]))
+        # self.new_datasource_list.append(ConcatDataset([self.datasource_list[1], self.datasource_list[4], self.datasource_list[7]]))
+        # self.new_datasource_list.append(ConcatDataset([self.datasource_list[2], self.datasource_list[5], self.datasource_list[8], self.datasource_list[9]]))
+        # self.datasource_list = self.new_datasource_list
+        # self.cycle = 3
+        
         self.dev = dev
         self.data = None
         self.global_parameters = None # 下发的全局模型
         self.local_parameters = None # 上传的本地模型
 
-        # 定义net
         self.net = None
         if self.dataset_name == 'mnist':
             if net_name == 'linear':
@@ -69,12 +94,33 @@ class Client(object):
         else:
             raise NotImplementedError('{}'.format(net_name))
         self.net.to(self.dev)
-        
-        # 定义loss function
         self.criterion = F.cross_entropy # 交叉熵：softmax + NLLLoss 参考知乎
-        
-        # 定义optimizer
         self.optim = torch.optim.SGD(self.net.parameters(), learning_rate)
+        self.init_data_size = 0
+        
+    def init_data(self, t, k, datasize):
+        self.init_data_size = datasize
+        
+        independent_size = datasize // 10
+        for tau in range(10):
+            idcs = [idc for idc in range(len(self.datasource_list[tau]))]
+            used = random.sample(idcs, independent_size)
+            # print('left:{}, increment:{}'.format(len(idcs),increment))
+            for item in used:
+                idcs.remove(item)
+            newdata = Subset(self.datasource_list[tau], used)
+            self.data = ConcatDataset([self.data, newdata]) if self.data != None else newdata
+            self.datasource_list[tau] = Subset(self.datasource_list[tau], idcs)
+        
+        data_list = []
+        label_list = []
+        for item in self.data:
+            data = item[0]
+            label = item[1]
+            data_list.append(data)
+            label_list.append(label)
+        random.shuffle(label_list)
+        self.data = Shuffle_Dataset(data_list, label_list)
         
     def discard_data(self, theta):
         size = int(len(self.data) * (1 - theta))
@@ -84,33 +130,82 @@ class Client(object):
             idcs.remove(item)
         self.data = Subset(self.data, idcs)
     
-    def collect_data(self, t, increment):
-        tau = t % 10
-        idcs = [idc for idc in range(len(self.datasource_list[tau]))]
-        used = random.sample(idcs, increment)
-        # print('left:{}, increment:{}'.format(len(idcs),increment))
+    def collect_data(self, t, k, increment):
+        # 这样子是从0-9循环收集标签
+        increment_A = int(increment * 0.4)
+        increment_B = (increment - increment_A) // min(t, 10)
+
+        # 防遗忘策略
+        for tau in range(min(t, 10)):
+            idcs = [idc for idc in range(len(self.datasource_list[tau]))]
+            used = random.sample(idcs, increment_B)
+            for item in used:
+                idcs.remove(item)
+            newdata = Subset(self.datasource_list[tau], used)
+            self.data = ConcatDataset([self.data, newdata])
+            self.datasource_list[tau] = Subset(self.datasource_list[tau], idcs)
+        # 收集最新数据
+        idcs = [idc for idc in range(len(self.datasource_list[t % 10]))]
+        used = random.sample(idcs, increment_A)
         for item in used:
             idcs.remove(item)
-        newdata = Subset(self.datasource_list[tau], used)
-        self.data = ConcatDataset([self.data, newdata]) if self.data != None else newdata
-        self.datasource_list = Subset(self.datasource_list[tau], idcs)
+        newdata = Subset(self.datasource_list[t % 10], used)
+        self.data = ConcatDataset([self.data, newdata])
+        self.datasource_list[t % 10] = Subset(self.datasource_list[t % 10], idcs)
         
     def local_update(self,
+                     idx,
                      t,
                      k,
-                     num_epoch, 
-                     batch_size, 
+                     num_epoch,
+                     batch_size,
                      global_parameters,
                      theta,
+                     increment_next,
                      datasize):
 
         self.global_parameters = global_parameters
-
-        # 收集数据
-        increment = int(datasize - theta * len(self.data)) if self.data != None else int(datasize)
-        self.discard_data(theta) if self.data != None else None
-        self.collect_data(t, increment)
         
+        # 收集数据
+        if t == 0:
+            datasize = int(datasize)
+            self.init_data(t, k, datasize)
+            # print('init_data_1:{}, init_data_2:{}, increment_next:{}'.format(datasize, len(self.data), increment_next))
+        else:
+            # print('origin', len(self.data))
+            self.discard_data(theta)
+            # print('decay', len(self.data))
+            # increment = int(datasize - theta * len(self.data)) 串联了呀
+            increment = int(datasize - len(self.data))
+            self.collect_data(t, k, increment)
+            # print('accumu', len(self.data)) 
+            # print('res_data_1:{}, res_data_2:{}, theta:{}, increment:{}, increment_next:{}'.format(datasize, len(self.data), theta, increment, increment_next))
+        
+        if t == 0:
+            self.count_matrix = []
+            
+        width = 0.4
+        if k == 0:
+            # 数据分布
+            count_dict = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0}
+            for item in self.data:
+                label = item[1].item()
+                count_dict[label] += 1
+            print(count_dict)
+            self.count_matrix.append(list(count_dict.values()))
+            material = np.array(self.count_matrix)
+            for target in range(10):
+                if target == 0:
+                    plt.bar(np.array(range(material.shape[0]))-0.5*width, material[:, target], width = width, label='{}'.format(target)) 
+                else:
+                    plt.bar(np.array(range(material.shape[0]))-0.5*width, material[:, target], width = width, bottom=np.sum(material[:, tar] for tar in range(target)), label='{}'.format(target))
+            plt.bar(np.array(range(material.shape[0]))+0.5*width, self.init_data_size * pow(theta, np.array(range(material.shape[0]))), width = width, color='white', edgecolor='black', hatch='/', label='{}'.format('old'))
+            plt.xlabel('Round')
+            plt.ylabel('Data Distribution')
+            plt.legend()
+            plt.savefig('../../logs/fedstream/data_distribution_{}.png'.format(idx))
+            plt.close()
+             
         # 训练
         # 计算Omega_Part2
         grad_list = []
@@ -141,7 +236,7 @@ class Client(object):
 
         self.local_parameters = deepcopy(self.net.state_dict())
         return self.local_parameters, new_grad, new_loss
-            
+
 
 class Client_Group(object):
     def __init__(self,
@@ -161,9 +256,7 @@ class Client_Group(object):
         self.alpha = alpha
         self.net_name = net_name
         self.learning_rate = learning_rate
-        self.test_dataloader = None
         self.dataset_allocation()
-    
     
     def load_mnist(self):
         # 下载：[60000, 28, 28], tensor + tensor
@@ -195,26 +288,6 @@ class Client_Group(object):
                                     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2033, 0.1994, 0.2010))])
         return train_data, train_label, test_data, test_label, trans
     
-    # 划分独立同分布数据    
-    def iid_split(self, train_label, num_client):
-        all_idcs = [i for i in range(train_label.shape[0])]
-        num_local_dataset = int(train_label.shape[0] / num_client)
-        client_idcs = []
-        for i in range(num_client):
-            client_idcs.append(np.random.choice(all_idcs, num_local_dataset))
-            all_idcs = list(set(all_idcs) - set(client_idcs[-1]))
-        return client_idcs
-    
-    def iid_split_1(self, train_label, num_client):
-        idcs = [idc for idc in range(train_label.shape[0])]
-        num_dataset = int(train_label.shape[0] / num_client)
-        client_idcs = []
-        for k in range(num_client):
-            used = random.sample(idcs, num_dataset)
-            client_idcs.append(used)
-            for idc in used:
-                idcs.remove(idc)
-        return client_idcs
     
     def iid_split_2(self, train_label, num_client):
         client_idcs = [[] for k in range(num_client)]
@@ -225,24 +298,7 @@ class Client_Group(object):
                 client_idcs[k].append(np.random.choice(target_idcs, num_local_target_idcs))
                 target_idcs = list(set(target_idcs) - set(client_idcs[k][-1]))
         return client_idcs
-    
-    # 划分非独立同分布数据
-    def dirichlet_split(self, train_label, alpha, num_client):
-        train_label = np.array(train_label)
-        num_class = train_label.max() + 1
-        # (K, N) class label distribution matrix X, record how much each client occupies in each class
-        label_distribution = np.random.dirichlet([alpha] * num_client, num_class) 
-        # Record the sample subscript corresponding to each K category
-        class_idcs = [np.argwhere(train_label==y).flatten() for y in range(num_class)]
-        # Record the index of N clients corresponding to the sample set respectively
-        client_idcs = [[] for _ in range(num_client)] 
-        for c, fracs in zip(class_idcs, label_distribution):
-            # np.split divides the samples of class k into N subsets according to the proportion
-            # for i, idcs is to traverse the index of the sample set corresponding to the i-th client
-            for i, idcs in enumerate(np.split(c, (np.cumsum(fracs)[:-1] * len(c)).astype(int))):
-                client_idcs[i] += [idcs]
-        client_idcs = [np.concatenate(idcs) for idcs in client_idcs]
-        return client_idcs        
+       
     
     # 下载、预处理、训练集划分和封装、测试集封装
     def dataset_allocation(self):
@@ -253,54 +309,33 @@ class Client_Group(object):
         else:
             raise NotImplementedError('{}'.format(self.dataset_name))
 
-        if self.is_iid == 1:
-            client_idcs = self.iid_split(
-                train_label=train_label,
-                num_client=self.num_client
-            )
-        elif self.is_iid == 0:
-            client_idcs = self.dirichlet_split(
-                train_label=train_label,
-                alpha=self.alpha,
-                num_client=self.num_client
-            )
-        else:
-            client_idcs = self.iid_split_2( # 是个矩阵
-                train_label=train_label,
-                num_client=self.num_client
-            )
+        # 划分数据集
+        client_idcs = self.iid_split_2( # 是个矩阵
+            train_label=train_label,
+            num_client=self.num_client
+        )
         
-        # # 刻画结果
-        # plt.figure(figsize=(12, 8))
-        # plt.hist([train_label[idc]for idc in client_idcs], stacked=True,
-        #         bins=np.arange(min(train_label)-0.5, max(train_label) + 1.5, 1),
-        #         label=["Client {}".format(i) for i in range(self.num_client)],
-        #         rwidth=0.5)
-        # plt.xticks(np.arange(10))
-        # plt.xlabel("Label type")
-        # plt.ylabel("Number of samples")
-        # plt.legend(loc="upper right")
-        # plt.title("Display Label Distribution on Different Clients")
-        # plt.show()
-        
-        if self.is_iid == 0 or self.is_iid == 1:
-            for idc in client_idcs:
-                local_data = train_data[idc]
-                local_label = train_label[idc]
+        for k in range(self.num_client):
+            local_dataset_list = []
+            for target in range(10):
+                local_data = train_data[client_idcs[k][target]]
+                local_label = train_label[client_idcs[k][target]]
                 local_dataset = Local_Dataset(local_data, local_label, trans)
-                client = Client(self.dataset_name, local_dataset, self.dev, self.net_name, self.learning_rate)
-                self.clients.append(client)
-                
-        else:
-            for k in range(self.num_client):
-                local_dataset_list = []
-                for target in range(10):
-                    local_data = train_data[client_idcs[k][target]]
-                    local_label = train_label[client_idcs[k][target]]
-                    local_dataset = Local_Dataset(local_data, local_label, trans)
-                    local_dataset_list.append(local_dataset)
-                client = Client(self.dataset_name, local_dataset_list, self.dev, self.net_name, self.learning_rate)
-                self.clients.append(client)
-                    
-        self.test_dataset = Local_Dataset(test_data, test_label, trans)
-        self.test_dataloader = DataLoader(self.test_dataset, batch_size=100, shuffle=False)
+                local_dataset_list.append(local_dataset)
+            client = Client(self.dataset_name, local_dataset_list, self.dev, self.net_name, self.learning_rate)
+            self.clients.append(client)
+        
+        # 划分测试集
+        self.test_data_list = []
+        for target in range(10):
+            idcs = np.where(test_label == target)[0]
+            tmp_data = test_data[idcs]
+            tmp_label = test_label[idcs]
+            tmp_dataset = Local_Dataset(tmp_data, tmp_label, trans)
+            self.test_data_list.append(tmp_dataset)
+        # 3个一组
+        # self.new_test_data_list = []
+        # self.new_test_data_list.append(ConcatDataset([self.test_data_list[0], self.test_data_list[3], self.test_data_list[6]]))
+        # self.new_test_data_list.append(ConcatDataset([self.test_data_list[1], self.test_data_list[4], self.test_data_list[7]]))
+        # self.new_test_data_list.append(ConcatDataset([self.test_data_list[2], self.test_data_list[5], self.test_data_list[8], self.test_data_list[9]]))
+        # self.test_data_list = self.new_test_data_list
