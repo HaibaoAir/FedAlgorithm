@@ -159,15 +159,16 @@ class Client(object):
                      datasize):
 
         self.global_parameters = global_parameters
+        sigma = sigma / 20
         
         # 收集数据
         if t == 0:
             datasize = int(datasize)
             self.init_data(t, k, datasize)
-            self.poison(sigma) # 本身的有毒性
+            self.poison(0.6) # 本身的有毒性
             # print('init_data_1:{}, init_data_2:{}, increment_next:{}'.format(datasize, len(self.data), increment_next))
         else:
-            self.poison(sigma) # 后续的有毒性
+            self.poison(0.6) # 后续的有毒性
             # print('origin', len(self.data))
             self.discard_data(theta)
             # print('decay', len(self.data))

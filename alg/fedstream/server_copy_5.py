@@ -31,18 +31,14 @@ args = {
     'num_epoch': 2,
     'batch_size': 32,
     'eval_freq': 1,
-    'save_path': '../../logs/fedstream/5_server.png',
-    'save_path_1': '../../logs/fedstream/5_server_1.png',
-    'save_path_1_delta': '../../logs/fedstream/5_server_1_delta.png',
-    'save_path_1_data': '../../logs/fedstream/5_server_1_data.png',
-    'save_path_1_stale': '../../logs/fedstream/5_server_1_stale.png',
-    'save_path_2': '../../logs/fedstream/5_server_2.png',
-    'save_path_2_9': '../../logs/fedstream/5_server_2_9.png',
-    'save_path_2_19': '../../logs/fedstream/5_server_2_19.png',
-    'save_path_3': '../../logs/fedstream/5_server_3.png',
-    'save_path_3_loss': '../../logs/fedstream/5_server_3_loss.png',
-    'save_path_3_acc': '../../logs/fedstream/5_server_3_acc.png',
-    'save_path_4': '../../logs/fedstream/5_server_4.png',
+    'save_path_1': '../../logs/fedstream/5_server_1',
+    'save_path_2_delta': '../../logs/fedstream/5_server_2_delta',
+    'save_path_2_data': '../../logs/fedstream/5_server_2_data',
+    'save_path_2_stale': '../../logs/fedstream/5_server_2_stale',
+    'save_path_2_cost': '../../logs/fedstream/5_server_2_cost',
+    'save_path_3': '../../logs/fedstream/5_server_3',
+    'save_path_4_loss': '../../logs/fedstream/5_server_4_loss',
+    'save_path_4_acc': '../../logs/fedstream/5_server_4_acc',
     'pre_estimate_path_1': '../../logs/fedstream/pre_estimate_5_1',
     'pre_estimate_path_2': '../../logs/fedstream/pre_estimate_5_2',
     
@@ -55,7 +51,7 @@ args = {
     'kappa_2': 1,
     'kappa_3': 1e-2,
     'kappa_4': 1e-2,
-    'gamma': 1e-4,
+    'gamma': 1e-5,
     
     # # 一阶段
     # self.reward_lb = 1
@@ -68,7 +64,7 @@ args = {
     
     # 二阶段
     'reward_lb': 1,
-    'reward_ub': 100,
+    'reward_ub': 500,
     'theta_lb': 0.1,
     'theta_ub': 1,
     'pop': 3000,
@@ -76,7 +72,7 @@ args = {
     'pso_max_iter': 500,
     
     'fix_eps_1': 1e-2,
-    'fix_eps_2': 5,
+    'fix_eps_2': 300,
     'fix_max_iter': 100000,
 }
 
@@ -105,28 +101,24 @@ class Server(object):
         self.num_epoch = args['num_epoch']
         self.batch_size = args['batch_size']
         self.eval_freq = args['eval_freq']
-        self.save_path = args['save_path']
         self.save_path_1 = args['save_path_1']
-        self.save_path_1_delta = args['save_path_1_delta']
-        self.save_path_1_data = args['save_path_1_data']
-        self.save_path_1_stale = args['save_path_1_stale']
-        self.save_path_2 = args['save_path_2']
-        self.save_path_2_9 = args['save_path_2_9']
-        self.save_path_2_19 = args['save_path_2_19']
+        self.save_path_2_delta = args['save_path_2_delta']
+        self.save_path_2_data = args['save_path_2_data']
+        self.save_path_2_stale = args['save_path_2_stale']
+        self.save_path_2_cost = args['save_path_2_cost']
         self.save_path_3 = args['save_path_3']
-        self.save_path_3_loss = args['save_path_3_loss']
-        self.save_path_3_acc = args['save_path_3_acc']
-        self.save_path_4 = args['save_path_4']
+        self.save_path_4_loss = args['save_path_4_loss']
+        self.save_path_4_acc = args['save_path_4_acc']
         self.pre_estimate_path_1 = args['pre_estimate_path_1']
         self.pre_estimate_path_2 = args['pre_estimate_path_2']
 
         # 初始化data_matrix[K,T]
-        self.data_origin_init = [random.randint(800, 900) for _ in range(self.num_client)]
+        self.data_origin_init = [random.randint(700, 800) for _ in range(self.num_client)]
         self.data_matrix_init = []
         for k in range(self.num_client):
             data_list = [self.data_origin_init[k]]
             for t in range(1, self.num_round):
-                data = random.randint(500, 1000)
+                data = random.randint(50, 100)
                 data_list.append(data)
             self.data_matrix_init.append(data_list)
         
@@ -210,8 +202,8 @@ class Server(object):
                         item3 = 2 * self.beta_list[k] * data_matrix[k][tau]
                         item += item1 * (item2 - item3)
                     increment = 1 / (2 * self.alpha_list[k]) * item
-                    if increment <= 0:
-                        print('dual')
+                    # if increment <= 0:
+                    #     print('dual')
                     increment = max(0, increment) # 好哇好
                     increment_list.append(increment)
                 increment_list.append(0)
@@ -254,7 +246,7 @@ class Server(object):
             reward, theta = var
             
             # 计算单列和
-            _, data_matrix, stale_matrix = self.estimate_D(phi_list, reward, theta) 
+            increment_matrix, data_matrix, stale_matrix = self.estimate_D(phi_list, reward, theta) 
             data_list = [] # [T]
             for t in range(self.num_round):
                 data = 0
@@ -313,47 +305,44 @@ class Server(object):
             print('max_diff_phi:{}'.format(max_diff))
             
             if max_diff > self.fix_eps_2:
-                phi_list = next_phi_list 
-                
-                # if idc == 0 or idc == 1:
-                #     continue
-                
+                phi_list = next_phi_list
                 phi_hist.append(phi_list[-1])
                 reward_hist.append(reward)
                 theta_hist.append(theta)
                 max_diff_hist.append(max_diff)
                 
-                fig = plt.figure()
-                ax1 = fig.add_subplot(2,1,1)
-                ax1.set_xlabel('iterations')
-                ax1.set_ylabel('phi')
-                ax1.plot(phi_hist, 'k-')
+                # 画图1，收敛
+                # fig = plt.figure()
+                # ax1 = fig.add_subplot(2,1,1)
+                # ax1.set_xlabel('iterations')
+                # ax1.set_ylabel('phi')
+                # ax1.plot(phi_hist, 'k-')
                 
-                ax2 = fig.add_subplot(2,1,2)
-                ax2.set_xlabel('iterations')
-                ax2.set_ylabel('reward')
-                ax2.spines['left'].set_edgecolor('C0')
-                ax2.yaxis.label.set_color('C0')
-                ax2.tick_params(axis='y', colors='C0')
-                line_2 = ax2.plot(reward_hist, color='C0', linestyle='-', label='reward')
+                # ax2 = fig.add_subplot(2,1,2)
+                # ax2.set_xlabel('iterations')
+                # ax2.set_ylabel('reward')
+                # ax2.spines['left'].set_edgecolor('C0')
+                # ax2.yaxis.label.set_color('C0')
+                # ax2.tick_params(axis='y', colors='C0')
+                # line_2 = ax2.plot(reward_hist, color='C0', linestyle='-', label='reward')
                 
-                ax3 = ax2.twinx()
-                ax3.set_ylabel('theta')
-                ax3.spines['right'].set_edgecolor('red')
-                ax3.yaxis.label.set_color('red')
-                ax3.tick_params(axis='y', colors='red')
-                line_3 = ax3.plot(theta_hist, 'r--', label='theta')
+                # ax3 = ax2.twinx()
+                # ax3.set_ylabel('theta')
+                # ax3.spines['right'].set_edgecolor('red')
+                # ax3.yaxis.label.set_color('red')
+                # ax3.tick_params(axis='y', colors='red')
+                # line_3 = ax3.plot(theta_hist, 'r--', label='theta')
                 
-                lines = line_2 + line_3
-                labs = [label.get_label() for label in lines]
-                ax3.legend(lines,labs, frameon=False, loc=4)
+                # lines = line_2 + line_3
+                # labs = [label.get_label() for label in lines]
+                # ax3.legend(lines,labs, frameon=False, loc=4)
                 
-                fig.tight_layout()
-                fig.savefig(self.save_path, dpi=200)
-                plt.close()
+                # fig.tight_layout()
+                # fig.savefig(self.save_path_1 + '_{}.png'.format(self.sigma), dpi=200)
+                # plt.close()
                 
-            else:           
-                max_diff_hist.append(max_diff)    
+            else:
+                max_diff_hist.append(max_diff)
                 print('triumph2')
                 return next_phi_list
             
@@ -368,7 +357,7 @@ class Server(object):
         phi_list = self.phi_list_init
         
         # 计算新的phi_list[T]
-        for idc in range(self.fix_max_iter):
+        for idx in range(self.fix_max_iter):
             increment_matrix, data_matrix, stale_matrix = self.estimate_D(phi_list, reward, theta)
             # print('******************************************************')
             # print('{}, {}, {}, {}'.format(idc, phi_list, self.reward, self.theta))
@@ -388,7 +377,7 @@ class Server(object):
         print('failure2')
         return next_phi_list
 
-
+    # 给定reward, data_matrix, stale_matrix, 方便检查cost的各个部分 --------
     def estimate_direct_func(self, reward, data_matrix, stale_matrix):        
         # 计算单列和
         data_list = [] # [T]
@@ -425,11 +414,14 @@ class Server(object):
 
     def online_train(self):
         # 正式训练前定好一切
-        pre_estimate_path_1 = self.pre_estimate_path_1 + str('_{}.npy'.format(self.sigma))
-        pre_estimate_path_2 = self.pre_estimate_path_2 + str('_{}.npy'.format(self.sigma))
+        pre_estimate_path_1 = self.pre_estimate_path_1 + '_{}.npy'.format(self.sigma)
+        pre_estimate_path_2 = self.pre_estimate_path_2 + '_{}.npy'.format(self.sigma)
         if os.path.exists(pre_estimate_path_1) == False:
             phi_list = self.estimate_phi() # [T]
             result = self.estimate_reward_theta(phi_list) # [K, T]
+            result_1 = np.array(result[0])
+            result_2 = np.array(result[1])
+            result = np.array([result_1, result_2])
             np.save(pre_estimate_path_1, phi_list)
             np.save(pre_estimate_path_2, result)
         
@@ -439,33 +431,33 @@ class Server(object):
         theta = result[0][1]
         res = result[1][1]
         
-        delta_list = []
-        res_list = []
-        los_list_9 = []
-        acc_list_9 = []
-        los_list_19 = []
-        acc_list_19 = []
-        res1_list = []
-        res2_list = []
-        res3_list = []
-        res4_list = []
+        # 尝试所有的变种
         delta_reward_list = []
         delta_theta_list = []
+        # 变种对应的数据，画图2
         hist_increment_matrix = []
         hist_data_matrix = []
         hist_stale_matrix = []
+        # 变种对应的cost理论值
+        hist_res_list = []
+        hist_res1_list = []
+        hist_res2_list = []
+        hist_res3_list = []
+        hist_res4_list = []
+        # 变种对应的loss/accuracy_list的最后一个，画图3
+        hist_global_loss_list = []
+        hist_accuracy_list = []
+        # 变种对应的loss/accuracy_list的整个，画图4
         hist_loss_matrix = []
         hist_acc_matrix = []
-        flag = 0
-        styles = ['^-', 'D-', 'o--', 'x', 'v-', 's-']
+
+        styles = ['^-', 'D-', 'o--', 'x-', 'v-', 's-']
         enum = [[0, -0.3], [0, -0.2], [0, 0], [0, 0.3], [0, 0.45], [0, 0.6]]
+        # enum = [[0, 0]]
         for idx in range(len(enum)):
             delta_com = enum[idx]
             new_reward = reward + delta_com[0]
-            new_theta = theta + delta_com[1]
-            print(new_reward)
-            print(new_theta)
-            delta_list.append('{}'.format(delta_com))
+            new_theta = min(max(0.05, theta + delta_com[1]), 1)
             delta_reward_list.append(delta_com[0])
             delta_theta_list.append(delta_com[1])
 
@@ -479,74 +471,82 @@ class Server(object):
             hist_stale_matrix.append(np.mean(stale_matrix, axis=0))
             
             res, res1, res2, res3, res4 = self.estimate_direct_func(new_reward, data_matrix, stale_matrix)
-            res_list.append(res)
-            res1_list.append(res1)
-            res2_list.append(res2)
-            res3_list.append(res3)
-            res4_list.append(res4)
+            hist_res_list.append(res)
+            hist_res1_list.append(res1)
+            hist_res2_list.append(res2)
+            hist_res3_list.append(res3)
+            hist_res4_list.append(res4)
             
-            # # 画图1
+            # # 画图2，数据
             # for n in range(idx+1):
-            #     if delta_theta_list[n] < 0:
-            #         label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
-            #     elif delta_theta_list[n] == 0:
-            #         label = r'$(R^*, \theta^*$)'
+            #     if delta_theta_list[n] == 0:
+            #         label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(reward, theta)
             #     else:
-            #         label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
+            #         label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(reward, min(max(0.05, theta + delta_theta_list[n]), 1))   
             #     plt.yticks(fontproperties = 'Times New Roman', size = 14)
             #     plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
             #     plt.plot(hist_increment_matrix[n], styles[n], label=label)
             #     plt.ylabel(r'Increment $\Delta$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
             #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
             #     plt.legend(frameon=False)
-            #     plt.savefig(self.save_path_1_delta, dpi=200)
+            #     plt.savefig(self.save_path_2_delta + '_{}.png'.format(self.sigma), dpi=200)
             # plt.close()
 
             # for n in range(idx+1):
-            #     if delta_theta_list[n] < 0:
-            #         label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
-            #     elif delta_theta_list[n] == 0:
-            #         label = r'$(R^*, \theta^*$)'
+            #     if delta_theta_list[n] == 0:
+            #         label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(reward, theta)
             #     else:
-            #         label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
+            #         label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(reward, min(max(0.05, theta + delta_theta_list[n]), 1))
             #     plt.yticks(fontproperties = 'Times New Roman', size = 14)
             #     plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
             #     plt.plot(hist_data_matrix[n], styles[n], label=label)
             #     plt.ylabel(r'Datasize $D$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
             #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
             #     plt.legend(frameon=False)
-            #     plt.savefig(self.save_path_1_data, dpi=200)
+            #     plt.savefig(self.save_path_2_data + '_{}.png'.format(self.sigma), dpi=200)
             # plt.close()
             
             # for n in range(idx+1):
-            #     if delta_theta_list[n] < 0:
-            #         label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
-            #     elif delta_theta_list[n] == 0:
-            #         label = r'$(R^*, \theta^*$)'
+            #     if delta_theta_list[n] == 0:
+            #         label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(reward, theta)
             #     else:
-            #         label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
-            #     plt.ylim(0, 10)
+            #         label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(reward, min(max(0.05, theta + delta_theta_list[n]), 1))   
             #     plt.yticks(fontproperties = 'Times New Roman', size = 14)
             #     plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
             #     plt.plot(hist_stale_matrix[n], styles[n], label=label)
             #     plt.ylabel(r'Staleness $S$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
             #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
             #     plt.legend(frameon=False)
-            #     plt.savefig(self.save_path_1_stale, dpi=200)
+            #     plt.savefig(self.save_path_2_stale + '_{}.png'.format(self.sigma), dpi=200)
             # plt.close()
-
-
-            # 初始化数据
-            self.init_data_net()
-            # numpy 切片格式 [:, :]
-            data_sum_list = [sum(data_matrix[:, t]) for t in range(self.num_round)]
-            # 临时记录，求平均后是self.delta_list
-            delta_matrix = [[] for k in range(self.num_client)]
             
+            # flag = 0
+            # width = 0.17
+            # x = range(len(delta_reward_list))
+            # ticks = [r'$(\theta={:.2f})$'.format(min(max(0.05, theta + delta_theta), 1)) for delta_theta in delta_theta_list]
+            # for n in range(idx+1):
+            #     plt.bar(np.array(range(len(hist_res_list))) - 1.5 * width, hist_res_list, width=width, label='total')
+            #     plt.bar(np.array(range(len(hist_res1_list))) - 0.5 * width, hist_res1_list, width=width, label='datasize')
+            #     plt.bar(np.array(range(len(hist_res2_list))) + 0.5 * width, hist_res2_list, width=width, label='age')
+            #     plt.bar(np.array(range(len(hist_res4_list))) + 1.5 * width, hist_res4_list, width=width, label='reward')
+            #     plt.xticks(x, ticks[:len(x)], fontproperties = 'Times New Roman', size = 10)
+            #     plt.ylabel(r'Theoretic Cost $U$', fontdict={'family':'Times New Roman', 'size':14, 'weight':'bold'})
+            #     if flag == 0:
+            #         plt.legend(frameon=False)
+            #         flag = 1
+            #     plt.savefig(self.save_path_2_cost + '_{}.png'.format(self.sigma), dpi=200)
+            # plt.close()
+            # continue
+        
+            # 初始化数据和网络
+            self.init_data_net()
+            # 数据列求和
+            data_sum_list = [sum(data_matrix[:, t]) for t in range(self.num_round)]
+            # 初始化全局参数
             self.global_parameter = {}
             for key, var in self.net.state_dict().items():
                 self.global_parameter[key] = var.clone()
-            
+            # 初始化loss和accuaracy
             global_loss_list = []
             accuracy_list = []
             
@@ -555,9 +555,6 @@ class Server(object):
                 
                 # 开始训练
                 next_global_parameter = {}
-                local_grad_list = []
-                local_loss_list = []
-                global_grad = 0
                 global_loss = 0
                 for k in range(self.num_client):
                     result = self.client_group.clients[k].local_update(
@@ -579,23 +576,11 @@ class Server(object):
                         else:
                             next_global_parameter[item[0]] += rate * item[1]
                             
-                    local_grad = result[1]
-                    local_grad_list.append(local_grad)
-                    global_grad += rate * local_grad
-                    
                     local_loss = result[2]
-                    local_loss_list.append(local_loss)
                     global_loss += rate * local_loss
                     
-                # 求global_parameters
+                # 求global_parameters和global_loss_list
                 self.global_parameter = next_global_parameter
-                
-                # 求delta
-                for k in range(self.num_client):
-                    delta = rate * torch.sqrt(torch.sum(torch.square(local_grad_list[k] - global_grad))) # 大错，用delta代替Upsilon
-                    delta_matrix[k].append(delta)
-                    
-                # 加入global_loss_list
                 global_loss_list.append(global_loss)
                 
                 # 验证
@@ -618,85 +603,56 @@ class Server(object):
                     acc = correct / total
                     accuracy_list.append(acc)
                     
-                # # 画图2                    
-                # if t == 9:
-                #     los_list_9.append(global_loss_list[-1])
-                #     acc_list_9.append(accuracy_list[-1])   
-                    
-                #     width = 0.8
-                #     x = range(len(delta_reward_list))
-                #     labels = [r'$(R^*, \theta^*-0.3)$', r'$(R^*, \theta^*-0.15)$', r'$(R^*, \theta^*)$', r'$(R^*, \theta^*+0.25)$', r'$(R^*, \theta^*+0.5)$']
-                #     new_gamma = 5e-3
-                #     print('los_list_9', los_list_9)
-                #     cost_1_list = (1 - new_gamma) * np.array(los_list_9)
-                #     cost_2_list = new_gamma * (np.array(delta_reward_list) + reward)
-                #     # plt.bar(x - 1.5 * width, cost_list, color='C0', width=width, label='cost')
-                #     plt.bar(x, cost_1_list, color='C0', width=width, label='loss')
-                #     plt.bar(x, cost_2_list, color='C3', width=width, label='reward', bottom=cost_1_list)
-                #     # plt.bar(x + 1.5 * width, acc_list, color='C3', width=width, label='acc')
-                #     plt.xticks(x, labels[:len(x)])
-                #     plt.ylabel(r'Realistic Cost of Server $U$')
-                #     plt.legend(frameon=False)
-                #     plt.savefig(self.save_path_2_9, dpi=200)
-                #     plt.close()
-                    
-                # if t == 19:
-                #     los_list_19.append(global_loss_list[-1])
-                #     acc_list_19.append(accuracy_list[-1])   
-                    
-                #     width = 0.8
-                #     x = range(len(delta_reward_list))
-                #     labels = [r'$(R^*, \theta^*-0.3)$', r'$(R^*, \theta^*-0.15)$', r'$(R^*, \theta^*)$', r'$(R^*, \theta^*+0.25)$', r'$(R^*, \theta^*+0.5)$']
-                #     new_gamma = 5e-3
-                #     print('los_list_19', los_list_19)
-                #     cost_1_list = (1 - new_gamma) * np.array(los_list_19)
-                #     cost_2_list = new_gamma * (np.array(delta_reward_list) + reward)
-                #     # plt.bar(x - 1.5 * width, cost_list, color='C0', width=width, label='cost')
-                #     plt.bar(x, cost_1_list, color='C0', width=width, label='loss')
-                #     plt.bar(x, cost_2_list, color='C3', width=width, label='reward', bottom=cost_1_list)
-                #     # plt.bar(x + 1.5 * width, acc_list, color='C3', width=width, label='acc')
-                #     plt.xticks(x, labels[:len(x)])
-                #     plt.ylabel(r'Realistic Cost of Server $U$')
-                #     plt.legend(frameon=False)
-                #     plt.savefig(self.save_path_2_19, dpi=200)
-                #     plt.close()
+            # # 画图3，真实的cost
+            # hist_global_loss_list.append(global_loss_list[-1])
+            # hist_accuracy_list.append(accuracy_list[-1])   
             
-            # 画图3
+            # width = 0.8
+            # x = range(len(delta_reward_list))
+            # labels = [r'$(R^*, \theta^*-0.3)$', r'$(R^*, \theta^*-0.15)$', r'$(R^*, \theta^*)$', r'$(R^*, \theta^*+0.25)$', r'$(R^*, \theta^*+0.5)$']
+            # new_gamma = 5e-3
+            # cost_1_list = (1 - new_gamma) * np.array(hist_global_loss_list)
+            # cost_2_list = new_gamma * (np.array(delta_reward_list) + reward)
+            # plt.bar(x, cost_1_list, color='C0', width=width, label='loss')
+            # plt.bar(x, cost_2_list, color='C3', width=width, label='reward', bottom=cost_1_list)
+            # plt.xticks(x, labels[:len(x)])
+            # plt.ylabel(r'Realistic Cost of Server $U$')
+            # plt.legend(frameon=False)
+            # plt.savefig(self.save_path_3 + '_{}.png'.format(self.sigma), dpi=200)
+            # plt.close()
+            
+            # 画图4，真实的loss和accuracy
             hist_loss_matrix.append(global_loss_list)
             hist_acc_matrix.append(accuracy_list)
-            for n in range(idx+1):
-                if delta_theta_list[n] < 0:
-                    label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
-                elif delta_theta_list[n] == 0:
-                    label = r'$(R^*, \theta^*$)'
+            for n in range(idx + 1):
+                if delta_theta_list[n] == 0:
+                    label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(reward, theta)
                 else:
-                    label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])   
+                    label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(reward, min(max(0.05, theta + delta_theta_list[n]), 1))
                 plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
                 plt.plot(hist_loss_matrix[n], styles[n], color='C{}'.format(n), label=label)
                 plt.ylabel('Loss', fontproperties = 'Times New Roman', size = 14)
                 plt.xlabel('Round', fontproperties = 'Times New Roman', size = 14)
                 plt.legend()
-                plt.savefig(self.save_path_3_loss, dpi=200)
+                plt.savefig(self.save_path_4_loss + '_{}.png'.format(self.sigma), dpi=200)
             plt.close()
             
             for n in range(idx+1):
-                if delta_theta_list[n] < 0:
-                    label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
-                elif delta_theta_list[n] == 0:
-                    label = r'$(R^*, \theta^*$)'
+                if delta_theta_list[n] == 0:
+                    label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(reward, theta)
                 else:
-                    label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])  
+                    label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(reward, min(max(0.05, theta + delta_theta_list[n]), 1))   
                 plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
                 plt.plot(hist_acc_matrix[n], styles[n], color='C{}'.format(n), label=label)
                 plt.ylabel('Accuracy', fontproperties = 'Times New Roman', size = 14)
                 plt.xlabel('Round', fontproperties = 'Times New Roman', size = 14)
                 plt.legend()
-                plt.savefig(self.save_path_3_acc, dpi=200)
+                plt.savefig(self.save_path_4_acc + '_{}.png'.format(self.sigma), dpi=200)
             plt.close()
-                
         
 server = Server(args)
-enum = [0, 0.3, 0.6, 1]
+# enum = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1, 2, 3]
+enum = [0.6]
 for item in enum:
     server.sigma = item
     server.online_train()

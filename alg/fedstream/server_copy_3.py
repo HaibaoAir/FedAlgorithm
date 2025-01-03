@@ -63,8 +63,8 @@ args = {
     # self.pso_max_iter = 500
     
     # 二阶段
-    'reward_lb': 30,
-    'reward_ub': 80,
+    'reward_lb': 1,
+    'reward_ub': 100,
     'theta_lb': 0.1,
     'theta_ub': 1,
     'pop': 3000,
@@ -202,8 +202,8 @@ class Server(object):
                         item3 = 2 * self.beta_list[k] * data_matrix[k][tau]
                         item += item1 * (item2 - item3)
                     increment = 1 / (2 * self.alpha_list[k]) * item
-                    if increment <= 0:
-                        print('dual')
+                    # if increment <= 0:
+                    #     print('dual')
                     increment = max(0, increment) # 好哇好
                     increment_list.append(increment)
                 increment_list.append(0)
@@ -427,7 +427,6 @@ class Server(object):
         reward = result[0][0]
         theta = result[0][1]
         res = result[1][1]
-        print('sigma:{}, reward:{}, theta:{}'.format(self.sigma, reward, theta))
         
         # 尝试所有的变种
         delta_reward_list = []
@@ -449,14 +448,13 @@ class Server(object):
         hist_loss_matrix = []
         hist_acc_matrix = []
 
-        flag = 0
         styles = ['^-', 'D-', 'o--', 'x-', 'v-', 's-']
         enum = [[0, -0.3], [0, -0.2], [0, 0], [0, 0.3], [0, 0.45], [0, 0.6]]
+        # enum = [[0, 0]]
         for idx in range(len(enum)):
             delta_com = enum[idx]
             new_reward = reward + delta_com[0]
-            new_theta = min(max(0, theta + delta_com[1]), 1)
-            print('sigma:{}, new_reward:{}, new_theta:{}'.format(self.sigma, new_reward, new_theta))
+            new_theta = min(max(0.05, theta + delta_com[1]), 1)
             delta_reward_list.append(delta_com[0])
             delta_theta_list.append(delta_com[1])
 
@@ -476,78 +474,79 @@ class Server(object):
             hist_res3_list.append(res3)
             hist_res4_list.append(res4)
             
-            # 画图2，数据
-            for n in range(idx+1):
-                if delta_theta_list[n] < 0:
-                    label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
-                elif delta_theta_list[n] == 0:
-                    label = r'$(R^*={}, \theta^*={}$)'.format(reward, theta)
-                else:
-                    label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
-                plt.yticks(fontproperties = 'Times New Roman', size = 14)
-                plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
-                plt.plot(hist_increment_matrix[n], styles[n], label=label)
-                plt.ylabel(r'Increment $\Delta$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
-                plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
-                plt.legend(frameon=False)
-                plt.savefig(self.save_path_2_delta + '_{}.png'.format(self.sigma), dpi=200)
-            plt.close()
+            # # 画图2，数据
+            # for n in range(idx+1):
+            #     if delta_theta_list[n] < 0:
+            #         label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
+            #     elif delta_theta_list[n] == 0:
+            #         label = r'$(R^*={}, \theta^*={}$)'.format(reward, theta)
+            #     else:
+            #         label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
+            #     plt.yticks(fontproperties = 'Times New Roman', size = 14)
+            #     plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
+            #     plt.plot(hist_increment_matrix[n], styles[n], label=label)
+            #     plt.ylabel(r'Increment $\Delta$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.legend(frameon=False)
+            #     plt.savefig(self.save_path_2_delta + '_{}.png'.format(self.sigma), dpi=200)
+            # plt.close()
 
-            for n in range(idx+1):
-                if delta_theta_list[n] < 0:
-                    label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
-                elif delta_theta_list[n] == 0:
-                    label = r'$(R^*={}, \theta^*={}$)'.format(reward, theta)
-                else:
-                    label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
-                plt.yticks(fontproperties = 'Times New Roman', size = 14)
-                plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
-                plt.plot(hist_data_matrix[n], styles[n], label=label)
-                plt.ylabel(r'Datasize $D$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
-                plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
-                plt.legend(frameon=False)
-                plt.savefig(self.save_path_2_data + '_{}.png'.format(self.sigma), dpi=200)
-            plt.close()
+            # for n in range(idx+1):
+            #     if delta_theta_list[n] < 0:
+            #         label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
+            #     elif delta_theta_list[n] == 0:
+            #         label = r'$(R^*={}, \theta^*={}$)'.format(reward, theta)
+            #     else:
+            #         label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
+            #     plt.yticks(fontproperties = 'Times New Roman', size = 14)
+            #     plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
+            #     plt.plot(hist_data_matrix[n], styles[n], label=label)
+            #     plt.ylabel(r'Datasize $D$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.legend(frameon=False)
+            #     plt.savefig(self.save_path_2_data + '_{}.png'.format(self.sigma), dpi=200)
+            # plt.close()
             
-            for n in range(idx+1):
-                if delta_theta_list[n] < 0:
-                    label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
-                elif delta_theta_list[n] == 0:
-                    label = r'$(R^*, \theta^*$)'
-                else:
-                    label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
-                plt.ylim(0, 10)
-                plt.yticks(fontproperties = 'Times New Roman', size = 14)
-                plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
-                plt.plot(hist_stale_matrix[n], styles[n], label=label)
-                plt.ylabel(r'Staleness $S$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
-                plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
-                plt.legend(frameon=False)
-                plt.savefig(self.save_path_2_stale + '_{}.png'.format(self.sigma), dpi=200)
-            plt.close()
+            # for n in range(idx+1):
+            #     if delta_theta_list[n] < 0:
+            #         label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
+            #     elif delta_theta_list[n] == 0:
+            #         label = r'$(R^*, \theta^*$)'
+            #     else:
+            #         label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
+            #     plt.ylim(0, 10)
+            #     plt.yticks(fontproperties = 'Times New Roman', size = 14)
+            #     plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
+            #     plt.plot(hist_stale_matrix[n], styles[n], label=label)
+            #     plt.ylabel(r'Staleness $S$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.legend(frameon=False)
+            #     plt.savefig(self.save_path_2_stale + '_{}.png'.format(self.sigma), dpi=200)
+            # plt.close()
             
-            width = 0.025
-            for n in range(idx+1):
-                if delta_theta_list[n] < 0:
-                    label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
-                elif delta_theta_list[n] == 0:
-                    label = r'$(R^*, \theta^*$)'
-                else:
-                    label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
-                plt.ylim(0, 10)
-                plt.yticks(fontproperties = 'Times New Roman', size = 14)
-                plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 14)
-                plt.bar(np.array(hist_res_list[n]) - 2 * width, styles[n], width=width, label=label)
-                plt.bar(np.array(hist_res1_list[n]) - width, styles[n], width=width, label=label)
-                plt.bar(np.array(hist_res2_list[n]), styles[n], width=width, label=label)
-                plt.bar(np.array(hist_res3_list[n]) + width, styles[n], width=width, label=label)
-                plt.bar(np.array(hist_res4_list[n]) + 2 * width, styles[n], width=width, label=label)
-                plt.ylabel(r'Staleness $S$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
-                plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
-                plt.legend(frameon=False)
-                plt.savefig(self.save_path_2_cost + '_{}.png'.format(self.sigma), dpi=200)
-            plt.close()
-            continue
+            # width = 0.17
+            # flag = 0
+            # for n in range(idx+1):
+            #     if delta_theta_list[n] < 0:
+            #         label = r'$(R^*, \theta^*{}$)'.format(delta_theta_list[n])
+            #     elif delta_theta_list[n] == 0:
+            #         label = r'$(R^*, \theta^*$)'
+            #     else:
+            #         label = r'$(R^*, \theta^*+{}$)'.format(delta_theta_list[n])
+            #     plt.yticks(fontproperties = 'Times New Roman', size = 14)
+            #     plt.xticks(fontproperties = 'Times New Roman', size = 14)
+            #     plt.bar(np.array(range(len(hist_res_list))) - 1.5 * width, hist_res_list, width=width, label='total')
+            #     plt.bar(np.array(range(len(hist_res1_list))) - 0.5 * width, hist_res1_list, width=width, label='datasize')
+            #     plt.bar(np.array(range(len(hist_res2_list))) + 0.5 * width, hist_res2_list, width=width, label='age')
+            #     plt.bar(np.array(range(len(hist_res4_list))) + 1.5 * width, hist_res4_list, width=width, label='reward')
+            #     plt.ylabel(r'Theoretic Cost $U$', fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     plt.xlabel(r'R:{},$\theta$:{}'.format(reward, theta), fontdict={'family':'Times New Roman', 'size':16, 'weight':'bold'})
+            #     if flag == 0:
+            #         plt.legend(frameon=False)
+            #         flag = 1
+            #     plt.savefig(self.save_path_2_cost + '_{}.png'.format(self.sigma), dpi=200)
+            # plt.close()
+            # continue
         
             # 初始化数据和网络
             self.init_data_net()
@@ -665,11 +664,12 @@ class Server(object):
                 plt.savefig(self.save_path_4_acc + '_{}.png'.format(self.sigma), dpi=200)
             plt.close()
                 
-        
 server = Server(args)
-enum = [0, 1]
+# enum = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+enum = [0, 0.1, 0.6, 0.9]
 for item in enum:
-    server.sigma = item
+    server.sigma = 0.425 + 0.1 * item
+    server.kappa_3 = 5e-2
     server.online_train()
 
 # R(T) = 0怎么保证：最后一轮R强制为0

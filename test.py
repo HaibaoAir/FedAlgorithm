@@ -7,11 +7,17 @@ from copy import deepcopy, copy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
+import torch.optim as optim 
 from sko.PSO import PSO
 import numpy as np
 from matplotlib import pyplot as plt
 import numpy as np
+
+path = 'logs/fedstream/pre_estimate_5_2'
+for i in [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1, 2, 3]:
+    result = np.load(path + '_{}.npy'.format(i))
+    print(result[0])
+exit(0)
 
 a = [random.randint(500, 1000) for _ in range(30)]
 print(a)
@@ -32,10 +38,8 @@ b = np.random.randint(10)
 print(b)
 exit(0)
 
-
 x = np.arange(1,10,1)
 y = np.arange(1,10,1)
-
 
 for k in range(0, 1, 0.2):
     print(k)
