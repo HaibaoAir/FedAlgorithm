@@ -13,10 +13,28 @@ import numpy as np
 from matplotlib import pyplot as plt
 import numpy as np
 
+reward_list = []
+theta_list = []
+# 0.25, 0.4, 0.41, 0.415, 0.42, 
+sigma_list = [0.425, 0.45, 0.75, 1, 1.25]
+poison_list = [0.05, 0.1, 0.3, 0.5, 0.9]
 path = 'logs/fedstream/pre_estimate_5_2'
-for i in [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1, 2, 3]:
+for i in sigma_list:
     result = np.load(path + '_{}.npy'.format(i))
     print(result[0])
+    reward_list.append(result[0][0])
+    theta_list.append(result[0][1])
+    
+plt.plot(theta_list, reward_list, marker='o', markerfacecolor='white', color='k', linestyle='--')
+plt.xlabel('Conservation Rate $\\theta$', fontproperties = 'Times New Roman', size = 14)
+plt.ylabel('Reward $R$', fontproperties = 'Times New Roman', size = 14)
+plt.xlim(0, 1)
+plt.ylim(30, 100)
+for poison, theta, reward in zip(poison_list, theta_list, reward_list):
+    plt.text(theta, reward, '$\sigma={}$ \n $\\theta={:.2f}, R={:.2f}$'.format(poison, theta, reward), fontproperties = 'Times New Roman', size = 8)
+
+plt.grid(True)
+plt.savefig('test.png', dpi=200)
 exit(0)
 
 a = [random.randint(500, 1000) for _ in range(30)]

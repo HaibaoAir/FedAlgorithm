@@ -1,1 +1,0 @@
-cifar10_cnn_1cifar10_cnn_1

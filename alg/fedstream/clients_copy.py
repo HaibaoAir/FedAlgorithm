@@ -159,23 +159,22 @@ class Client(object):
                      datasize):
 
         self.global_parameters = global_parameters
-        sigma = sigma / 20
         
         # 收集数据
         if t == 0:
             datasize = int(datasize)
             self.init_data(t, k, datasize)
-            self.poison(0.6) # 本身的有毒性
+            self.poison(0.8) # 本身的有毒性
             # print('init_data_1:{}, init_data_2:{}, increment_next:{}'.format(datasize, len(self.data), increment_next))
         else:
-            self.poison(0.6) # 后续的有毒性
+            self.poison(0.8) # 后续的有毒性
             # print('origin', len(self.data))
             self.discard_data(theta)
             # print('decay', len(self.data))
             # increment = int(datasize - theta * len(self.data)) 串联了呀
             increment = int(datasize - len(self.data))
             self.collect_data(t, k, increment)
-            # print('accumu', len(self.data)) 
+            # print('accumu', len(self.data))
             # print('res_data_1:{}, res_data_2:{}, theta:{}, increment:{}, increment_next:{}'.format(datasize, len(self.data), theta, increment, increment_next))
         
         
@@ -195,13 +194,17 @@ class Client(object):
             print(count_dict)
             self.count_matrix.append(list(count_dict.values()))
             material = np.array(self.count_matrix)
-            for target in range(11):
-                if target == 0:
-                    plt.bar(np.array(range(material.shape[0])), material[:, target], width = width, label='{}'.format(target)) 
-                elif target < 10:
-                    plt.bar(np.array(range(material.shape[0])), material[:, target], width = width, bottom=np.sum(material[:, tar] for tar in range(target)), label='{}'.format(target))
-                else:
-                    plt.bar(np.array(range(material.shape[0])), material[:, target], width = width, bottom=np.sum(material[:, tar] for tar in range(10)), color='white', edgecolor='black', hatch='/', label='{}'.format('poison'))
+            # for target in range(11):
+            #     if target == 0:
+            #         plt.bar(np.array(range(material.shape[0])), material[:, target], width = width, color='C0', edgecolor='black', label='{}'.format('valid_data')) 
+            #     elif target < 10:
+            #         plt.bar(np.array(range(material.shape[0])), material[:, target], width = width, color='C0', edgecolor='black', bottom=np.sum(material[:, tar] for tar in range(target)))
+            #     else:
+            #         plt.bar(np.array(range(material.shape[0])), material[:, target], width = width, bottom=np.sum(material[:, tar] for tar in range(10)), color='white', edgecolor='black', hatch='/', label='{}'.format('stale_data'))
+            a = np.sum(material[:, :-1], axis=1)
+            b = material[:, -1]
+            plt.bar(np.array(range(material.shape[0])), a, width = width, color='C0', edgecolor='black', label='{}'.format('valid_data')) 
+            plt.bar(np.array(range(material.shape[0])), b, width = width, bottom=a, color='white', edgecolor='black', hatch='/', label='{}'.format('stale_data'))
             plt.xlabel('Round')
             plt.ylabel('Data Distribution')
             plt.legend()

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from copy import deepcopy
 
-from alg.fedstream.clients_old import Client_Group
+from alg.fedstream.clients_copy import Client_Group
 from model.mnist import MNIST_Linear, MNIST_CNN
 from model.cifar import Cifar10_CNN
 
@@ -106,7 +106,6 @@ class Server(object):
                                          )
         self.scales = self.client_group.scales
         self.rate = [item / sum(self.scales) for item in self.scales]
-        self.test_dataloader = self.client_group.test_dataloader
  
         # 定义net
         self.net = None
@@ -497,9 +496,10 @@ class Server(object):
             increment_list_3.append(sum(increment_matrix[0]))
             plt.bar(np.array(num_list)+width, increment_list_3, width=width, hatch='\\', color='C2', label=r'$\Delta = random$')
             
-            plt.xticks(num_list)
-            plt.ylabel(r'Total Increment $\sum \Delta(t)$')
-            plt.xlabel(r'Number of Clients $N$')
+            plt.xticks(num_list, fontproperties = 'Times New Roman', size = 14)
+            plt.yticks(fontproperties = 'Times New Roman', size = 14)
+            plt.ylabel(r'Total Increment $\sum \Delta(t)$', fontproperties = 'Times New Roman', size = 18)
+            plt.xlabel(r'Number of Clients $N$', fontproperties = 'Times New Roman', size = 18)
             plt.legend(frameon=False)
             plt.savefig(self.save_path_4, dpi=200)
             plt.close()
@@ -543,9 +543,10 @@ class Server(object):
             utility_list_3.append(max(self.calculate_utility(phi_list, increment_matrix, data_matrix)[0], 0))
             plt.bar(np.array(num_list) + width, utility_list_3, width, color='C2', hatch='\\', label=r'$\Delta = random$')
             
-            plt.xticks(num_list)
-            plt.xlabel(r'Number of Clients $N$')
-            plt.ylabel(r'Utility of Client $U_k$')
+            plt.xticks(num_list, fontproperties = 'Times New Roman', size = 14)
+            plt.yticks(fontproperties = 'Times New Roman', size = 14)
+            plt.xlabel(r'Number of Clients $N$', fontproperties = 'Times New Roman', size = 18)
+            plt.ylabel(r'Utility of Client $U_k$', fontproperties = 'Times New Roman', size = 18)
             if flag == 0:
                 flag = 1
                 plt.legend()
