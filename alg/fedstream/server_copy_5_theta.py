@@ -39,14 +39,14 @@ args = {
     'save_path_3': '../../logs/fedstream/5_server_3',
     'save_path_4_loss': '../../logs/fedstream/5_server_4_loss',
     'save_path_4_acc': '../../logs/fedstream/5_server_4_acc',
-    'pre_estimate_path_1': '../../logs/fedstream/pre_estimate_5_1',
-    'pre_estimate_path_2': '../../logs/fedstream/pre_estimate_5_2',
+    'pre_estimate_path_1': '../../logs/fedstream/pre_estimate_5_3',
+    'pre_estimate_path_2': '../../logs/fedstream/pre_estimate_5_4',
     
     'delta': 1,
     'psi': 1,
     'alpha': 1e-3,
     'beta': 5e-6,
-    'sigma': 1.25,
+    'sigma': 0.75,
     
     'kappa_1': 1,
     'kappa_2': 1,
@@ -432,6 +432,7 @@ class Server(object):
         reward = result[0][0]
         theta = result[0][1]
         res = result[1][1]
+        exit(0)
         
         # 尝试所有的变种
         delta_reward_list = []
@@ -454,7 +455,8 @@ class Server(object):
         hist_acc_matrix = []
 
         color = ['C0', 'C2', 'C3', 'C4', 'C5']
-        marker = ['^', 'o', 'x', 'v', 'D', 's', '+', 'p', ',']
+        marker = ['^', 's', 'o', 'v', 'D', 's', '+', 'p', ',']
+        linestyle = [':', '-', ':', ':']
         # enum = [[0, 0], [0, 0.15], [0, 0.3], [0, 0.45], [0, 0.6]]
         sigma_dict = {1.25: 0.10, 1: 0.32, 0.75: 0.51, 0.475: 0.71, 0: 0.90}
         enum = [[0, -theta + 0.10], [0, -theta + 0.51], [0, -theta + 0.71], [0, -theta + 0.9]]
@@ -486,11 +488,9 @@ class Server(object):
             #     tmp_theta = min(max(0.05, theta + delta_theta_list[n]), 1)
             #     if tmp_theta == sigma_dict[self.sigma]:
             #         label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(new_reward, tmp_theta)
-            #         linestyle = '--'
             #     else:
             #         label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(new_reward, tmp_theta)
-            #         linestyle = '-'
-            #     plt.plot(hist_increment_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle, label=label)
+            #     plt.plot(hist_increment_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle[n], label=label)
             #     plt.ylabel(r'Increment $\Delta$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
             #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
             #     plt.yticks(fontproperties = 'Times New Roman', size = 18)
@@ -504,11 +504,9 @@ class Server(object):
             #     tmp_theta = min(max(0.05, theta + delta_theta_list[n]), 1)
             #     if tmp_theta == sigma_dict[self.sigma]:
             #         label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(new_reward, tmp_theta)
-            #         linestyle = '--'
             #     else:
             #         label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(new_reward, tmp_theta)
-            #         linestyle = '-'
-            #     plt.plot(hist_data_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle, label=label)
+            #     plt.plot(hist_data_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle[n], label=label)
             #     plt.ylabel(r'Datasize $D$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
             #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
             #     plt.yticks(fontproperties = 'Times New Roman', size = 18)
@@ -522,11 +520,9 @@ class Server(object):
             #     tmp_theta = min(max(0.05, theta + delta_theta_list[n]), 1)
             #     if tmp_theta == sigma_dict[self.sigma]:
             #         label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(new_reward, tmp_theta)
-            #         linestyle = '--'
             #     else:
             #         label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(new_reward, tmp_theta)
-            #         linestyle = '-'
-            #     plt.plot(hist_stale_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle, label=label)
+            #     plt.plot(hist_stale_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle[n], label=label)
             #     plt.ylabel(r'Staleness $S$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
             #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
             #     plt.yticks(fontproperties = 'Times New Roman', size = 18)
@@ -652,11 +648,9 @@ class Server(object):
                 tmp_theta = min(max(0.05, theta + delta_theta_list[n]), 1)
                 if tmp_theta == sigma_dict[self.sigma]:
                     label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(new_reward, tmp_theta)
-                    linestyle = '--'
                 else:
                     label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(new_reward, tmp_theta)
-                    linestyle = '-'
-                plt.plot(hist_loss_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle, label=label)
+                plt.plot(hist_loss_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle[n], label=label)
                 plt.ylabel('Loss', fontproperties = 'Times New Roman', size = 18)
                 plt.xlabel('Round $T$', fontproperties = 'Times New Roman', size = 18)
                 plt.yticks(fontproperties = 'Times New Roman', size = 18)
@@ -669,11 +663,9 @@ class Server(object):
                 tmp_theta = min(max(0.05, theta + delta_theta_list[n]), 1)
                 if tmp_theta == sigma_dict[self.sigma]:
                     label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(reward, tmp_theta)
-                    linestyle = '--'
                 else:
                     label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(reward, tmp_theta)
-                    linestyle = '-'
-                plt.plot(hist_acc_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle, label=label)
+                plt.plot(hist_acc_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle[n], label=label)
                 plt.ylabel('Accuracy', fontproperties = 'Times New Roman', size = 18)
                 plt.xlabel('Round $T$', fontproperties = 'Times New Roman', size = 18)
                 plt.yticks(fontproperties = 'Times New Roman', size = 18)

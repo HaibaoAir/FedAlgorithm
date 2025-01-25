@@ -13,11 +13,45 @@ import numpy as np
 from matplotlib import pyplot as plt
 import numpy as np
 
+from mpl_toolkits.mplot3d import Axes3D
+
+x = np.arange(0, 5, 0.1)
+y = x + (1/x)
+print(x)
+print(y)
+plt.plot(x, y)
+plt.savefig('test.png')
+exit(0)
+
+# 示例函数
+def example_function(input_scalar):
+    x = np.linspace(-5, 5, 10)
+    y = np.linspace(-5, 5, 10)
+    X, Y = np.meshgrid(x, y)
+    Z = np.sin(X**2 + Y**2) * input_scalar
+    return X, Y, Z
+
+# 输入标量
+input_scalar = 3
+X, Y, Z = example_function(input_scalar)
+
+# 绘制3D表面图
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+surf = ax.plot_surface(X, Y, Z, cmap='viridis')
+fig.colorbar(surf, label='Value')  # 添加颜色条
+ax.set_title(f"3D Surface Plot for Input {input_scalar}")
+ax.set_xlabel('X-axis')
+ax.set_ylabel('Y-axis')
+ax.set_zlabel('Value')
+plt.savefig('test.png')
+exit()
+
 reward_list = []
 theta_list = []
 # 0.25, 0.4, 0.41, 0.415, 0.42, 
-sigma_list = [0.425, 0.45, 0.75, 1, 1.25]
-poison_list = [0.05, 0.1, 0.3, 0.5, 0.9]
+sigma_list = [0.475, 0.75, 1, 1.25]
+poison_list = [0.07, 0.25, 0.5, 0.8]
 path = 'logs/fedstream/pre_estimate_5_2'
 for i in sigma_list:
     result = np.load(path + '_{}.npy'.format(i))

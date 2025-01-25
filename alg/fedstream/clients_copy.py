@@ -164,10 +164,10 @@ class Client(object):
         if t == 0:
             datasize = int(datasize)
             self.init_data(t, k, datasize)
-            self.poison(0.8) # 本身的有毒性
+            self.poison(0.25) # 本身的有毒性
             # print('init_data_1:{}, init_data_2:{}, increment_next:{}'.format(datasize, len(self.data), increment_next))
         else:
-            self.poison(0.8) # 后续的有毒性
+            self.poison(0.25) # 后续的有毒性
             # print('origin', len(self.data))
             self.discard_data(theta)
             # print('decay', len(self.data))

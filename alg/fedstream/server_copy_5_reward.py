@@ -455,9 +455,9 @@ class Server(object):
 
         color = ['C0', 'C2', 'C3', 'C4', 'C5']
         marker = ['^', 'o', 'x', 'v', 'D', 's', '+', 'p', ',']
-        enum = [[-50, 0], [-25, 0], [0, 0], [25, 0], [50, 0]]
-        # sigma_dict = {1.25: 0.10, 1: 0.32, 0.75: 0.51, 0.475: 0.71, 0: 0.90}
-        # enum = [[0, -theta + 0.10], [0, -theta + 0.51], [0, -theta + 0.71], [0, -theta + 0.9]]
+        enum = [[-50, 0], [0, 0], [50, 0], [100, 0]]
+        # sigma_dict = {1.25: 89.56, 1: 76.12, 0.75: 61.62, 0.475: 42.40, 0: 10}
+        # enum = [[-reward + 89.56, 0], [-reward + 61.62, 0], [-reward + 42.40, 0], [-reward + 10, 0]]
         for idx in range(len(enum)):
             delta_com = enum[idx]
             new_reward = reward + delta_com[0]
@@ -485,17 +485,20 @@ class Server(object):
             for n in range(idx+1):
                 tmp_reward = reward + delta_reward_list[n]
                 if delta_reward_list[n] == 0:
-                    label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(tmp_reward, new_theta)
+                    label = r'$(R^*={:.2f}, \theta^*$)'.format(tmp_reward)
                     linestyle = '--'
+                elif delta_reward_list[n] < 0:
+                    label = r'$(R^*{}, \theta^*$)'.format(delta_reward_list[n])
+                    linestyle = '-'
                 else:
-                    label = r'$(R={:.2f}, \theta^*={:.2f}$)'.format(tmp_reward, new_theta)
+                    label = r'$(R^*+{}, \theta^*$)'.format(delta_reward_list[n])
                     linestyle = '-'
                 plt.plot(hist_increment_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle, label=label)
                 plt.ylabel(r'Increment $\Delta$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
                 plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
                 plt.yticks(fontproperties = 'Times New Roman', size = 18)
                 plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 18)
-                plt.ylim(0, 100)
+                plt.ylim(0, 150)
                 plt.legend(frameon=False, prop={'family':'Times New Roman', 'size':10, 'weight':'bold'})
                 plt.savefig(self.save_path_2_delta + '_{}.png'.format(self.sigma), dpi=200, bbox_inches='tight')
             plt.close()
@@ -503,10 +506,13 @@ class Server(object):
             for n in range(idx+1):
                 tmp_reward = reward + delta_reward_list[n]
                 if delta_reward_list[n] == 0:
-                    label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(tmp_reward, new_theta)
+                    label = r'$(R^*={:.2f}, \theta^*$)'.format(tmp_reward)
                     linestyle = '--'
+                elif delta_reward_list[n] < 0:
+                    label = r'$(R^*{}, \theta^*$)'.format(delta_reward_list[n])
+                    linestyle = '-'
                 else:
-                    label = r'$(R={:.2f}, \theta^*={:.2f}$)'.format(tmp_reward, new_theta)
+                    label = r'$(R^*+{}, \theta^*$)'.format(delta_reward_list[n])
                     linestyle = '-'
                 plt.plot(hist_data_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle, label=label)
                 plt.ylabel(r'Datasize $D$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
@@ -521,10 +527,13 @@ class Server(object):
             for n in range(idx+1):
                 tmp_reward = reward + delta_reward_list[n]
                 if delta_reward_list[n] == 0:
-                    label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(tmp_reward, new_theta)
+                    label = r'$(R^*={:.2f}, \theta^*$)'.format(tmp_reward)
                     linestyle = '--'
+                elif delta_reward_list[n] < 0:
+                    label = r'$(R^*{}, \theta^*$)'.format(delta_reward_list[n])
+                    linestyle = '-'
                 else:
-                    label = r'$(R={:.2f}, \theta^*={:.2f}$)'.format(tmp_reward, new_theta)
+                    label = r'$(R^*+{}, \theta^*$)'.format(delta_reward_list[n])
                     linestyle = '-'
                 plt.plot(hist_stale_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle, label=label)
                 plt.ylabel(r'Staleness $S$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
@@ -631,10 +640,13 @@ class Server(object):
                 if delta_reward_list[n] == 0:
                     label = r'$(R^*={:.2f}, \theta^*$)'.format(tmp_reward)
                     labels.append(label)
-                else:
-                    label = r'$(R^={:.2f}, \theta^*$)'.format(tmp_reward)
+                elif delta_reward_list[n] < 0:
+                    label = r'$(R^*{}, \theta^*$)'.format(delta_reward_list[n])
                     labels.append(label)
-            new_gamma = 5e-3
+                else:
+                    label = r'$(R^*+{}, \theta^*$)'.format(delta_reward_list[n])
+                    labels.append(label)                    
+            new_gamma = 1e-3
             cost_1_list = (1 - new_gamma) * (1 - np.array(hist_accuracy_list))
             cost_2_list = new_gamma * (np.array(delta_reward_list) + reward)
             plt.bar(x, cost_1_list, color='C0', width=width, label='loss')
@@ -651,11 +663,14 @@ class Server(object):
             for n in range(idx + 1):
                 tmp_reward = reward + delta_reward_list[n]
                 if delta_reward_list[n] == 0:
-                    label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(tmp_reward, new_theta)
+                    label = r'$(R^*={:.2f}, \theta^*$)'.format(tmp_reward)
                     linestyle = '--'
-                else:
-                    label = r'$(R={:.2f}, \theta^*={:.2f}$)'.format(tmp_reward, new_theta)
+                elif delta_reward_list[n] < 0:
+                    label = r'$(R^*{}, \theta^*$)'.format(delta_reward_list[n])
                     linestyle = '-'
+                else:
+                    label = r'$(R^*+{}, \theta^*$)'.format(delta_reward_list[n]) 
+                    linestyle = '-' 
                 plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 18)
                 plt.yticks(fontproperties = 'Times New Roman', size = 18)
                 plt.plot(hist_loss_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle, label=label)
@@ -668,11 +683,14 @@ class Server(object):
             for n in range(idx+1):
                 tmp_reward = reward + delta_reward_list[n]
                 if delta_reward_list[n] == 0:
-                    label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(tmp_reward, new_theta)
+                    label = r'$(R^*={:.2f}, \theta^*$)'.format(tmp_reward)
                     linestyle = '--'
-                else:
-                    label = r'$(R={:.2f}, \theta^*={:.2f}$)'.format(tmp_reward, new_theta)
+                elif delta_reward_list[n] < 0:
+                    label = r'$(R^*{}, \theta^*$)'.format(delta_reward_list[n])
                     linestyle = '-'
+                else:
+                    label = r'$(R^*+{}, \theta^*$)'.format(delta_reward_list[n]) 
+                    linestyle = '-' 
                 plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 18)
                 plt.yticks(fontproperties = 'Times New Roman', size = 18)
                 plt.plot(hist_acc_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle, label=label)
