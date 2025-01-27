@@ -15,6 +15,14 @@ import numpy as np
 
 from mpl_toolkits.mplot3d import Axes3D
 
+a = [1,2,3]
+b = a[:2]
+c = a[-1:]
+print(b)
+print(c)
+print(b + c)
+exit(0)
+
 x = np.arange(0, 5, 0.1)
 y = x + (1/x)
 print(x)

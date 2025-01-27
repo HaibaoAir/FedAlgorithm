@@ -11,7 +11,7 @@ from copy import deepcopy
 
 import sys
 sys.path.append('../..')
-from model.mnist import MNIST_Linear, MNIST_CNN
+from model.mnist import MNIST_MLP, MNIST_CNN
 from model.cifar import Cifar10_CNN
 
 seed = 10
@@ -80,8 +80,8 @@ class Client(object):
 
         self.net = None
         if self.dataset_name == 'mnist':
-            if net_name == 'linear':
-                self.net = MNIST_Linear()
+            if net_name == 'mlp':
+                self.net = MNIST_MLP()
             elif net_name == 'cnn':
                 self.net = MNIST_CNN()
             else:
@@ -156,7 +156,8 @@ class Client(object):
                      global_parameters,
                      theta,
                      increment_next,
-                     datasize):
+                     datasize,
+                     real_sigma):
 
         self.global_parameters = global_parameters
         
@@ -164,10 +165,10 @@ class Client(object):
         if t == 0:
             datasize = int(datasize)
             self.init_data(t, k, datasize)
-            self.poison(0.25) # 本身的有毒性
+            self.poison(real_sigma) # 本身的有毒性
             # print('init_data_1:{}, init_data_2:{}, increment_next:{}'.format(datasize, len(self.data), increment_next))
         else:
-            self.poison(0.25) # 后续的有毒性
+            self.poison(real_sigma) # 后续的有毒性
             # print('origin', len(self.data))
             self.discard_data(theta)
             # print('decay', len(self.data))

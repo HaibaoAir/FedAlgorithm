@@ -14,7 +14,7 @@ from tqdm import tqdm
 from copy import deepcopy
 
 from alg.fedstream.clients_copy import Client_Group
-from model.mnist import MNIST_Linear, MNIST_CNN
+from model.mnist import MNIST_MLP, MNIST_CNN
 from model.cifar import Cifar10_CNN
 
 from sko.PSO import PSO
@@ -22,13 +22,12 @@ from sko.PSO import PSO
 args = {
     'num_client': 5,
     'num_sample': 5,
-    'dataset': 'mnist',
     'is_iid': 2,
     'a': 1.0,
-    'model': 'cnn',
+
     'learning_rate': 0.01,
-    'num_round': 20,
-    'num_epoch': 2,
+    'num_round': 50,
+    
     'batch_size': 32,
     'eval_freq': 1,
     'save_path_1': '../../logs/fedstream/5_server_1',
@@ -36,16 +35,132 @@ args = {
     'save_path_2_data': '../../logs/fedstream/5_server_2_data',
     'save_path_2_stale': '../../logs/fedstream/5_server_2_stale',
     'save_path_2_cost': '../../logs/fedstream/5_server_2_cost',
-    'save_path_3': '../../logs/fedstream/5_server_3',
-    'save_path_4_loss': '../../logs/fedstream/5_server_4_loss',
-    'save_path_4_acc': '../../logs/fedstream/5_server_4_acc',
     'pre_estimate_path_1': '../../logs/fedstream/pre_estimate_5_3',
     'pre_estimate_path_2': '../../logs/fedstream/pre_estimate_5_4',
+    
+    # # 配置mlp1
+    # 'dataset': 'mnist',
+    # 'model': 'mlp',
+    # 'num_epoch': 20,
+    # 'save_path_3': '../../logs/fedstream/5_server_31',
+    # 'save_path_4_loss': '../../logs/fedstream/5_server_4_loss1',
+    # 'save_path_4_acc': '../../logs/fedstream/5_server_4_acc1',
+    # 'con_1': 0.1,
+    # 'con_2': 0.5,
+    # 'con_3': 0.8,
+    # 'con_4': 0.9,
+    # 'real_sigma': 0.1,
+    
+    # # 配置mlp2
+    # 'dataset': 'mnist',
+    # 'model': 'mlp',
+    # 'num_epoch': 20,
+    # 'save_path_3': '../../logs/fedstream/5_server_31',
+    # 'save_path_4_loss': '../../logs/fedstream/5_server_4_loss12',
+    # 'save_path_4_acc': '../../logs/fedstream/5_server_4_acc12',
+    # 'con_1': 0.1,
+    # 'con_2': 0.5,
+    # 'con_3': 0.8,
+    # 'con_4': 0.9,
+    # 'real_sigma': 0.25,
+    
+    # 配置mlp3
+    'dataset': 'mnist',
+    'model': 'mlp',
+    'num_epoch': 20,
+    'save_path_3': '../../logs/fedstream/5_server_31',
+    'save_path_4_loss': '../../logs/fedstream/5_server_4_loss13',
+    'save_path_4_acc': '../../logs/fedstream/5_server_4_acc13',
+    'con_1': 0.1,
+    'con_2': 0.5,
+    'con_3': 0.8,
+    'con_4': 0.9,
+    'real_sigma': 0.5,
+    
+    # -----------------------------------------------------------------------------------------
+    # # 配置cnn1
+    # 'dataset': 'mnist',
+    # 'model': 'cnn',
+    # 'num_epoch': 1,
+    # 'con_1': 0.1,
+    # 'con_2': 0.5,
+    # 'con_3': 0.8,
+    # 'con_4': 0.9,
+    # 'real_sigma': 0.5,
+    # 'save_path_3': '../../logs/fedstream/5_server_32',
+    # 'save_path_4_loss': '../../logs/fedstream/5_server_4_loss2',
+    # 'save_path_4_acc': '../../logs/fedstream/5_server_4_acc2',
+
+    # # 配置cnn2
+    # 'dataset': 'mnist',
+    # 'model': 'cnn',
+    # 'num_epoch': 1,
+    # 'con_1': 0.1,
+    # 'con_2': 0.5,
+    # 'con_3': 0.8,
+    # 'con_4': 0.9,
+    # 'real_sigma': 0.1,
+    # 'save_path_3': '../../logs/fedstream/5_server_322',
+    # 'save_path_4_loss': '../../logs/fedstream/5_server_4_loss22',
+    # 'save_path_4_acc': '../../logs/fedstream/5_server_4_acc22',
+    
+    # -----------------------------------------------------------------------------------------
+    # # 配置cifarcnn1
+    # 'dataset': 'cifar10',
+    # 'model': 'cnn',
+    # 'num_epoch': 10,
+    # 'con_1': 0.1,
+    # 'con_2': 0.5,
+    # 'con_3': 0.8,
+    # 'con_4': 0.9,
+    # 'real_sigma': 0.1,
+    # 'save_path_3': '../../logs/fedstream/5_server_33',
+    # 'save_path_4_loss': '../../logs/fedstream/5_server_4_loss3',
+    # 'save_path_4_acc': '../../logs/fedstream/5_server_4_acc3',
+
+    # # 配置cifarcnn2
+    # 'dataset': 'cifar10',
+    # 'model': 'cnn',
+    # 'num_epoch': 10,
+    # 'con_1': 0.1,
+    # 'con_2': 0.5,
+    # 'con_3': 0.8,
+    # 'con_4': 0.9,
+    # 'real_sigma': 0.5,
+    # 'save_path_3': '../../logs/fedstream/5_server_33',
+    # 'save_path_4_loss': '../../logs/fedstream/5_server_4_loss32',
+    # 'save_path_4_acc': '../../logs/fedstream/5_server_4_acc32',
+    
+    # # 配置cifarcnn3
+    # 'dataset': 'cifar10',
+    # 'model': 'cnn',
+    # 'num_epoch': 20,
+    # 'con_1': 0.1,
+    # 'con_2': 0.5,
+    # 'con_3': 0.8,
+    # 'con_4': 0.9,
+    # 'real_sigma': 0.1,
+    # 'save_path_3': '../../logs/fedstream/5_server_33',
+    # 'save_path_4_loss': '../../logs/fedstream/5_server_4_loss33',
+    # 'save_path_4_acc': '../../logs/fedstream/5_server_4_acc33',
+    
+    # # 配置cifarcnn4
+    # 'dataset': 'cifar10',
+    # 'model': 'cnn',
+    # 'num_epoch': 20,
+    # 'con_1': 0.1,
+    # 'con_2': 0.5,
+    # 'con_3': 0.8,
+    # 'con_4': 0.9,
+    # 'real_sigma': 0.5,
+    # 'save_path_3': '../../logs/fedstream/5_server_33',
+    # 'save_path_4_loss': '../../logs/fedstream/5_server_4_loss34',
+    # 'save_path_4_acc': '../../logs/fedstream/5_server_4_acc34',
     
     'delta': 1,
     'psi': 1,
     'alpha': 1e-3,
-    'beta': 5e-6,
+    'beta': 1e-7,
     'sigma': 0.75,
     
     'kappa_1': 1,
@@ -65,16 +180,17 @@ args = {
     
     # 二阶段
     'reward_lb': 1,
-    'reward_ub': 500,
+    'reward_ub': 100,
     'theta_lb': 0,
     'theta_ub': 1,
-    'pop': 5000,
+    'pop': 3000,
     'pso_eps': 1e-5,
     'pso_max_iter': 500,
     
     'fix_eps_1': 1e-2,
-    'fix_eps_2': 3,
-    'fix_max_iter': 100000,
+    'fix_eps_2': 20,
+    'fix_eps_3': 1,
+    'fix_max_iter': 10000000,
 }
 
 seed = 10
@@ -152,6 +268,7 @@ class Server(object):
         
         self.fix_eps_1 = args['fix_eps_1']
         self.fix_eps_2 = args['fix_eps_2']
+        self.fix_eps_3 = args['fix_eps_3']
         self.fix_max_iter = args['fix_max_iter']
            
         
@@ -165,16 +282,12 @@ class Server(object):
                                          self.learning_rate,
                                          )
         self.test_data_list = self.client_group.test_data_list
-        # for item in self.test_data_list[2]:
-        #     print(item[-1])
-        # exit(0)
-            
- 
+             
         # 定义net
         self.net = None
         if self.dataset_name == 'mnist':
-            if args['model'] == 'linear':
-                self.net = MNIST_Linear()
+            if args['model'] == 'mlp':
+                self.net = MNIST_MLP()
             elif args['model'] == 'cnn':
                 self.net = MNIST_CNN()
             else:
@@ -204,8 +317,8 @@ class Server(object):
                         item3 = 2 * self.beta_list[k] * data_matrix[k][tau]
                         item += item1 * (item2 - item3)
                     increment = 1 / (2 * self.alpha_list[k]) * item
-                    # if increment <= 0:
-                    #     print('dual')
+                    if increment <= 0:
+                        print('dual')
                     increment = max(0, increment) # 好哇好
                     increment_list.append(increment)
                 increment_list.append(0)
@@ -370,8 +483,9 @@ class Server(object):
             max_diff = np.max(np.abs(next_phi_list - phi_list))
             # print('max_diff_phi:{}'.format(max_diff))
             
-            if max_diff > self.fix_eps_2:
+            if max_diff > self.fix_eps_3:
                 phi_list = next_phi_list
+                print('max_diff:{}'.format(max_diff))
             else:
                 print('triumph2')
                 return next_phi_list, increment_matrix, data_matrix, stale_matrix
@@ -426,13 +540,12 @@ class Server(object):
             result = np.array([result_1, result_2])
             np.save(pre_estimate_path_1, phi_list)
             np.save(pre_estimate_path_2, result)
-        
+        print('has read')
         phi_list = np.load(pre_estimate_path_1)
         result = np.load(pre_estimate_path_2)
         reward = result[0][0]
         theta = result[0][1]
         res = result[1][1]
-        exit(0)
         
         # 尝试所有的变种
         delta_reward_list = []
@@ -457,21 +570,31 @@ class Server(object):
         color = ['C0', 'C2', 'C3', 'C4', 'C5']
         marker = ['^', 's', 'o', 'v', 'D', 's', '+', 'p', ',']
         linestyle = [':', '-', ':', ':']
-        # enum = [[0, 0], [0, 0.15], [0, 0.3], [0, 0.45], [0, 0.6]]
-        sigma_dict = {1.25: 0.10, 1: 0.32, 0.75: 0.51, 0.475: 0.71, 0: 0.90}
-        enum = [[0, -theta + 0.10], [0, -theta + 0.51], [0, -theta + 0.71], [0, -theta + 0.9]]
+        sigma_dict = {1.25: 0.10, 1: 0.32, 0.75: 0.52, 0.475: 0.71, 0: 0.90}
+        # enum = [[0, -theta + 0.3], [0, -theta + 0.52], [0, -theta + 0.70], [0, -theta + 0.90]]
+        enum = [[0, -theta + args['con_1']], [0, -theta + args['con_2']], [0, -theta + args['con_3']], [0, -theta + args['con_4']]]
         for idx in range(len(enum)):
             delta_com = enum[idx]
             new_reward = reward + delta_com[0]
             new_theta = min(max(0.05, theta + delta_com[1]), 1)
             delta_reward_list.append(delta_com[0])
             delta_theta_list.append(delta_com[1])
-
-            var = self.estimate_direct_phi(new_reward, new_theta)
-            phi_list = var[0]
-            increment_matrix = var[1]
-            data_matrix = var[2]
-            stale_matrix = var[3]
+            
+            pre_estimate_path_4_a = self.pre_estimate_path_2 + '_{}_a.npy'.format(new_theta)
+            pre_estimate_path_4_b = self.pre_estimate_path_2 + '_{}_b.npy'.format(new_theta)
+            pre_estimate_path_4_c = self.pre_estimate_path_2 + '_{}_c.npy'.format(new_theta)
+            pre_estimate_path_4_d = self.pre_estimate_path_2 + '_{}_d.npy'.format(new_theta)
+            if os.path.exists(pre_estimate_path_4_a) == False:
+                var = self.estimate_direct_phi(new_reward, new_theta)
+                np.save(pre_estimate_path_4_a, var[0])
+                np.save(pre_estimate_path_4_b, var[1])
+                np.save(pre_estimate_path_4_c, var[2])
+                np.save(pre_estimate_path_4_d, var[3])
+            phi_list = np.load(pre_estimate_path_4_a)
+            increment_matrix = np.load(pre_estimate_path_4_b)
+            data_matrix = np.load(pre_estimate_path_4_c)
+            stale_matrix = np.load(pre_estimate_path_4_d)
+            
             hist_increment_matrix.append(np.mean(increment_matrix, axis=0))
             hist_data_matrix.append(np.mean(data_matrix, axis=0))
             hist_stale_matrix.append(np.mean(stale_matrix, axis=0))
@@ -490,11 +613,13 @@ class Server(object):
             #         label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(new_reward, tmp_theta)
             #     else:
             #         label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(new_reward, tmp_theta)
-            #     plt.plot(hist_increment_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle[n], label=label)
+            #     draw = hist_increment_matrix[n][::2]
+            #     draw = np.append(draw, hist_increment_matrix[n][-1])
+            #     plt.plot(draw, color=color[n], marker=marker[n], markersize=4, linestyle=linestyle[n], label=label)
             #     plt.ylabel(r'Increment $\Delta$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
             #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
-            #     plt.yticks(fontproperties = 'Times New Roman', size = 18)
-            #     plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 18)
+            #     plt.yticks(fontproperties = 'Times New Roman', size = 10)
+            #     plt.xticks(range(len(draw)), [i for i in range(0, self.num_round + 1, 2)], fontproperties = 'Times New Roman', size = 10)
             #     plt.ylim(0, 100)
             #     plt.legend(frameon=False, prop={'family':'Times New Roman', 'size':10, 'weight':'bold'})
             #     plt.savefig(self.save_path_2_delta + '_{}.png'.format(self.sigma), dpi=200, bbox_inches='tight')
@@ -506,11 +631,13 @@ class Server(object):
             #         label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(new_reward, tmp_theta)
             #     else:
             #         label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(new_reward, tmp_theta)
-            #     plt.plot(hist_data_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle[n], label=label)
+            #     draw = hist_data_matrix[n][::2]
+            #     draw = np.append(draw, hist_data_matrix[n][-1])
+            #     plt.plot(draw, color=color[n], marker=marker[n], markersize=4, linestyle=linestyle[n], label=label)
             #     plt.ylabel(r'Datasize $D$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
             #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
-            #     plt.yticks(fontproperties = 'Times New Roman', size = 18)
-            #     plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 18)
+            #     plt.yticks(fontproperties = 'Times New Roman', size = 10)
+            #     plt.xticks(range(len(draw)), [i for i in range(0, self.num_round + 1, 2)], fontproperties = 'Times New Roman', size = 10)
             #     plt.ylim(0, 800)
             #     plt.legend(frameon=False, prop={'family':'Times New Roman', 'size':10, 'weight':'bold'})
             #     plt.savefig(self.save_path_2_data + '_{}.png'.format(self.sigma), dpi=200, bbox_inches='tight')
@@ -522,11 +649,13 @@ class Server(object):
             #         label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(new_reward, tmp_theta)
             #     else:
             #         label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(new_reward, tmp_theta)
-            #     plt.plot(hist_stale_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle[n], label=label)
+            #     draw = hist_stale_matrix[n][::2]
+            #     draw = np.append(draw, hist_stale_matrix[n][-1])
+            #     plt.plot(draw, color=color[n], marker=marker[n], markersize=4, linestyle=linestyle[n], label=label)
             #     plt.ylabel(r'Staleness $S$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
             #     plt.xlabel(r'Round $T$', fontdict={'family':'Times New Roman', 'size':18, 'weight':'bold'})
-            #     plt.yticks(fontproperties = 'Times New Roman', size = 18)
-            #     plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 18)
+            #     plt.yticks(fontproperties = 'Times New Roman', size = 10)
+            #     plt.xticks(range(len(draw)), [i for i in range(0, self.num_round + 1, 2)], fontproperties = 'Times New Roman', size = 10)
             #     plt.ylim(0, 12)
             #     plt.legend(frameon=False, prop={'family':'Times New Roman', 'size':10, 'weight':'bold'})
             #     plt.savefig(self.save_path_2_stale + '_{}.png'.format(self.sigma), dpi=200, bbox_inches='tight')
@@ -579,7 +708,8 @@ class Server(object):
                                                                     self.global_parameter,
                                                                     new_theta, # 妈的是new的不是旧的
                                                                     increment_matrix[k][t],
-                                                                    data_matrix[k][t])
+                                                                    data_matrix[k][t],
+                                                                    args['real_sigma'])
                     rate = data_matrix[k][t] / data_sum_list[t]
                     local_parameter = result[0]
                     for item in local_parameter.items():
@@ -633,8 +763,8 @@ class Server(object):
             new_gamma = 5e-3
             cost_1_list = (1 - new_gamma) * (1 - np.array(hist_accuracy_list))
             cost_2_list = new_gamma * (np.array(delta_reward_list) + reward)
-            plt.bar(x, cost_1_list, color='C0', width=width, label='loss')
-            plt.bar(x, cost_2_list, color='C3', width=width, label='reward', bottom=cost_1_list)
+            plt.bar(x, cost_1_list, width=0.7*width, hatch='/', color='C0', label='loss')
+            plt.bar(x, cost_2_list, width=0.7*width, hatch='\\', color='C2', label='reward', bottom=cost_1_list)
             plt.ylabel(r'Realistic Cost of Server $U$', fontproperties = 'Times New Roman', size = 18)
             plt.xticks(x, labels, fontproperties = 'Times New Roman', size = 12)
             plt.legend(frameon=False, prop={'family':'Times New Roman', 'size':10, 'weight':'bold'})
@@ -650,11 +780,13 @@ class Server(object):
                     label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(new_reward, tmp_theta)
                 else:
                     label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(new_reward, tmp_theta)
-                plt.plot(hist_loss_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle[n], label=label)
+                draw = hist_loss_matrix[n][::2]
+                draw = np.append(draw, hist_loss_matrix[n][-1])
+                plt.plot(draw, color=color[n], marker=marker[n], markersize=4, linestyle=linestyle[n], label=label)
                 plt.ylabel('Loss', fontproperties = 'Times New Roman', size = 18)
                 plt.xlabel('Round $T$', fontproperties = 'Times New Roman', size = 18)
-                plt.yticks(fontproperties = 'Times New Roman', size = 18)
-                plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 18)
+                plt.yticks(fontproperties = 'Times New Roman', size = 10)
+                plt.xticks(range(len(draw)), [i for i in range(0, self.num_round + 1, 2)], fontproperties = 'Times New Roman', size = 10)
                 plt.legend(frameon=False, prop={'family':'Times New Roman', 'size':10, 'weight':'bold'})
                 plt.savefig(self.save_path_4_loss + '_{}.png'.format(self.sigma), dpi=200, bbox_inches='tight')
             plt.close()
@@ -665,11 +797,13 @@ class Server(object):
                     label = r'$(R^*={:.2f}, \theta^*={:.2f}$)'.format(reward, tmp_theta)
                 else:
                     label = r'$(R^*={:.2f}, \theta={:.2f}$)'.format(reward, tmp_theta)
-                plt.plot(hist_acc_matrix[n], color=color[n], marker=marker[n], linestyle=linestyle[n], label=label)
+                draw = hist_acc_matrix[n][::2]
+                draw = np.append(draw, hist_acc_matrix[n][-1])
+                plt.plot(draw, color=color[n], marker=marker[n], markersize=4, linestyle=linestyle[n], label=label)
                 plt.ylabel('Accuracy', fontproperties = 'Times New Roman', size = 18)
                 plt.xlabel('Round $T$', fontproperties = 'Times New Roman', size = 18)
-                plt.yticks(fontproperties = 'Times New Roman', size = 18)
-                plt.xticks(range(0, self.num_round, 2), fontproperties = 'Times New Roman', size = 18)
+                plt.yticks(fontproperties = 'Times New Roman', size = 10)
+                plt.xticks(range(len(draw)), [i for i in range(0, self.num_round + 1, 2)], fontproperties = 'Times New Roman', size = 10)
                 plt.legend(frameon=False, prop={'family':'Times New Roman', 'size':10, 'weight':'bold'})
                 plt.savefig(self.save_path_4_acc + '_{}.png'.format(self.sigma), dpi=200, bbox_inches='tight')
             plt.close()
