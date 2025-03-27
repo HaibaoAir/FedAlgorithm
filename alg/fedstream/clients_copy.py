@@ -13,6 +13,7 @@ import sys
 sys.path.append('../..')
 from model.mnist import MNIST_MLP, MNIST_CNN
 from model.cifar import Cifar10_CNN
+from model.fmnist import FMNIST_CNN
 
 seed = 10
 random.seed(seed)
@@ -84,6 +85,11 @@ class Client(object):
                 self.net = MNIST_MLP()
             elif net_name == 'cnn':
                 self.net = MNIST_CNN()
+            else:
+                raise NotImplementedError('{}'.format(net_name))
+        elif self.dataset_name == 'fmnist':
+            if net_name == 'cnn':
+                self.net = FMNIST_CNN()
             else:
                 raise NotImplementedError('{}'.format(net_name))
         elif self.dataset_name == 'cifar10':
@@ -279,6 +285,21 @@ class Client_Group(object):
                                     transforms.Normalize((0.13065973,),(0.3015038,))])  # [0, 1] -> [-1, 1]
         return train_data, train_label, test_data, test_label, trans
     
+    def load_fmnist(self):
+        # 下载：[60000, 28, 28], tensor + tensor
+        train_dataset = torchvision.datasets.FashionMNIST(root='../../data', download=True, train=True)
+        test_dataset = torchvision.datasets.FashionMNIST(root='../../data', download=True, train=False)
+        train_data = train_dataset.data
+        test_data = test_dataset.data
+        train_label = train_dataset.targets
+        test_label = test_dataset.targets
+        trans = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))  # Fashion MNIST是灰度图像，通道数为1
+        ])
+        return train_data, train_label, test_data, test_label, trans
+    
      
     def load_cifar10(self):
         # 下载：[50000, 32, 32, 3], tensor + list
@@ -311,6 +332,8 @@ class Client_Group(object):
     def dataset_allocation(self):
         if self.dataset_name == 'mnist':
             train_data, train_label, test_data, test_label, trans = self.load_mnist()
+        elif self.dataset_name == 'fmnist':
+            train_data, train_label, test_data, test_label, trans = self.load_fmnist()
         elif self.dataset_name == 'cifar10':
             train_data, train_label, test_data, test_label, trans = self.load_cifar10()
         else:

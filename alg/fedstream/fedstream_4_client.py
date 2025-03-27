@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from copy import deepcopy
 
-from alg.fedstream.clients_old import Client_Group
-from model.mnist import MNIST_Linear, MNIST_CNN
+from alg.fedstream.clients import Client_Group
+from model.mnist import MNIST_MLP, MNIST_CNN
 from model.cifar import Cifar10_CNN
 
 from sko.PSO import PSO

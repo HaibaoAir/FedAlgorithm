@@ -13,7 +13,7 @@ from tqdm import tqdm
 from copy import deepcopy
 
 from alg.fedstream.clients import Client_Group
-from model.mnist import MNIST_Linear, MNIST_CNN
+from model.mnist import MNIST_MLP, MNIST_CNN
 from model.cifar import Cifar10_CNN
 from torch.utils.data import DataLoader
 
@@ -40,7 +40,7 @@ args = {
     
     'delta': 1,
     'psi': 1,
-    'sigma': 1,
+    'sigma': 0.87,
     'alpha': 1e-3,
     'beta': 5e-6,
     
@@ -50,26 +50,27 @@ args = {
     'kappa_4': 1e-2,
     'gamma': 1e-4,
     
-    # # 一阶段
-    # self.reward_lb = 1
-    # self.reward_ub = 100
-    # self.theta_lb = 0
-    # self.theta_ub = 1
-    # self.pop = 1000
-    # self.pso_eps = 1e-5
-    # self.pso_max_iter = 500
     
-    # 二阶段
-    'reward_lb': 1,
-    'reward_ub': 100,
-    'theta_lb': 0.1,
-    'theta_ub': 1,
-    'pop': 3000, 
+    # 一阶段
+    'reward_lb': 50,
+    'reward_ub': 70,
+    'theta_lb': 0.4,
+    'theta_ub': 0.6,
+    'pop': 5000, 
     'pso_eps': 1e-5,
     'pso_max_iter': 500,
     
+    # # 二阶段
+    # 'reward_lb': 1,
+    # 'reward_ub': 100,
+    # 'theta_lb': 0.1,
+    # 'theta_ub': 1,
+    # 'pop': 3000, 
+    # 'pso_eps': 1e-5,
+    # 'pso_max_iter': 500,
+    
     'fix_eps_1': 1e-2,
-    'fix_eps_2': 5,
+    'fix_eps_2': 2,
     'fix_max_iter': 10000,
 }
 
@@ -166,7 +167,7 @@ class Server(object):
         self.net = None
         if self.dataset_name == 'mnist':
             if args['model'] == 'linear':
-                self.net = MNIST_Linear()
+                self.net = MNIST_MLP()
             elif args['model'] == 'cnn':
                 self.net = MNIST_CNN()
             else:
@@ -311,20 +312,20 @@ class Server(object):
                 
                 fig = plt.figure()
                 ax1 = fig.add_subplot(2,1,1)
-                ax1.set_xlabel('iterations')
-                ax1.set_ylabel('phi')
+                ax1.set_xlabel('Convergence Iterations')
+                ax1.set_ylabel('Mean-Field Term $\phi$')
                 ax1.plot(phi_hist, 'k-')
                 
                 ax2 = fig.add_subplot(2,1,2)
-                ax2.set_xlabel('iterations')
-                ax2.set_ylabel('reward')
+                ax2.set_xlabel('Convergence Iterations')
+                ax2.set_ylabel('Payment $R$')
                 ax2.spines['left'].set_edgecolor('C0')
                 ax2.yaxis.label.set_color('C0')
                 ax2.tick_params(axis='y', colors='C0')
                 line_2 = ax2.plot(reward_hist, color='C0', linestyle='-', label='reward')
                 
                 ax3 = ax2.twinx()
-                ax3.set_ylabel('theta')
+                ax3.set_ylabel('Conservation Rate $\\theta$')
                 ax3.spines['right'].set_edgecolor('red')
                 ax3.yaxis.label.set_color('red')
                 ax3.tick_params(axis='y', colors='red')
@@ -411,14 +412,14 @@ class Server(object):
 
     def online_train(self):
         # 正式训练前定好一切
-        if os.path.exists(self.pre_estimate_path_1) == False:
-            phi_list = self.estimate_phi() # [T]
-            result = self.estimate_reward_theta(phi_list) # [K, T]
-            np.save(self.pre_estimate_path_1, phi_list)
-            np.save(self.pre_estimate_path_2, result)
-        
-        phi_list = np.load(self.pre_estimate_path_1)
-        result = np.load(self.pre_estimate_path_2)
+        # if os.path.exists(self.pre_estimate_path_1) == False:
+        phi_list = self.estimate_phi() # [T]
+        result = self.estimate_reward_theta(phi_list) # [K, T]
+        # np.save(self.pre_estimate_path_1, phi_list)
+        # np.save(self.pre_estimate_path_2, result)
+        exit(0)
+        # phi_list = np.load(self.pre_estimate_path_1)
+        # result = np.load(self.pre_estimate_path_2)
         reward = result[0][0]
         theta = result[0][1]
         res = result[1][1]

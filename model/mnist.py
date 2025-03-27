@@ -3,22 +3,17 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class MNIST_MLP(nn.Module):
-    def __init__(self):
+    def __init__(self, output):
         super(MNIST_MLP, self).__init__()
         self.fc1 = nn.Linear(784, 256)
         self.fc2 = nn.Linear(256, 64)
-        self.fc3 = nn.Linear(64, 10)
-        self.dropout = nn.Dropout(0.3)
+        self.fc3 = nn.Linear(64, output)
         
     def forward(self, x):
         x = x.view(-1, 784) # view是重构，permute是换位置，reshape是啥
-        x = self.dropout(x)
         x = F.relu(self.fc1(x))
-        x = self.dropout(x)
         x = F.relu(self.fc2(x))
-        x = self.dropout(x)
         x = self.fc3(x)
-        x = F.softmax(x, dim=1)
         return x
         
 class MNIST_CNN(nn.Module):
@@ -67,8 +62,3 @@ class MNIST_CNN(nn.Module):
         x = self.dropout(x)
         x = self.fc2(x)
         return x
-    
-net_1 = MNIST_CNN()
-net_2 = MNIST_MLP()
-print("Total number of paramerters in networks is {}  ".format(sum(x.numel() for x in net_1.parameters())))
-print("Total number of paramerters in networks is {}  ".format(sum(x.numel() for x in net_2.parameters())))

@@ -14,7 +14,7 @@ from tqdm import tqdm
 from sko.GA import GA
 import matplotlib.pyplot as plt
 
-from clients import ClientsGroup
+from alg.Clients import ClientsGroup
 from model.Mnist import Mnist_2NN, Mnist_CNN, LinearNet
 from model.Cifar import Cifar10_CNN, CIFAR10_Model
 

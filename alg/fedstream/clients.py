@@ -11,7 +11,7 @@ from copy import deepcopy
 
 import sys
 sys.path.append('../..')
-from model.mnist import MNIST_Linear, MNIST_CNN
+from model.mnist import MNIST_MLP, MNIST_CNN
 from model.cifar import Cifar10_CNN
 
 seed = 10

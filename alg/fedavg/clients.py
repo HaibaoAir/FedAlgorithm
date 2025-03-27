@@ -48,7 +48,6 @@ class Client(object):
         
         # 本地训练
         loss_list = []
-        print('length:', len(self.dataset))
         dataloader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True)
         for epoch in range(num_epoch):
             for batch in dataloader:
@@ -63,8 +62,6 @@ class Client(object):
                 optim.step()
                 loss_list.append(loss.cpu().detach().numpy())
                 break
-        
-        print('loss:', sum(loss_list) / len(loss_list))
         # 上传模型
         return net.state_dict()
             
@@ -166,18 +163,18 @@ class Client_Group(object):
                 num_client=self.num_client
             )
         
-        # 刻画结果
-        plt.figure(figsize=(12, 8))
-        plt.hist([train_label[idc]for idc in client_idcs], stacked=True,
-                bins=np.arange(min(train_label)-0.5, max(train_label) + 1.5, 1),
-                label=["Client {}".format(i) for i in range(self.num_client)],
-                rwidth=0.5)
-        plt.xticks(np.arange(10))
-        plt.xlabel("Label type")
-        plt.ylabel("Number of samples")
-        plt.legend(loc="upper right")
-        plt.title("Display Label Distribution on Different Clients")
-        plt.savefig('../../logs/data_distribution.jpg')
+        # # 刻画结果
+        # plt.figure(figsize=(12, 8))
+        # plt.hist([train_label[idc]for idc in client_idcs], stacked=True,
+        #         bins=np.arange(min(train_label)-0.5, max(train_label) + 1.5, 1),
+        #         label=["Client {}".format(i) for i in range(self.num_client)],
+        #         rwidth=0.5)
+        # plt.xticks(np.arange(10))
+        # plt.xlabel("Label type")
+        # plt.ylabel("Number of samples")
+        # plt.legend(loc="upper right")
+        # plt.title("Display Label Distribution on Different Clients")
+        # plt.savefig('../../logs/data_distribution.jpg')
         
         for idc in client_idcs:
             local_data = train_data[idc]
