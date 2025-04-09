@@ -15,7 +15,7 @@ from copy import deepcopy
 
 from alg.fedstream.clients_copy import Client_Group
 from model.mnist import MNIST_MLP, MNIST_CNN
-from model.cifar import Cifar10_CNN
+from model.cifar10 import Cifar10_CNN
 from model.fmnist import FMNIST_CNN
 
 from sko.PSO import PSO

@@ -29,6 +29,12 @@ from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
 
+a = [1,2,3]
+b = a
+b.append(4)
+print(a)
+exit(0)
+
 a = np.array([1,2,3])
 b = 0.1
 np.save('logs/{}.npy'.format(b),a)

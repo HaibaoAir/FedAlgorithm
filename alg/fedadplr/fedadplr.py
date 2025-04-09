@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from clients import Client_Group
 from model.mnist import MNIST_Linear, MNIST_CNN
-from model.cifar import Cifar10_CNN
+from model.cifar10 import Cifar10_CNN
 
 args = {
     'num_client': 10,

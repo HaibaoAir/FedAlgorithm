@@ -12,7 +12,7 @@ from copy import deepcopy
 import sys
 sys.path.append('../..')
 from model.mnist import MNIST_MLP, MNIST_CNN
-from model.cifar import Cifar10_CNN
+from model.cifar10 import Cifar10_CNN
 
 seed = 10
 random.seed(seed)
