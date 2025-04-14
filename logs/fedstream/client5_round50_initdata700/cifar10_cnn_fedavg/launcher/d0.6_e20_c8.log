@@ -1,0 +1,50 @@
+Running FedStream with: Dir=0.6, Epoch=20, Init_Class=8
+Files already downloaded and verified
+Files already downloaded and verified
+has read
+Files already downloaded and verified
+Files already downloaded and verified
+  0%|          | 0/50 [00:00<?, ?it/s]  0%|          | 0/50 [01:17<?, ?it/s]
+5 154 [4 6 2 3 7]
+{0: 0, 1: 0, 2: 154, 3: 154, 4: 154, 5: 0, 6: 154, 7: 154, 8: 0, 9: 0}
+5 140 [3 5 7 0 2]
+5 150 [3 7 4 1 2]
+5 152 [0 5 7 2 4]
+5 154 [5 4 2 6 0]
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 1152, in <module>
+    server.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 916, in online_train
+    pred = self.net(data)  # [batch_size， 10]，输出的是概率
+           ^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/../model/cifar10.py", line 36, in forward
+    x = self.conv_block(x)
+        ^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/container.py", line 217, in forward
+    input = module(input)
+            ^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/batchnorm.py", line 175, in forward
+    return F.batch_norm(
+           ^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/functional.py", line 2509, in batch_norm
+    return torch.batch_norm(
+           ^^^^^^^^^^^^^^^^^
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 256.00 MiB. GPU 

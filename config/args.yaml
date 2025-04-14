@@ -1,136 +1,134 @@
-{
-    # 客户端与数据集配置
-    "mode": "train",
-    "num_client": 5,
-    "num_sample": 5,
-    "num_class": 10,
-    "init_num_class": 10,
-    "dirichlet": 0.6,
-    "init_data_lower": 700,
-    "init_data_upper": 800,
-    # -----------------------------------------------------------------------------------------
-    # 配置svhncnn
-    "dataset": "svhn",
-    "model": "cnn",
-    "num_round": 50,
-    "num_epoch": 15,
-    "batch_size": 32,
-    "learning_rate": 0.01,
-    "eval_freq": 2,
-    "con_1": 0.1,
-    "con_2": 0.5,
-    "con_3": 0.88,
-    "con_4": 0.92,
-    "poison_sigma": 0.25,
-    "pre_estimate_path": "../logs/fedstream/pre_estimate",
-    "save_path_1": "../logs/fedstream/1",
-    "save_path_2_delta": "../logs/fedstream/2_delta_model=fmnistlr",
-    "save_path_2_data": "../logs/fedstream/2_data_model=fmnistlr",
-    "save_path_2_stale": "../logs/fedstream/2_stale_model=fmnistlr",
-    "save_path_2_cost": "../logs/fedstream/2_cost_model=fmnistlr",
-    "save_path_3": "../logs/fedstream/3_cost_model=fmnistlr",
-    "save_path_4_loss": "../logs/fedstream/4_loss_model=fmnistlr",
-    "save_path_4_acc": "../logs/fedstream/4_acc_model=svhncnn_10",
-    # -----------------------------------------------------------------------------------------
-    # # 配置mnistlr
-    # 'dataset': 'mnist',
-    # 'model': 'lr',
-    # 'num_epoch': 2,
-    # 'con_1': 0.1,
-    # 'con_2': 0.5,
-    # 'con_3': 0.8,
-    # 'con_4': 0.9,
-    # 'poison_sigma': 0.1,
-    # 'save_path_1': '../logs/fedstream/1',
-    # 'save_path_2_delta': '../logs/fedstream/2_delta_model=mnistlr',
-    # 'save_path_2_data': '../logs/fedstream/2_data_model=mnistlr',
-    # 'save_path_2_stale': '../logs/fedstream/2_stale_model=mnistlr',
-    # 'save_path_2_cost': '../logs/fedstream/2_cost_model=mnistlr',
-    # 'save_path_3': '../logs/fedstream/3_cost_model=mnistlr',
-    # 'save_path_4_loss': '../logs/fedstream/4_loss_model=mnistlr',
-    # 'save_path_4_acc': '../logs/fedstream/4_acc_model=mnistlr_9',
-    # -----------------------------------------------------------------------------------------
-    # 配置fmnistlr
-    # "dataset": "fmnist",
-    # "model": "lr",
-    # "num_epoch": 1,
-    # "con_1": 0.1,
-    # "con_2": 0.5,
-    # "con_3": 0.88,
-    # "con_4": 0.92,
-    # "poison_sigma": 0.25,
-    # "save_path_1": "../logs/fedstream/1",
-    # "save_path_2_delta": "../logs/fedstream/2_delta_model=fmnistlr",
-    # "save_path_2_data": "../logs/fedstream/2_data_model=fmnistlr",
-    # "save_path_2_stale": "../logs/fedstream/2_stale_model=fmnistlr",
-    # "save_path_2_cost": "../logs/fedstream/2_cost_model=fmnistlr",
-    # "save_path_3": "../logs/fedstream/3_cost_model=fmnistlr",
-    # "save_path_4_loss": "../logs/fedstream/4_loss_model=fmnistlr",
-    # "save_path_4_acc": "../logs/fedstream/4_acc_model=fmnistlr_10",
-    # -----------------------------------------------------------------------------------------
-    # # 配置mnistcnn2(选中)
-    # 'dataset': 'mnist',
-    # 'model': 'cnn',
-    # 'num_epoch': 2,
-    # 'con_1': 0.1,
-    # 'con_2': 0.5,
-    # 'con_3': 0.83,
-    # 'con_4': 0.9,
-    # 'poison_sigma': 0.25,
-    # 'save_path_1': '../logs/fedstream/1',
-    # 'save_path_2_delta': '../logs/fedstream/2_delta_model=mnistcnn2',
-    # 'save_path_2_data': '../logs/fedstream/2_data_model=mnistcnn2',
-    # 'save_path_2_stale': '../logs/fedstream/2_stale_model=mnistcnn2',
-    # 'save_path_2_cost': '../logs/fedstream/2_cost_model=mnistcnn2',
-    # 'save_path_3': '../logs/fedstream/3_cost_model=mnistcnn2',
-    # 'save_path_4_loss': '../logs/fedstream/4_loss_model=mnistcnn2',
-    # 'save_path_4_acc': '../logs/fedstream/4_acc_model=mnistcnn2',
-    # -----------------------------------------------------------------------------------------
-    # # 配置fmnistcnn2(选中)
-    # 'dataset': 'fmnist',
-    # 'model': 'cnn',
-    # 'num_epoch': 1,
-    # 'con_1': 0.1,
-    # 'con_2': 0.5,
-    # 'con_3': 0.88,
-    # 'con_4': 0.92,
-    # 'poison_sigma': 0.25,
-    # 'save_path_1': '../logs/fedstream/1',
-    # 'save_path_2_delta': '../logs/fedstream/2_delta_model=fmnistcnn2_',
-    # 'save_path_2_data': '../logs/fedstream/2_data_model=fmnistcnn2',
-    # 'save_path_2_stale': '../logs/fedstream/2_stale_model=fmnistcnn2',
-    # 'save_path_2_cost': '../logs/fedstream/2_cost_model=fmnistcnn2',
-    # 'save_path_3': '../logs/fedstream/3_cost_model=fmnistcnn2',
-    # 'save_path_4_loss': '../logs/fedstream/4_loss_model=fmnistcnn2',
-    # 'save_path_4_acc': '../logs/fedstream/4_acc_model=fmnistcnn2',
-    "delta": 1,
-    "psi": 1,
-    "alpha": 1.0e-3,
-    "beta": 1.0e-7,
-    "sigma": 0.75,
-    "kappa_1": 1,
-    "kappa_2": 1,
-    "kappa_3": 1.0e-2,
-    "kappa_4": 1.0e-2,
-    "gamma": 1.0e-4,
-    # # 一阶段
-    # self.reward_lb = 1
-    # self.reward_ub = 100
-    # self.theta_lb = 0
-    # self.theta_ub = 1
-    # self.pop = 1000
-    # self.pso_eps = 1.0e-5
-    # self.pso_max_iter = 500
-    # 二阶段
-    "reward_lb": 1,
-    "reward_ub": 100,
-    "theta_lb": 0,
-    "theta_ub": 1,
-    "pop": 3000,
-    "pso_eps": 1.0e-5,
-    "pso_max_iter": 500,
-    "fix_eps_1": 1.0e-2,
-    "fix_eps_2": 20,
-    "fix_eps_3": 1,
-    "fix_max_iter": 10000000,
-}
+# 相关配置
+mode: train
+num_client: 5
+num_sample: 5
+num_round: 50
+init_data_lower: 700
+init_data_upper: 800
+# -----------------------------------------------------------------------------------------
+# 配置svhn+cnn
+dataset: mnist
+model: lr
+alg: fedavg
+# alg: fedprox # 记得改mu以及local_update_prox
+# mu: 0.01
+num_class: 10
+init_num_class: None
+dirichlet: None
+num_epoch: None
+batch_size: 64
+learning_rate: 0.01
+eval_freq: 2
+
+con_1: 0.1
+con_2: 0.5
+con_3: 0.88
+con_4: 0.92
+poison_sigma: 0.25
+path_prefix: ../logs/fedstream
+# -----------------------------------------------------------------------------------------
+# # 配置svhn+cnn
+# dataset: svhn
+# model: cnn
+# alg: fedavg
+# num_class: 10
+# init_num_class: None
+# dirichlet: None
+# num_epoch: None
+# batch_size: 64
+# learning_rate: 0.01
+# eval_freq: 2
+
+# con_1: 0.1
+# con_2: 0.5
+# con_3: 0.88
+# con_4: 0.92
+# poison_sigma: 0.25
+# path_prefix: ../logs/fedstream
+# -----------------------------------------------------------------------------------------
+# # 配置mnistlr
+# dataset: mnist
+# model: lr
+# num_epoch: 2
+# con_1: 0.1
+# con_2: 0.5
+# con_3: 0.8
+# con_4: 0.9
+# poison_sigma: 0.1
+# path_prefix: ../logs/fedstream
+# -----------------------------------------------------------------------------------------
+# 配置fmnistlr
+# dataset: fmnist
+# model: lr
+# num_epoch: 1
+# con_1: 0.1
+# con_2: 0.5
+# con_3: 0.88
+# con_4: 0.92
+# poison_sigma: 0.25
+# path_prefix: ../logs/fedstream
+# -----------------------------------------------------------------------------------------
+# # 配置mnistcnn2(选中)
+# dataset: mnist
+# model: cnn
+# num_epoch: 2
+# con_1: 0.1
+# con_2: 0.5
+# con_3: 0.83
+# con_4: 0.9
+# poison_sigma: 0.25
+# path_prefix: ../logs/fedstream
+# -----------------------------------------------------------------------------------------
+# # 配置fmnistcnn2(选中)
+# dataset: fmnist
+# model: cnn
+# num_epoch: 1
+# con_1: 0.1
+# con_2: 0.5
+# con_3: 0.88
+# con_4: 0.92
+# poison_sigma: 0.25
+# path_prefix: ../logs/fedstream
+
+delta: 1
+psi: 1
+alpha: 1.0e-3
+beta: 1.0e-7
+sigma: 0.75
+kappa_1: 1
+kappa_2: 1
+kappa_3: 1.0e-2
+kappa_4: 1.0e-2
+gamma: 1.0e-4 # 求解过程中的gamma
+new_gamma: 5.0e-4 # 实际绘图中的gamma，得保证损失成本和最低
+
+# # 一阶段
+# reward_lb: 1 # 缩小搜索范围
+# reward_ub: 200
+# theta_lb: 0
+# theta_ub: 1
+# n_calls: 200 # 增加迭代次数，默认都100
+# base_estimator: GP
+# noise: gaussian
+# acq_func: EI
+# xi: 0.01 # 降低采集函数探索能力，默认为0.01
+# random_state: 42
+
+# 二阶段
+# 初期警报变多
+# 后期可能不严格收敛
+reward_lb: 50 # 缩小搜索范围
+reward_ub: 70
+theta_lb: 0.45
+theta_ub: 0.55
+n_calls: 100 # 增加迭代次数，默认都100
+base_estimator: GP
+noise: gaussian
+acq_func: EI
+xi: 0.005 # 降低采集函数探索能力，默认为0.01
+random_state: 42
+
+fix_eps_1: 1.0e-2
+fix_eps_2: 20
+fix_eps_3: 1
+fix_max_iter: 10000000

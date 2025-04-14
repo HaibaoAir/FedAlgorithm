@@ -1,0 +1,37 @@
+Running FedStream with: Dir=0.8, Epoch=20, Init_Class=8
+Files already downloaded and verified
+Files already downloaded and verified
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 1151, in <module>
+    server = Server(args)
+             ^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 40, in __init__
+    self.init_data_net()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 104, in init_data_net
+    self.client_group = Client_Group(
+                        ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 397, in __init__
+    self.dataset_allocation()
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 735, in dataset_allocation
+    client = Client(
+             ^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 106, in __init__
+    self.net.to(self.dev)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1173, in to
+    return self._apply(convert)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 779, in _apply
+    module._apply(fn)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 779, in _apply
+    module._apply(fn)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 804, in _apply
+    param_applied = fn(param)
+                    ^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1159, in convert
+    return t.to(
+           ^^^^^
+RuntimeError: CUDA error: out of memory
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1.
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+

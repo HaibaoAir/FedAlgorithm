@@ -6,9 +6,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import ConcatDataset, DataLoader  # 三件套
+from torch.utils.data import ConcatDataset, DataLoader
 import matplotlib.pyplot as plt
-from sko.PSO import PSO
+from skopt import gp_minimize
+from skopt.space import Real
 from tqdm import tqdm
 import argparse
 import yaml
@@ -33,6 +34,7 @@ class Server(object):
         self.num_client = args["num_client"]
         self.num_sample = args["num_sample"]
         self.net_name = args["model"]
+        self.alg_name = args["alg"]
         self.learning_rate = args["learning_rate"]
         self.eta = self.learning_rate
         self.init_data_net()
@@ -42,15 +44,7 @@ class Server(object):
         self.num_epoch = args["num_epoch"]
         self.batch_size = args["batch_size"]
         self.eval_freq = args["eval_freq"]
-        self.save_path_1 = args["save_path_1"]
-        self.save_path_2_delta = args["save_path_2_delta"]
-        self.save_path_2_data = args["save_path_2_data"]
-        self.save_path_2_stale = args["save_path_2_stale"]
-        self.save_path_2_cost = args["save_path_2_cost"]
-        self.save_path_3 = args["save_path_3"]
-        self.save_path_4_loss = args["save_path_4_loss"]
-        self.save_path_4_acc = args["save_path_4_acc"]
-        self.pre_estimate_path = args["pre_estimate_path"]
+        self.path_prefix = args["path_prefix"]
 
         self.init_data_lower = args["init_data_lower"]
         self.init_data_upper = args["init_data_upper"]
@@ -88,14 +82,18 @@ class Server(object):
         self.kappa_3 = args["kappa_3"]
         self.kappa_4 = args["kappa_4"]
         self.gamma = args["gamma"]
+        self.new_gamma = args["new_gamma"]
 
         self.reward_lb = args["reward_lb"]  # 反正不看过程只看结果，原来1-100得50
         self.reward_ub = args["reward_ub"]
         self.theta_lb = args["theta_lb"]
         self.theta_ub = args["theta_ub"]
-        self.pop = args["pop"]
-        self.pso_eps = args["pso_eps"]
-        self.pso_max_iter = args["pso_max_iter"]
+        self.n_calls = args["n_calls"]
+        self.base_estimator = args["base_estimator"]
+        self.noise = args["noise"]
+        self.acq_func = args["acq_func"]
+        self.xi = args["xi"]
+        self.random_state = args["random_state"]
 
         self.fix_eps_1 = args["fix_eps_1"]
         self.fix_eps_2 = args["fix_eps_2"]
@@ -161,6 +159,9 @@ class Server(object):
         self.net.to(self.dev)
 
     def estimate_D(self, phi_list, reward, theta):
+        """
+        函数1：给定reward和theta，估计D
+        """
         # 初始化数据矩阵
         data_matrix = self.data_matrix_init
 
@@ -228,8 +229,11 @@ class Server(object):
         return np.array(next_data_matrix)
 
     def estimate_reward_theta(self, phi_list):
+        """
+        函数2：给定phi_list，估计reward和theta
+        """
 
-        def func(var):
+        def cost_fn(var):
             reward, theta = var
 
             # 计算单列和
@@ -243,7 +247,7 @@ class Server(object):
                     data += data_matrix[k][t]
                 data_list.append(data)
 
-            res = 0
+            cost = 0
             for t in range(self.num_round):
                 delta_sum = 0
                 stale_sum = 0
@@ -253,7 +257,6 @@ class Server(object):
                         data_matrix[k][t] * stale_matrix[k][t] * (self.sigma**2)
                     )
 
-                # Omega不影响
                 item_1 = (
                     pow(self.kappa_1, self.num_round - 1 - t)
                     * self.kappa_2
@@ -276,22 +279,28 @@ class Server(object):
                 item = (1 - self.gamma) * (
                     item_1 + item_2 + item_3
                 ) + self.gamma * reward
-                res += item
-            return res
+                cost += item
+            return cost
 
-        pso = PSO(
-            func=func,
-            dim=2,
-            pop=self.pop,
-            max_iter=self.pso_max_iter,
-            lb=[self.reward_lb, self.theta_lb],
-            ub=[self.reward_ub, self.theta_ub],
-            eps=self.pso_eps,
+        result = gp_minimize(
+            func=cost_fn,  # 目标函数
+            dimensions=[
+                Real(self.reward_lb, self.reward_ub),
+                Real(self.theta_lb, self.theta_ub),
+            ],  # 搜索空间
+            n_calls=self.n_calls,  # 迭代次数，默认100
+            base_estimator=self.base_estimator,  # 代理模型
+            noise=self.noise,
+            acq_func=self.acq_func,  # 采集函数
+            xi=self.xi,  # 采集函数探索程度，默认0.01
+            random_state=self.random_state,  # 随机种子
         )
-        pso.run()
-        return pso.gbest_x, pso.gbest_y_hist
+        return result.x, result.fun, result.x_iters
 
     def estimate_phi(self):
+        """
+        函数3：给定D，估计phi
+        """
 
         # 初始化phi_list
         phi_list = self.phi_list_init
@@ -302,12 +311,12 @@ class Server(object):
 
         # 计算新的phi_list[T]
         for idc in range(self.fix_max_iter):
-            var, res = self.estimate_reward_theta(phi_list)
+            var, res, hist = self.estimate_reward_theta(phi_list)
             reward, theta = var
             increment_matrix, data_matrix, _ = self.estimate_D(phi_list, reward, theta)
             print("******************************************************")
-            print("{}, {}, {}, {}, {}".format(idc, phi_list, reward, theta, res))
-            print("{}".format(data_matrix))
+            print("{}, {}, {}, {}, {}".format(idc, hist[-10:], reward, theta, res))
+            # print("{}".format(data_matrix))
 
             next_phi_list = np.sum(
                 data_matrix * ((1 / self.delta_list).reshape(self.num_client, 1)),
@@ -324,35 +333,44 @@ class Server(object):
                 theta_hist.append(theta)
                 max_diff_hist.append(max_diff)
 
-                # 画图1，收敛
-                # fig = plt.figure()
-                # ax1 = fig.add_subplot(2,1,1)
-                # ax1.set_xlabel('iterations')
-                # ax1.set_ylabel('phi')
-                # ax1.plot(phi_hist, 'k-')
+                fig = plt.figure()
+                ax1 = fig.add_subplot(2, 1, 1)
+                ax1.set_xlabel("iterations")
+                ax1.set_ylabel("phi")
+                ax1.plot(phi_hist, "k-")
 
-                # ax2 = fig.add_subplot(2,1,2)
-                # ax2.set_xlabel('iterations')
-                # ax2.set_ylabel('reward')
-                # ax2.spines['left'].set_edgecolor('C0')
-                # ax2.yaxis.label.set_color('C0')
-                # ax2.tick_params(axis='y', colors='C0')
-                # line_2 = ax2.plot(reward_hist, color='C0', linestyle='-', label='reward')
+                ax2 = fig.add_subplot(2, 1, 2)
+                ax2.set_xlabel("iterations")
+                ax2.set_ylabel("reward")
+                ax2.spines["left"].set_edgecolor("C0")
+                ax2.yaxis.label.set_color("C0")
+                ax2.tick_params(axis="y", colors="C0")
+                line_2 = ax2.plot(
+                    reward_hist, color="C0", linestyle="-", label="reward"
+                )
 
-                # ax3 = ax2.twinx()
-                # ax3.set_ylabel('theta')
-                # ax3.spines['right'].set_edgecolor('red')
-                # ax3.yaxis.label.set_color('red')
-                # ax3.tick_params(axis='y', colors='red')
-                # line_3 = ax3.plot(theta_hist, 'r--', label='theta')
+                ax3 = ax2.twinx()
+                ax3.set_ylabel("theta")
+                ax3.spines["right"].set_edgecolor("red")
+                ax3.yaxis.label.set_color("red")
+                ax3.tick_params(axis="y", colors="red")
+                line_3 = ax3.plot(theta_hist, "r--", label="theta")
 
-                # lines = line_2 + line_3
-                # labs = [label.get_label() for label in lines]
-                # ax3.legend(lines,labs, frameon=False, loc=4)
-
-                # fig.tight_layout()
-                # fig.savefig(self.save_path_1 + '_{}.png'.format(self.sigma), dpi=200)
-                # plt.close()
+                lines = line_2 + line_3
+                labs = [label.get_label() for label in lines]
+                ax3.legend(lines, labs, frameon=False, loc=4)
+                fig.tight_layout()
+                path_1 = (
+                    self.path_prefix
+                    + "/client{}_round{}_initdata{}/conv/convergence.png".format(
+                        self.num_client,
+                        self.num_round,
+                        self.init_data_lower,
+                    )
+                )
+                os.makedirs(os.path.dirname(path_1), exist_ok=True)
+                fig.savefig(path_1, dpi=200)
+                plt.close()
 
             else:
                 max_diff_hist.append(max_diff)
@@ -362,8 +380,10 @@ class Server(object):
         print("failure2")
         return next_phi_list
 
-    # 给定R和theta，估计phi和delta ---------------------------------------------------
-    def estimate_direct_phi(self, reward, theta):
+    def re_estimate_phi_theta(self, reward, theta):
+        """
+        函数4：给定R和theta，重新估计phi和delta
+        """
 
         # 初始化phi_list
         phi_list = self.phi_list_init
@@ -395,8 +415,10 @@ class Server(object):
         print("failure2")
         return next_phi_list
 
-    # 给定reward, data_matrix, stale_matrix, 方便检查cost的各个部分 --------
     def estimate_direct_func(self, reward, data_matrix, stale_matrix):
+        """
+        函数5：给定reward, data_matrix, stale_matrix, 方便检查理论cost的各个部分
+        """
         # 计算单列和
         data_list = []  # [T]
         for t in range(self.num_round):
@@ -447,30 +469,28 @@ class Server(object):
 
     def online_train(self):
         # 正式训练前定好一切
-        pre_estimate_path_1 = self.pre_estimate_path + "_phi_best_sigma:{}.npy".format(
-            self.sigma
+        path_2 = (
+            self.path_prefix
+            + "/client{}_round{}_initdata{}/pre/standard.npz".format(
+                self.num_client, self.num_round, self.init_data_lower
+            )
         )
-        pre_estimate_path_2 = (
-            self.pre_estimate_path + "_theta_best_sigma:{}.npy".format(self.sigma)
-        )
-        if os.path.exists(pre_estimate_path_1) == False:
+        if os.path.exists(path_2) == False:
             phi_list = self.estimate_phi()  # [T]
             result = self.estimate_reward_theta(phi_list)  # [K, T]
-            result_1 = np.array(result[0])
-            result_2 = np.array(result[1])
-            result = np.array([result_1, result_2])
-            np.save(pre_estimate_path_1, phi_list)
-            np.save(pre_estimate_path_2, result)
+            reward = np.array(result[0][0])
+            theta = np.array(result[0][1])
+            cost = np.array(result[1])
+            os.makedirs(os.path.dirname(path_2), exist_ok=True)
+            np.savez(path_2, phi=phi_list, reward=reward, theta=theta, cost=cost)
         print("has read")
-        phi_list = np.load(pre_estimate_path_1)
-        result = np.load(pre_estimate_path_2)
-        reward = result[0][0]
-        theta = result[0][1]
-        res = result[1][1]
+        cache = np.load(path_2)
+        reward = cache["reward"]
+        theta = cache["theta"]
 
         # 尝试所有的变种
-        delta_reward_list = []
-        delta_theta_list = []
+        gap_reward_list = []
+        gap_theta_list = []
         # 变种对应的数据，画图2
         hist_increment_matrix = []
         hist_data_matrix = []
@@ -494,51 +514,46 @@ class Server(object):
         sigma_dict = {1.25: 0.10, 1: 0.32, 0.75: 0.52, 0.475: 0.71, 0: 0.90}
         # enum = [[0, -theta + 0.3], [0, -theta + 0.52], [0, -theta + 0.70], [0, -theta + 0.90]]
         # enum = [[0, -theta + args['con_1']], [0, -theta + args['con_2']], [0, -theta + args['con_3']], [0, -theta + args['con_4']]]
-        enum = [[-reward, -theta + 1], [0, -theta + args["con_2"]]]
-        for idx in range(len(enum)):
-            delta_com = enum[idx]
-            new_reward = reward + delta_com[0]
-            new_theta = min(max(0.05, theta + delta_com[1]), 1)
-            delta_reward_list.append(delta_com[0])
-            delta_theta_list.append(delta_com[1])
+        gaps = [[-reward, -theta + 1], [0, -theta + args["con_2"]]]
+        for idx in range(len(gaps)):
+            gap = gaps[idx]
+            new_reward = reward + gap[0]
+            new_theta = min(max(0.05, theta + gap[1]), 1)
+            gap_reward_list.append(gap[0])
+            gap_theta_list.append(gap[1])
             # print(reward, delta_com[0], new_reward)
             # print(theta, delta_com[1], new_theta)
             # exit(0)
 
-            pre_estimate_path_3_a = (
-                self.pre_estimate_path
-                + "_a_theta_ver:{}_sigma:{}.npy".format(
-                    str(round(new_theta, 2)), self.sigma
+            path_3 = (
+                self.path_prefix
+                + "/client{}_round{}_initdata{}/pre/variety/newreward{}_newtheta{}.npz".format(
+                    self.num_client,
+                    self.num_round,
+                    self.init_data_lower,
+                    str(round(new_reward, 2)),
+                    str(round(new_theta, 2)),
                 )
             )
-            pre_estimate_path_3_b = (
-                self.pre_estimate_path
-                + "_b_theta_ver:{}_sigma:{}.npy".format(
-                    str(round(new_theta, 2)), self.sigma
+            if os.path.exists(path_3) == False:
+                var = self.re_estimate_phi_theta(new_reward, new_theta)
+                phi_list = var[0]
+                increment_matrix = var[1]
+                data_matrix = var[2]
+                stale_matrix = var[3]
+                os.makedirs(os.path.dirname(path_3), exist_ok=True)
+                np.savez(
+                    path_3,
+                    phi=phi_list,
+                    increment=increment_matrix,
+                    data=data_matrix,
+                    stale=stale_matrix,
                 )
-            )
-            pre_estimate_path_3_c = (
-                self.pre_estimate_path
-                + "_c_theta_ver:{}_sigma:{}.npy".format(
-                    str(round(new_theta, 2)), self.sigma
-                )
-            )
-            pre_estimate_path_3_d = (
-                self.pre_estimate_path
-                + "_d_theta_ver:{}_sigma:{}.npy".format(
-                    str(round(new_theta, 2)), self.sigma
-                )
-            )
-            if os.path.exists(pre_estimate_path_3_a) == False:
-                var = self.estimate_direct_phi(new_reward, new_theta)
-                np.save(pre_estimate_path_3_a, var[0])
-                np.save(pre_estimate_path_3_b, var[1])
-                np.save(pre_estimate_path_3_c, var[2])
-                np.save(pre_estimate_path_3_d, var[3])
-            phi_list = np.load(pre_estimate_path_3_a)
-            increment_matrix = np.load(pre_estimate_path_3_b)
-            data_matrix = np.load(pre_estimate_path_3_c)
-            stale_matrix = np.load(pre_estimate_path_3_d)
+            cache = np.load(path_3)
+            phi_list = cache["phi"]
+            increment_matrix = cache["increment"]
+            data_matrix = cache["data"]
+            stale_matrix = cache["stale"]
             # print(increment_matrix)
             # exit(0)
 
@@ -560,7 +575,7 @@ class Server(object):
                 labels = []
                 count = 1
                 for n in range(idx + 1):
-                    tmp_theta = min(max(0.05, theta + delta_theta_list[n]), 1)
+                    tmp_theta = min(max(0.05, theta + gap_theta_list[n]), 1)
                     if tmp_theta == 0.5:
                         label = r"$(R, \theta)^*$"
                     else:
@@ -608,8 +623,17 @@ class Server(object):
                             "weight": "bold",
                         },
                     )
+                    path_4 = (
+                        self.path_prefix
+                        + "/client{}_round{}_initdata{}/data/delta.png".format(
+                            self.num_client,
+                            self.num_round,
+                            self.init_data_lower,
+                        )
+                    )
+                    os.makedirs(os.path.dirname(path_4), exist_ok=True)
                     plt.savefig(
-                        self.save_path_2_delta + "_{}.png".format(self.sigma),
+                        path_4,
                         dpi=200,
                         bbox_inches="tight",
                     )
@@ -618,7 +642,7 @@ class Server(object):
                 labels = []
                 count = 1
                 for n in range(idx + 1):
-                    tmp_theta = min(max(0.05, theta + delta_theta_list[n]), 1)
+                    tmp_theta = min(max(0.05, theta + gap_theta_list[n]), 1)
                     if tmp_theta == 0.5:
                         label = r"$(R, \theta)^*$"
                     else:
@@ -667,8 +691,17 @@ class Server(object):
                             "weight": "bold",
                         },
                     )
+                    path_5 = (
+                        self.path_prefix
+                        + "/client{}_round{}_initdata{}/data/data.png".format(
+                            self.num_client,
+                            self.num_round,
+                            self.init_data_lower,
+                        )
+                    )
+                    os.makedirs(os.path.dirname(path_5), exist_ok=True)
                     plt.savefig(
-                        self.save_path_2_data + "_{}.png".format(self.sigma),
+                        path_5,
                         dpi=200,
                         bbox_inches="tight",
                     )
@@ -677,7 +710,7 @@ class Server(object):
                 labels = []
                 count = 1
                 for n in range(idx + 1):
-                    tmp_theta = min(max(0.05, theta + delta_theta_list[n]), 1)
+                    tmp_theta = min(max(0.05, theta + gap_theta_list[n]), 1)
                     if tmp_theta == 0.5:
                         label = r"$(R, \theta)^*$"
                     else:
@@ -726,8 +759,17 @@ class Server(object):
                             "weight": "bold",
                         },
                     )
+                    path_6 = (
+                        self.path_prefix
+                        + "/client{}_round{}_initdata{}/data/stale.png".format(
+                            self.num_client,
+                            self.num_round,
+                            self.init_data_lower,
+                        )
+                    )
+                    os.makedirs(os.path.dirname(path_6), exist_ok=True)
                     plt.savefig(
-                        self.save_path_2_stale + "_{}.png".format(self.sigma),
+                        path_6,
                         dpi=200,
                         bbox_inches="tight",
                     )
@@ -735,10 +777,10 @@ class Server(object):
 
                 flag = 0
                 width = 0.17
-                x = range(len(delta_reward_list))
+                x = range(len(gap_reward_list))
                 ticks = [
-                    r"$(\theta={:.2f})$".format(min(max(0.05, theta + delta_theta), 1))
-                    for delta_theta in delta_theta_list
+                    r"$(\theta={:.2f})$".format(min(max(0.05, theta + gap_theta), 1))
+                    for gap_theta in gap_theta_list
                 ]
                 for n in range(idx + 1):
                     plt.bar(
@@ -779,8 +821,17 @@ class Server(object):
                     if flag == 0:
                         plt.legend(frameon=False)
                         flag = 1
+                    path_7 = (
+                        self.path_prefix
+                        + "/client{}_round{}_initdata{}/data/cost.png".format(
+                            self.num_client,
+                            self.num_round,
+                            self.init_data_lower,
+                        )
+                    )
+                    os.makedirs(os.path.dirname(path_7), exist_ok=True)
                     plt.savefig(
-                        self.save_path_2_cost + "_{}.png".format(self.sigma),
+                        path_7,
                         dpi=200,
                         bbox_inches="tight",
                     )
@@ -808,7 +859,7 @@ class Server(object):
                     next_global_parameter = {}
                     global_loss = 0
                     for k in range(self.num_client):
-                        result = self.client_group.clients[k].local_update(
+                        result = self.client_group.clients[k].local_update_avg(
                             idx,
                             t,
                             k,
@@ -831,6 +882,12 @@ class Server(object):
                                 next_global_parameter[item[0]] += (
                                     rate_matrix[k][t] * item[1].clone()
                                 )
+                        # print(
+                        #     local_parameter["conv_block.0.weight"].data_ptr()
+                        #     == next_global_parameter["conv_block.0.weight"].data_ptr()
+                        # )
+                        # exit(0)
+                        # 不会污染第一个本地模型
 
                         local_loss = result[1]
                         global_loss += rate_matrix[k][t] * local_loss
@@ -848,7 +905,7 @@ class Server(object):
                             # 固定哦
                             test_dataloader = DataLoader(
                                 ConcatDataset(self.test_data_list),
-                                batch_size=100,
+                                batch_size=1024,
                                 shuffle=False,
                             )
                             for batch in test_dataloader:
@@ -868,20 +925,19 @@ class Server(object):
                 hist_accuracy_list.append(accuracy_list[-1])
 
                 width = 0.8
-                x = range(len(delta_reward_list))
+                x = range(len(gap_reward_list))
                 labels = []
                 count = 1
                 for n in range(idx + 1):
-                    tmp_theta = min(max(0.05, theta + delta_theta_list[n]), 1)
+                    tmp_theta = min(max(0.05, theta + gap_theta_list[n]), 1)
                     if tmp_theta == 0.5:
                         label = r"$(R, \theta)^*$"
                     else:
                         label = r"$(R, \theta)^{}$".format(count)
                         count += 1
                     labels.append(label)
-                new_gamma = 5e-4
-                cost_1_list = (1 - new_gamma) * (1 - np.array(hist_accuracy_list))
-                cost_2_list = new_gamma * (np.array(delta_reward_list) + reward)
+                cost_1_list = (1 - self.new_gamma) * (1 - np.array(hist_accuracy_list))
+                cost_2_list = self.new_gamma * (np.array(gap_reward_list) + reward)
                 plt.bar(
                     x,
                     cost_1_list,
@@ -912,8 +968,23 @@ class Server(object):
                     frameon=False,
                     prop={"family": "Times New Roman", "size": 17, "weight": "bold"},
                 )
+                path_8 = (
+                    self.path_prefix
+                    + "/client{}_round{}_initdata{}/{}_{}_{}/cost/d{}_e{}_i{}.png".format(
+                        self.num_client,
+                        self.num_round,
+                        self.init_data_lower,
+                        self.dataset_name,
+                        self.net_name,
+                        self.alg_name,
+                        args["dirichlet"],
+                        args["num_epoch"],
+                        args["init_num_class"],
+                    )
+                )
+                os.makedirs(os.path.dirname(path_8), exist_ok=True)
                 plt.savefig(
-                    self.save_path_3 + "_sigma={}.png".format(self.sigma),
+                    path_8,
                     dpi=200,
                     bbox_inches="tight",
                 )
@@ -928,7 +999,7 @@ class Server(object):
 
                 count = 1
                 for n in range(idx + 1):
-                    tmp_theta = min(max(0.05, theta + delta_theta_list[n]), 1)
+                    tmp_theta = min(max(0.05, theta + gap_theta_list[n]), 1)
                     if tmp_theta == 0.5:
                         label = r"$(R, \theta)^*$"
                     else:
@@ -961,8 +1032,23 @@ class Server(object):
                             "weight": "bold",
                         },
                     )
+                    path_9 = (
+                        self.path_prefix
+                        + "/client{}_round{}_initdata{}/{}_{}_{}/loss/d{}_e{}_i{}.png".format(
+                            self.num_client,
+                            self.num_round,
+                            self.init_data_lower,
+                            self.dataset_name,
+                            self.net_name,
+                            self.alg_name,
+                            args["dirichlet"],
+                            args["num_epoch"],
+                            args["init_num_class"],
+                        )
+                    )
+                    os.makedirs(os.path.dirname(path_9), exist_ok=True)
                     plt.savefig(
-                        self.save_path_4_loss + "_sigma={}.png".format(self.sigma),
+                        path_9,
                         dpi=200,
                         bbox_inches="tight",
                     )
@@ -970,7 +1056,7 @@ class Server(object):
 
                 count = 1
                 for n in range(idx + 1):
-                    tmp_theta = min(max(0.05, theta + delta_theta_list[n]), 1)
+                    tmp_theta = min(max(0.05, theta + gap_theta_list[n]), 1)
                     if tmp_theta == 0.5:
                         label = r"$(R, \theta)^*$"
                     else:
@@ -1001,8 +1087,23 @@ class Server(object):
                             "weight": "bold",
                         },
                     )
+                    path_10 = (
+                        self.path_prefix
+                        + "/client{}_round{}_initdata{}/{}_{}_{}/acc/d{}_e{}_i{}.png".format(
+                            self.num_client,
+                            self.num_round,
+                            self.init_data_lower,
+                            self.dataset_name,
+                            self.net_name,
+                            self.alg_name,
+                            args["dirichlet"],
+                            args["num_epoch"],
+                            args["init_num_class"],
+                        )
+                    )
+                    os.makedirs(os.path.dirname(path_10), exist_ok=True)
                     plt.savefig(
-                        self.save_path_4_acc + "_sigma={}.png".format(self.sigma),
+                        path_10,
                         dpi=200,
                         bbox_inches="tight",
                     )
@@ -1021,9 +1122,6 @@ def parser_args():
     dirichlet = cli_args["dirichlet"]
     num_epoch = cli_args["num_epoch"]
     init_num_class = cli_args["init_num_class"]
-    save_path = "../logs/fedstream/acc_svhn_cnn_fedavg_d{}_e{}_i{}".format(
-        dirichlet, num_epoch, init_num_class
-    )
 
     # 加载默认参数
     with open("../config/args.yaml") as f:
@@ -1033,7 +1131,6 @@ def parser_args():
     default_args["dirichlet"] = dirichlet
     default_args["num_epoch"] = num_epoch
     default_args["init_num_class"] = init_num_class
-    default_args["save_path_4_acc"] = save_path
 
     return default_args
 

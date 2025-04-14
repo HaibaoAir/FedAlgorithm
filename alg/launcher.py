@@ -1,22 +1,48 @@
 import os
 from subprocess import Popen
 import time
+import yaml
+
+# 套取基本信息以访问路径
+with open("../config/args.yaml") as f:
+    config = yaml.safe_load(f)
+client = config["num_client"]
+round = config["num_round"]
+initdata = config["init_data_lower"]
+dataset = config["dataset"]
+model = config["model"]
+alg = config["alg"]
 
 # 参数组合
 dirichlet_list = [0.5, 0.6, 0.7, 0.8]
-num_epoch_list = [20]
-init_num_class_list = [7, 8, 9, 10]
+num_epoch_list = [1, 2, 5]
+init_num_class_list = [6, 7, 8, 9]
 
 # 控制最大同时运行的进程数
-MAX_PARALLEL = 32
+MAX_PARALLEL = 45
 process_pool = []
 
 
 # 启动一个实验
 def launch(dirichlet, num_epoch, init_num_class, env):
+    # 命令
     cmd = f"python FedStream.py --dirichlet {dirichlet} --num_epoch {num_epoch} --init_num_class {init_num_class}"
-    log_name = f"d{dirichlet}_e{num_epoch}_c{init_num_class}.log"
-    log_file = open(f"../logs/launcher_logs/{log_name}", "w")
+
+    # 路径
+    path_0 = "../logs/fedstream/client{}_round{}_initdata{}/{}_{}_{}/launcher/d{}_e{}_c{}.log".format(
+        client,
+        round,
+        initdata,
+        dataset,
+        model,
+        alg,
+        dirichlet,
+        num_epoch,
+        init_num_class,
+    )
+    os.makedirs(os.path.dirname(path_0), exist_ok=True)
+    log_file = open(path_0, "w")
+
     print(f"[LAUNCH] {cmd}")
     return Popen(
         cmd,
@@ -54,6 +80,7 @@ for dirichlet in dirichlet_list:
                 process_pool = [
                     p for p in process_pool if p.poll() is None
                 ]  # 只保留未结束的
+
 
 # 等所有实验完成
 for p in process_pool:
