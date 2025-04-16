@@ -143,6 +143,7 @@ class Client(object):
             independent_class = np.random.choice(
                 range(t + self.num_init_class), true_num_class, replace=False
             )
+            print(true_num_class, independent_size, independent_class)
             for tau in independent_class:
                 idcs = [idc for idc in range(len(self.datasource_list[tau]))]
                 used = random.sample(idcs, independent_size)
@@ -178,17 +179,13 @@ class Client(object):
 
     def local_update_avg(
         self,
-        idx,
         t,
         k,
-        sigma,
         num_epoch,
         batch_size,
         global_parameters,
         theta,
-        increment_next,
         datasize,
-        poison_sigma,
     ):
 
         # 收集数据
@@ -209,44 +206,6 @@ class Client(object):
 
         if t == 0:
             self.count_matrix = []
-
-        width = 0.4
-        if k == 0:
-            # 数据分布
-            count_dict = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0}
-            for item in self.data:
-                label = item[1].item()
-                count_dict[label] += 1
-            print(count_dict)
-            self.count_matrix.append(list(count_dict.values()))
-            material = np.array(self.count_matrix)
-            a = np.sum(material[:, :-1], axis=1)
-            b = material[:, -1]
-            plt.bar(
-                np.array(range(material.shape[0])),
-                a,
-                width=width,
-                color="C0",
-                edgecolor="black",
-                label="{}".format("valid_data"),
-            )
-            plt.bar(
-                np.array(range(material.shape[0])),
-                b,
-                width=width,
-                bottom=a,
-                color="white",
-                edgecolor="black",
-                hatch="/",
-                label="{}".format("stale_data"),
-            )
-            plt.xlabel("Round")
-            plt.ylabel("Data Distribution")
-            plt.legend()
-            plt.savefig(
-                "../logs/fedstream/data_distribution_{}.png".format(idx), dpi=200
-            )
-            plt.close()
 
         # 训练
         loss_list = []
@@ -269,18 +228,14 @@ class Client(object):
 
     def local_update_prox(
         self,
-        idx,
         t,
         k,
-        sigma,
         num_epoch,
         batch_size,
         global_parameters,
         theta,
-        increment_next,
         datasize,
-        poison_sigma,
-        mu=0.01,
+        mu,
     ):
 
         # 收集数据
@@ -301,44 +256,6 @@ class Client(object):
 
         if t == 0:
             self.count_matrix = []
-
-        width = 0.4
-        if k == 0:
-            # 数据分布
-            count_dict = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0}
-            for item in self.data:
-                label = item[1].item()
-                count_dict[label] += 1
-            print(count_dict)
-            self.count_matrix.append(list(count_dict.values()))
-            material = np.array(self.count_matrix)
-            a = np.sum(material[:, :-1], axis=1)
-            b = material[:, -1]
-            plt.bar(
-                np.array(range(material.shape[0])),
-                a,
-                width=width,
-                color="C0",
-                edgecolor="black",
-                label="{}".format("valid_data"),
-            )
-            plt.bar(
-                np.array(range(material.shape[0])),
-                b,
-                width=width,
-                bottom=a,
-                color="white",
-                edgecolor="black",
-                hatch="/",
-                label="{}".format("stale_data"),
-            )
-            plt.xlabel("Round")
-            plt.ylabel("Data Distribution")
-            plt.legend()
-            plt.savefig(
-                "../logs/fedstream/data_distribution_{}.png".format(idx), dpi=200
-            )
-            plt.close()
 
         # 训练
         loss_list = []

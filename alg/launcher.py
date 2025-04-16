@@ -15,21 +15,22 @@ alg = config["alg"]
 
 # 参数组合
 dirichlet_list = [0.5, 0.6, 0.7, 0.8]
-num_epoch_list = [1, 2, 5]
 init_num_class_list = [6, 7, 8, 9]
 
 # 控制最大同时运行的进程数
-MAX_PARALLEL = 45
+MAX_PARALLEL = 40
 process_pool = []
 
 
 # 启动一个实验
-def launch(dirichlet, num_epoch, init_num_class, env):
+def launch(dirichlet, init_num_class, env):
     # 命令
-    cmd = f"python FedStream.py --dirichlet {dirichlet} --num_epoch {num_epoch} --init_num_class {init_num_class}"
+    cmd = (
+        f"python FedStream.py --dirichlet {dirichlet} --init_num_class {init_num_class}"
+    )
 
     # 路径
-    path_0 = "../logs/fedstream/client{}_round{}_initdata{}/{}_{}_{}/launcher/d{}_e{}_c{}.log".format(
+    path_0 = "../logs/fedstream/client{}_round{}_initdata{}/{}_{}_{}/launcher/d{}_c{}.log".format(
         client,
         round,
         initdata,
@@ -37,7 +38,6 @@ def launch(dirichlet, num_epoch, init_num_class, env):
         model,
         alg,
         dirichlet,
-        num_epoch,
         init_num_class,
     )
     os.makedirs(os.path.dirname(path_0), exist_ok=True)
@@ -57,29 +57,27 @@ def launch(dirichlet, num_epoch, init_num_class, env):
 gpu_list = [0, 1, 2]
 count = 0
 for dirichlet in dirichlet_list:
-    for num_epoch in num_epoch_list:
-        for init_num_class in init_num_class_list:
-            # 设置GPU
-            gpu_id = gpu_list[count % len(gpu_list)]
-            env = os.environ.copy()
-            env["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
-            count += 1
+    for init_num_class in init_num_class_list:
+        # 设置GPU
+        gpu_id = gpu_list[count % len(gpu_list)]
+        env = os.environ.copy()
+        env["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
+        count += 1
 
-            # 启动实验
-            p = launch(
-                dirichlet,
-                num_epoch,
-                init_num_class,
-                env,
-            )
-            process_pool.append(p)
+        # 启动实验
+        p = launch(
+            dirichlet,
+            init_num_class,
+            env,
+        )
+        process_pool.append(p)
 
-            # 限制最大并发
-            while len(process_pool) >= MAX_PARALLEL:
-                time.sleep(2)
-                process_pool = [
-                    p for p in process_pool if p.poll() is None
-                ]  # 只保留未结束的
+        # 限制最大并发
+        while len(process_pool) >= MAX_PARALLEL:
+            time.sleep(2)
+            process_pool = [
+                p for p in process_pool if p.poll() is None
+            ]  # 只保留未结束的
 
 
 # 等所有实验完成

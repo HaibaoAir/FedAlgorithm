@@ -31,6 +31,13 @@ import torchvision.transforms as transforms
 
 import numpy as np
 
+a = [[1, 2], [3, 4]]
+print(np.array(a)[:, 0])
+exit(0)
+
+a = 5.0
+print(np.round(a, 2))
+exit(0)
 path = "logs/fedstream/pre_estimate_phi_best_sigma:0.75.npy"
 phi_list = np.load(path)
 

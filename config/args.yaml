@@ -1,94 +1,26 @@
-# 相关配置
+# 配置fmnist+lr+fedavg
+dataset: mnist
+num_class: 10
+init_num_class: None
+dirichlet: None
+
+model: lr
+num_epoch: 5
+batch_size: 64
+learning_rate: 0.01
+eval_freq: 5
+
+alg: fedavg
+mu: 0.01
+
+# 配置fedstream
 mode: train
 num_client: 5
 num_sample: 5
 num_round: 50
 init_data_lower: 700
 init_data_upper: 800
-# -----------------------------------------------------------------------------------------
-# 配置svhn+cnn
-dataset: mnist
-model: lr
-alg: fedavg
-# alg: fedprox # 记得改mu以及local_update_prox
-# mu: 0.01
-num_class: 10
-init_num_class: None
-dirichlet: None
-num_epoch: None
-batch_size: 64
-learning_rate: 0.01
-eval_freq: 2
-
-con_1: 0.1
-con_2: 0.5
-con_3: 0.88
-con_4: 0.92
-poison_sigma: 0.25
 path_prefix: ../logs/fedstream
-# -----------------------------------------------------------------------------------------
-# # 配置svhn+cnn
-# dataset: svhn
-# model: cnn
-# alg: fedavg
-# num_class: 10
-# init_num_class: None
-# dirichlet: None
-# num_epoch: None
-# batch_size: 64
-# learning_rate: 0.01
-# eval_freq: 2
-
-# con_1: 0.1
-# con_2: 0.5
-# con_3: 0.88
-# con_4: 0.92
-# poison_sigma: 0.25
-# path_prefix: ../logs/fedstream
-# -----------------------------------------------------------------------------------------
-# # 配置mnistlr
-# dataset: mnist
-# model: lr
-# num_epoch: 2
-# con_1: 0.1
-# con_2: 0.5
-# con_3: 0.8
-# con_4: 0.9
-# poison_sigma: 0.1
-# path_prefix: ../logs/fedstream
-# -----------------------------------------------------------------------------------------
-# 配置fmnistlr
-# dataset: fmnist
-# model: lr
-# num_epoch: 1
-# con_1: 0.1
-# con_2: 0.5
-# con_3: 0.88
-# con_4: 0.92
-# poison_sigma: 0.25
-# path_prefix: ../logs/fedstream
-# -----------------------------------------------------------------------------------------
-# # 配置mnistcnn2(选中)
-# dataset: mnist
-# model: cnn
-# num_epoch: 2
-# con_1: 0.1
-# con_2: 0.5
-# con_3: 0.83
-# con_4: 0.9
-# poison_sigma: 0.25
-# path_prefix: ../logs/fedstream
-# -----------------------------------------------------------------------------------------
-# # 配置fmnistcnn2(选中)
-# dataset: fmnist
-# model: cnn
-# num_epoch: 1
-# con_1: 0.1
-# con_2: 0.5
-# con_3: 0.88
-# con_4: 0.92
-# poison_sigma: 0.25
-# path_prefix: ../logs/fedstream
 
 delta: 1
 psi: 1
