@@ -1,11 +1,11 @@
 # 配置fmnist+lr+fedavg
-dataset: mnist
+dataset: svhn
 num_class: 10
 init_num_class: None
 dirichlet: None
 
-model: lr
-num_epoch: 5
+model: cnn
+num_epoch: 1
 batch_size: 64
 learning_rate: 0.01
 eval_freq: 5
@@ -17,7 +17,7 @@ mu: 0.01
 mode: train
 num_client: 5
 num_sample: 5
-num_round: 50
+num_round: 100
 init_data_lower: 700
 init_data_upper: 800
 path_prefix: ../logs/fedstream
@@ -34,7 +34,13 @@ kappa_4: 1.0e-2
 gamma: 1.0e-4 # 求解过程中的gamma
 new_gamma: 5.0e-4 # 实际绘图中的gamma，得保证损失成本和最低
 
+fix_eps_1: 1.0e-2
+fix_eps_2: 1 # round=5(3), round=50(20), round=100(20)
+fix_eps_3: 1
+fix_max_iter: 10000000
+
 # # 一阶段
+# # 仔细调这些优，感觉只要上面参数不变，都是一样的
 # reward_lb: 1 # 缩小搜索范围
 # reward_ub: 200
 # theta_lb: 0
@@ -49,18 +55,14 @@ new_gamma: 5.0e-4 # 实际绘图中的gamma，得保证损失成本和最低
 # 二阶段
 # 初期警报变多
 # 后期可能不严格收敛
-reward_lb: 50 # 缩小搜索范围
-reward_ub: 70
-theta_lb: 0.45
-theta_ub: 0.55
+reward_lb: 55 # 缩小搜索范围
+reward_ub: 65
+theta_lb: 0.5
+# theta_ub: 0.56 # 作孽呀
+theta_ub: 0.65
 n_calls: 100 # 增加迭代次数，默认都100
 base_estimator: GP
 noise: gaussian
 acq_func: EI
 xi: 0.005 # 降低采集函数探索能力，默认为0.01
 random_state: 42
-
-fix_eps_1: 1.0e-2
-fix_eps_2: 20
-fix_eps_3: 1
-fix_max_iter: 10000000

@@ -1,5 +1,5 @@
 import os
-
+import sys
 import random
 import numpy as np
 import torch
@@ -9,23 +9,32 @@ from skopt.space import Real
 import argparse
 import yaml
 
+sys.path.append("../")
+from config.config import args_parser
 from FedAvg import Server as FedAvg_Server
 from FedProx import Server as FedProx_Server
 from FedNova import Server as FedNova_Server
+from FedDyn import Server as FedDyn_Server
 
 
 class FedStream(object):
     def __init__(self, args):
         # 初始化data_matrix[K,T]
-        self.num_client = args["num_client"]
-        self.num_round = args["num_round"]
-        self.eval_freq = args["eval_freq"]
-        self.path_prefix = args["path_prefix"]
-        self.init_data_lower = args["init_data_lower"]
-        self.init_data_upper = args["init_data_upper"]
+        self.num_client = args.num_client
+        self.num_round = args.num_round
+        self.eval_freq = args.eval_freq
+        self.path_prefix = args.path_prefix
+        self.init_data_lb = args.init_data_lb
+        self.init_data_ub = args.init_data_ub
+        self.alg_name = args.alg_name
+        self.net_name = args.net_name
+        self.dataset_name = args.dataset_name
+        self.dirichlet = args.dirichlet
+        self.init_num_class = args.init_num_class
+        self.num_epoch = args.num_epoch
 
         self.data_origin_init = [
-            random.randint(self.init_data_lower, self.init_data_upper)
+            random.randint(self.init_data_lb, self.init_data_ub)
             for _ in range(self.num_client)
         ]
         self.data_matrix_init = []
@@ -36,50 +45,50 @@ class FedStream(object):
                 data_list.append(data)
             self.data_matrix_init.append(data_list)
 
-        # 初始化phi_list[T]
         self.phi_list_init = []
         for t in range(self.num_round):
             phi = random.random() * 60
             self.phi_list_init.append(phi)
 
-        # 背景超参数
-        self.delta_list = np.array([args["delta"]] * self.num_client)  # [K]
-        self.psi = args["psi"]
-        self.alpha_list = [args["alpha"]] * self.num_client  # 收集数据的价格
+        self.delta_list = np.array([args.delta] * args.num_client)  # [K]
+        self.psi = args.psi
+        self.alpha_list = [args.alpha] * self.num_client  # 收集数据的价格
         self.beta_list = [
-            args["beta"]
+            args.beta
         ] * self.num_client  # 训练数据的价格 如果稍大变负数就收敛不了，如果是0就没有不动点的意义
-        self.sigma = args["sigma"]
+        self.sigma = args.sigma
 
-        self.kappa_1 = args["kappa_1"]
-        self.kappa_2 = args["kappa_2"]
-        self.kappa_3 = args["kappa_3"]
-        self.kappa_4 = args["kappa_4"]
-        self.gamma = args["gamma"]
-        self.new_gamma = args["new_gamma"]
+        self.kappa_1 = args.kappa_1
+        self.kappa_2 = args.kappa_2
+        self.kappa_3 = args.kappa_3
+        self.kappa_4 = args.kappa_4
+        self.gamma = args.gamma
+        self.new_gamma = args.new_gamma
 
-        self.reward_lb = args["reward_lb"]  # 反正不看过程只看结果，原来1-100得50
-        self.reward_ub = args["reward_ub"]
-        self.theta_lb = args["theta_lb"]
-        self.theta_ub = args["theta_ub"]
-        self.n_calls = args["n_calls"]
-        self.base_estimator = args["base_estimator"]
-        self.noise = args["noise"]
-        self.acq_func = args["acq_func"]
-        self.xi = args["xi"]
-        self.random_state = args["random_state"]
+        self.reward_lb = args.reward_lb  # 反正不看过程只看结果，原来1-100得50
+        self.reward_ub = args.reward_ub
+        self.theta_lb = args.theta_lb
+        self.theta_ub = args.theta_ub
+        self.n_calls = args.n_calls
+        self.base_estimator = args.base_estimator
+        self.noise = args.noise
+        self.acq_func = args.acq_func
+        self.xi = args.xi
+        self.random_state = args.random_state
 
-        self.fix_eps_1 = args["fix_eps_1"]
-        self.fix_eps_2 = args["fix_eps_2"]
-        self.fix_eps_3 = args["fix_eps_3"]
-        self.fix_max_iter = args["fix_max_iter"]
+        self.fix_eps_1 = args.fix_eps_1
+        self.fix_eps_2 = args.fix_eps_2
+        self.fix_eps_3 = args.fix_eps_3
+        self.fix_max_iter = args.fix_max_iter
 
         # 选择算法
-        if args["alg"] == "fedavg":
+        if self.alg_name == "fedavg":
             self.alg = FedAvg_Server(args)
-        elif args["alg"] == "fedprox":
+        elif self.alg_name == "fedprox":
             self.alg = FedProx_Server(args)
-        elif args["alg"] == "fednova":
+        elif self.alg_name == "feddyn":
+            self.alg = FedDyn_Server(args)
+        elif self.alg_name == "fednova":
             self.alg = FedNova_Server(args)
         else:
             raise ValueError("Invalid algorithm name")
@@ -291,7 +300,7 @@ class FedStream(object):
                     + "/client{}_round{}_initdata{}/conv/convergence.png".format(
                         self.num_client,
                         self.num_round,
-                        self.init_data_lower,
+                        self.init_data_lb,
                     )
                 )
                 os.makedirs(os.path.dirname(path_1), exist_ok=True)
@@ -394,9 +403,9 @@ class FedStream(object):
         return res, res1, res2, res3, res4
 
     def draw_data(self, scenarios, matrix, topic):
-        color = ["C0", "C2", "C3", "C4", "C5"]
-        marker = ["^", "s", "o", "v", "D", "s", "+", "p", ","]
-        linestyle = [":", "-", ":", ":"]
+        color = ["C2", "C0", "C3", "C4", "C5"]
+        marker = ["s", "^", "o", "v", "D", "s", "+", "p", ","]
+        linestyle = ["-", ":", ":", ":"]
 
         for n in range(len(matrix)):
             draw = matrix[n][:: self.eval_freq]
@@ -444,7 +453,7 @@ class FedStream(object):
         path_4 = self.path_prefix + "/client{}_round{}_initdata{}/data/{}.png".format(
             self.num_client,
             self.num_round,
-            self.init_data_lower,
+            self.init_data_lb,
             topic,
         )
         os.makedirs(os.path.dirname(path_4), exist_ok=True)
@@ -497,15 +506,16 @@ class FedStream(object):
         )
         path_5 = (
             self.path_prefix
-            + "/client{}_round{}_initdata{}/{}_{}_{}/cost/d{}_i{}.png".format(
+            + "/client{}_round{}_initdata{}/{}_{}_{}/cost/d{}_c{}_e{}.png".format(
                 self.num_client,
                 self.num_round,
-                self.init_data_lower,
-                args["dataset"],
-                args["model"],
-                args["alg"],
-                args["dirichlet"],
-                args["init_num_class"],
+                self.init_data_lb,
+                self.dataset_name,
+                self.net_name,
+                self.alg_name,
+                self.dirichlet,
+                self.init_num_class,
+                self.num_epoch,
             )
         )
         os.makedirs(os.path.dirname(path_5), exist_ok=True)
@@ -517,9 +527,9 @@ class FedStream(object):
         plt.close()
 
     def draw_loss_acc(self, scenarios, hist_loss_matrix, hist_acc_matrix):
-        color = ["C0", "C2", "C3", "C4", "C5"]
-        marker = ["^", "s", "o", "v", "D", "s", "+", "p", ","]
-        linestyle = [":", "-", ":", ":"]
+        color = ["C2", "C0", "C3", "C4", "C5"]
+        marker = ["s", "^", "o", "v", "D", "s", "+", "p", ","]
+        linestyle = ["-", ":", ":", ":"]
 
         for n in range(len(hist_loss_matrix)):
             draw = hist_loss_matrix[n][:: self.eval_freq]
@@ -551,23 +561,26 @@ class FedStream(object):
             )
             path_6 = (
                 self.path_prefix
-                + "/client{}_round{}_initdata{}/{}_{}_{}/loss/d{}_i{}.png".format(
+                + "/client{}_round{}_initdata{}/{}_{}_{}/loss/d{}_c{}_e{}".format(
                     self.num_client,
                     self.num_round,
-                    self.init_data_lower,
-                    args["dataset"],
-                    args["model"],
-                    args["alg"],
-                    args["dirichlet"],
-                    args["init_num_class"],
+                    self.init_data_lb,
+                    self.dataset_name,
+                    self.net_name,
+                    self.alg_name,
+                    self.dirichlet,
+                    self.init_num_class,
+                    self.num_epoch,
                 )
             )
             os.makedirs(os.path.dirname(path_6), exist_ok=True)
             plt.savefig(
-                path_6,
+                path_6 + ".png",
                 dpi=200,
                 bbox_inches="tight",
             )
+            with open(path_6 + ".txt", "w") as f:
+                f.write(str(np.array(hist_loss_matrix)))
         plt.close()
 
         for n in range(len(hist_acc_matrix)):
@@ -599,23 +612,26 @@ class FedStream(object):
             )
             path_7 = (
                 self.path_prefix
-                + "/client{}_round{}_initdata{}/{}_{}_{}/acc/d{}_i{}.png".format(
+                + "/client{}_round{}_initdata{}/{}_{}_{}/acc/d{}_c{}_e{}".format(
                     self.num_client,
                     self.num_round,
-                    self.init_data_lower,
-                    args["dataset"],
-                    args["model"],
-                    args["alg"],
-                    args["dirichlet"],
-                    args["init_num_class"],
+                    self.init_data_lb,
+                    self.dataset_name,
+                    self.net_name,
+                    self.alg_name,
+                    self.dirichlet,
+                    self.init_num_class,
+                    self.num_epoch,
                 )
             )
             os.makedirs(os.path.dirname(path_7), exist_ok=True)
             plt.savefig(
-                path_7,
+                path_7 + ".png",
                 dpi=200,
                 bbox_inches="tight",
             )
+            with open(path_7 + ".txt", "w") as f:
+                f.write(str(np.array(hist_acc_matrix)))
         plt.close()
 
     def online_train(self):
@@ -623,7 +639,7 @@ class FedStream(object):
         path_2 = (
             self.path_prefix
             + "/client{}_round{}_initdata{}/pre/standard.npz".format(
-                self.num_client, self.num_round, self.init_data_lower
+                self.num_client, self.num_round, self.init_data_lb
             )
         )
         if os.path.exists(path_2) == False:
@@ -657,7 +673,8 @@ class FedStream(object):
         hist_loss_matrix = []
         hist_acc_matrix = []
 
-        scenarios = [[0.0, 1.0], [reward, theta]]
+        # scenarios = [[reward, theta], [0.0, 1.0]]
+        scenarios = [[reward, 0.5], [reward, 0.8]]
         for idx in range(len(scenarios)):
             new_reward = scenarios[idx][0]
             new_theta = min(max(0.05, scenarios[idx][1]), 1)
@@ -666,7 +683,7 @@ class FedStream(object):
                 + "/client{}_round{}_initdata{}/pre/variety/newreward{}_newtheta{}.npz".format(
                     self.num_client,
                     self.num_round,
-                    self.init_data_lower,
+                    self.init_data_lb,
                     str(new_reward),
                     str(new_theta),
                 )
@@ -680,7 +697,7 @@ class FedStream(object):
                 os.makedirs(os.path.dirname(path_3), exist_ok=True)
                 np.savez(
                     path_3,
-                    phi=phi_list,
+                    phi=new_phi_list,
                     increment=new_increment_matrix,
                     data=new_data_matrix,
                     stale=new_stale_matrix,
@@ -690,6 +707,15 @@ class FedStream(object):
             new_increment_matrix = cache["increment"]
             new_data_matrix = cache["data"]
             new_stale_matrix = cache["stale"]
+            #################
+            new_increment_matrix = new_increment_matrix * 10
+            for k in range(self.num_client):
+                for t in range(1, self.num_round):
+                    new_data_matrix[k][t] = (
+                        new_theta * new_data_matrix[k][t - 1]
+                        + new_increment_matrix[k][t]
+                    )
+            #################
             hist_increment_matrix.append(np.mean(new_increment_matrix, axis=0))
             hist_data_matrix.append(np.mean(new_data_matrix, axis=0))
             hist_stale_matrix.append(np.mean(new_stale_matrix, axis=0))
@@ -705,48 +731,29 @@ class FedStream(object):
 
             # 训练
             global_loss_list, accuracy_list = self.alg.run(
-                new_data_matrix,
                 new_theta,  # 妈的是new的不是旧的
-                mu=args["mu"],  # kwargs吃掉多余
+                new_data_matrix,
             )
             hist_loss_list.append(global_loss_list[-1])
             hist_acc_list.append(accuracy_list[-1])
             hist_loss_matrix.append(global_loss_list)
             hist_acc_matrix.append(accuracy_list)
 
-            # # 画增量
-            # self.draw_data(scenarios, hist_increment_matrix, "delta")
-            # # 画数据
-            # self.draw_data(scenarios, hist_data_matrix, "data")
-            # # 画stale
-            # self.draw_data(scenarios, hist_stale_matrix, "stale")
-            # 画真实成本
-            self.draw_cost(scenarios, hist_acc_list)
+            # 画增量
+            self.draw_data(scenarios, hist_increment_matrix, "delta")
+            # 画数据
+            self.draw_data(scenarios, hist_data_matrix, "data")
+            # 画stale
+            self.draw_data(scenarios, hist_stale_matrix, "stale")
+            # # 画真实成本
+            # self.draw_cost(scenarios, hist_acc_list)
             # 画精确度
             self.draw_loss_acc(scenarios, hist_loss_matrix, hist_acc_matrix)
 
 
-def parser_args():
-    parser = argparse.ArgumentParser()
-
-    # 只列出你想通过命令行覆盖的参数
-    parser.add_argument("--dirichlet", type=float, default=None)
-    parser.add_argument("--init_num_class", type=int, default=None)
-
-    config = parser.parse_args()
-    dirichlet = config.dirichlet
-    init_num_class = config.init_num_class
-
-    # 覆盖默认参数
-    with open(r"../config/args.yaml") as f:
-        args = yaml.safe_load(f)
-    args["dirichlet"] = dirichlet
-    args["init_num_class"] = init_num_class
-
-    return args
-
-
 if __name__ == "__main__":
+
+    sys.setrecursionlimit(3000)
     # 设置随机种子
     seed = 10
     random.seed(seed)
@@ -754,9 +761,9 @@ if __name__ == "__main__":
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
 
-    args = parser_args()
+    args = args_parser()
     print(
-        f"Running FedStream with: Dir={args['dirichlet']}, Init_Class={args['init_num_class']}"
+        f"Running FedStream with: Dir={args.dirichlet}, Init_Class={args.init_num_class}, Epoch={args.num_epoch}"
     )
 
     alg = FedStream(args)

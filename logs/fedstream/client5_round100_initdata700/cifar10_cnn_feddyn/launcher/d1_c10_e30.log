@@ -1,0 +1,31 @@
+Running FedStream with: Dir=1.0, Init_Class=10, Epoch=30
+Files already downloaded and verified
+Files already downloaded and verified
+has read
+Files already downloaded and verified
+Files already downloaded and verified
+  0%|          | 0/100 [00:00<?, ?it/s]  1%|          | 1/100 [01:21<2:15:06, 81.88s/it]  2%|▏         | 2/100 [02:50<2:20:01, 85.73s/it]  2%|▏         | 2/100 [03:10<2:35:25, 95.16s/it]
+10 77 [8 0 4 3 9 1 2 6 7 5]
+10 70 [5 8 3 9 2 1 0 7 4 6]
+10 75 [0 6 9 3 2 4 5 1 8 7]
+10 76 [0 6 1 3 2 7 8 9 5 4]
+10 77 [3 5 6 7 0 2 1 9 8 4]
+10 55 [8 0 4 3 9 1 2 6 7 5]
+10 56 [5 8 3 9 2 1 0 7 4 6]
+10 56 [0 6 9 3 2 4 5 1 8 7]
+10 55 [0 6 1 3 2 7 8 9 5 4]
+10 55 [3 5 6 7 0 2 1 9 8 4]
+10 66 [8 0 4 3 9 1 2 6 7 5]
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 770, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 733, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedDyn.py", line 138, in run
+    ].local_update_dyn(
+      ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 332, in local_update_dyn
+    loss_list.append(loss.item())
+                     ^^^^^^^^^^^
+KeyboardInterrupt

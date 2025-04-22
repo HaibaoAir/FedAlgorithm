@@ -10,6 +10,7 @@ from matplotlib import pyplot as plt
 import random
 import math
 from copy import deepcopy
+import time
 
 sys.path.append("../")
 from model.mnist import MNIST_LR, MNIST_MLP, MNIST_CNN
@@ -42,150 +43,126 @@ class Local_Dataset(Dataset):
 
 
 class Client(object):
-    def __init__(
-        self,
-        dataset_name,
-        dataset_list,
-        num_class,
-        num_init_class,
-        dirichlet,
-        dev,
-        net_name,
-        learning_rate,
-    ):
-        self.dataset_name = dataset_name
+    def __init__(self, dataset_list, args):
         self.datasource_list = dataset_list  # 数据源，是每个类的分类
-        self.num_class = num_class
-        self.num_init_class = num_init_class
-        self.dirichlet = dirichlet
-
-        self.dev = dev
+        self.dataset_name = args.dataset_name
+        self.num_class = args.num_class
+        self.init_num_class = args.init_num_class
+        self.dirichlet = args.dirichlet
+        self.own_class = None
         self.data = None
 
+        self.dev = torch.device(args.device)
+        self.num_epoch = args.num_epoch
+        self.batch_size = args.batch_size
+        self.learning_rate = args.learning_rate
+        self.dev = torch.device(args.device)
+
+        self.mu = args.mu
+
         self.net = None
+        self.net_name = args.net_name
         if self.dataset_name == "mnist":
-            if net_name == "lr":
+            if self.net_name == "lr":
                 self.net = MNIST_LR()
-            elif net_name == "mlp":
+            elif self.net_name == "mlp":
                 self.net = MNIST_MLP()
-            elif net_name == "cnn":
+            elif self.net_name == "cnn":
                 self.net = MNIST_CNN()
             else:
-                raise NotImplementedError("{}".format(net_name))
+                raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "fmnist":
-            if net_name == "lr":
+            if self.net_name == "lr":
                 self.net = FMNIST_LR()
-            elif net_name == "mlp":
+            elif self.net_name == "mlp":
                 self.net = FMNIST_MLP()
-            elif net_name == "cnn":
+            elif self.net_name == "cnn":
                 self.net = FMNIST_CNN()
             else:
-                raise NotImplementedError("{}".format(net_name))
+                raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "cifar10":
-            if net_name == "cnn":
+            if self.net_name == "cnn":
                 self.net = Cifar10_CNN()
             else:
-                raise NotImplementedError("{}".format(net_name))
+                raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "svhn":
-            if net_name == "cnn":
+            if self.net_name == "cnn":
                 self.net = SVHN_CNN()
             else:
-                raise NotImplementedError("{}".format(net_name))
+                raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "cifar100":
-            if net_name == "cnn":
+            if self.net_name == "cnn":
                 self.net = Cifar100_ResNet18()
             else:
-                raise NotImplementedError("{}".format(net_name))
+                raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "tinyimagenet":
-            if net_name == "cnn":
+            if self.net_name == "cnn":
                 self.net = TinyImageNet_ResNet18()
             else:
-                raise NotImplementedError("{}".format(net_name))
+                raise NotImplementedError("{}".format(self.net_name))
         else:
-            raise NotImplementedError("{}".format(net_name))
+            raise NotImplementedError("{}".format(self.net_name))
         self.net.to(self.dev)
         self.criterion = F.cross_entropy
-        self.optim = torch.optim.SGD(self.net.parameters(), learning_rate)
+        # self.optim = torch.optim.SGD(self.net.parameters(), self.learning_rate)
+        self.optim = torch.optim.Adam(self.net.parameters(), lr=1e-3, weight_decay=1e-4)
+
+        self.mu = args.mu
 
     def init_data(self, t, k, datasize):
-        true_num_class = math.ceil(self.num_init_class * self.dirichlet)
-        independent_size = datasize // true_num_class
-        independent_class = np.random.choice(
-            range(self.num_init_class), true_num_class, replace=False
+        self.own_class = np.random.choice(
+            range(self.init_num_class),
+            math.ceil(self.init_num_class * self.dirichlet),
+            replace=False,
         )
-        print(true_num_class, independent_size, independent_class)
-        for tau in independent_class:
+        volume = datasize // self.own_class.shape[0]
+        print(self.own_class.shape[0], volume, self.own_class)
+        for tau in self.own_class:
             idcs = [idc for idc in range(len(self.datasource_list[tau]))]
-            used = random.sample(idcs, independent_size)
-            # print('left:{}, increment:{}'.format(len(idcs),increment))
-            for item in used:
-                idcs.remove(item)
+            used = idcs[:volume]
+            idcs = idcs[volume:] + used
             newdata = Subset(self.datasource_list[tau], used)
-            self.data = (
-                ConcatDataset([self.data, newdata]) if self.data != None else newdata
-            )
+            self.data = ConcatDataset([self.data, newdata]) if self.data else newdata
             self.datasource_list[tau] = Subset(self.datasource_list[tau], idcs)
 
     def discard_data(self, theta):
-        size = int(len(self.data) * (1 - theta))
-        idcs = [idc for idc in range(len(self.data))]
-        discard = random.sample(idcs, size)
-        for item in discard:
-            idcs.remove(item)
+        start_idx = int(len(self.data) * (1 - theta))
+        idcs = list(range(start_idx, len(self.data)))
         self.data = Subset(self.data, idcs)
 
     def collect_data(self, t, k, increment):
         # t=0阶段用的是初始类别
-        # 从t=1开始用新类
-        if t + self.num_init_class < self.num_class:
-            true_num_class = math.ceil((t + self.num_init_class) * self.dirichlet)
-            independent_size = increment // true_num_class
-            independent_class = np.random.choice(
-                range(t + self.num_init_class), true_num_class, replace=False
-            )
-            print(true_num_class, independent_size, independent_class)
-            for tau in independent_class:
+        # 从t=1开始收集6，t=4收集9
+        if t + self.init_num_class <= self.num_class:
+            if random.random() < self.dirichlet:
+                self.own_class = np.append(self.own_class, t + self.init_num_class - 1)
+            volume = increment // self.own_class.shape[0]
+            print(self.own_class.shape[0], volume, self.own_class)
+            for tau in self.own_class:
                 idcs = [idc for idc in range(len(self.datasource_list[tau]))]
-                used = random.sample(idcs, independent_size)
-                # print('left:{}, increment:{}'.format(len(idcs),increment))
-                for item in used:
-                    idcs.remove(item)
+                used = idcs[:volume]
+                idcs = idcs[volume:] + used
                 newdata = Subset(self.datasource_list[tau], used)
-                self.data = (
-                    ConcatDataset([self.data, newdata])
-                    if self.data != None
-                    else newdata
-                )
+                self.data = ConcatDataset([self.data, newdata])
                 self.datasource_list[tau] = Subset(self.datasource_list[tau], idcs)
         else:
-            true_num_class = math.ceil((self.num_class) * self.dirichlet)
-            independent_size = increment // true_num_class
-            independent_class = np.random.choice(
-                range(self.num_class), true_num_class, replace=False
-            )
-            for tau in independent_class:
+            volume = increment // self.own_class.shape[0]
+            print(self.own_class.shape[0], volume, self.own_class)
+            for tau in self.own_class:
                 idcs = [idc for idc in range(len(self.datasource_list[tau]))]
-                used = random.sample(idcs, independent_size)
-                # print('left:{}, increment:{}'.format(len(idcs),increment))
-                for item in used:
-                    idcs.remove(item)
+                used = idcs[:volume]
+                idcs = idcs[volume:] + used
                 newdata = Subset(self.datasource_list[tau], used)
-                self.data = (
-                    ConcatDataset([self.data, newdata])
-                    if self.data != None
-                    else newdata
-                )
+                self.data = ConcatDataset([self.data, newdata])
                 self.datasource_list[tau] = Subset(self.datasource_list[tau], idcs)
 
     def local_update_avg(
         self,
         t,
         k,
-        num_epoch,
-        batch_size,
-        global_parameters,
         theta,
         datasize,
+        global_parameters,
     ):
 
         # 收集数据
@@ -195,33 +172,41 @@ class Client(object):
             self.init_data(t, k, datasize)  # t=0用0-7
         ## 每轮增一类，用完就全量
         else:
+            a = time.time()
             # print('origin', len(self.data))
             self.discard_data(theta)
             # print('decay', len(self.data))
             # increment = int(datasize - theta * len(self.data)) 串联了呀
+            b = time.time()
             increment = int(datasize - len(self.data))  # t=1收集好了8
             self.collect_data(t, k, increment)
             # print('accumu', len(self.data))
             # print('res_data_1:{}, res_data_2:{}, theta:{}, increment:{}, increment_next:{}'.format(datasize, len(self.data), theta, increment, increment_next))
-
+            c = time.time()
+            print(
+                "client {}: discard {}, collect {}, sum {}".format(
+                    k, b - a, c - b, c - a
+                )
+            )
         if t == 0:
             self.count_matrix = []
 
         # 训练
         loss_list = []
         self.net.load_state_dict(global_parameters, strict=True)
-        dataloader = DataLoader(self.data, batch_size=batch_size, shuffle=True)
-        for epoch in range(num_epoch):
+        dataloader = DataLoader(self.data, batch_size=self.batch_size, shuffle=True)
+        for epoch in range(self.num_epoch):
             for batch in dataloader:
                 data, label = batch
                 data = data.to(self.dev)
                 label = label.to(self.dev)
                 pred = self.net(data)
                 loss = self.criterion(pred, label)
-                loss_list.append(loss.cpu().detach())
+
                 self.optim.zero_grad()
                 loss.backward()
                 self.optim.step()
+                loss_list.append(loss.item())
         new_loss = sum(loss_list) / len(loss_list)
 
         return deepcopy(self.net.state_dict()), new_loss
@@ -230,12 +215,9 @@ class Client(object):
         self,
         t,
         k,
-        num_epoch,
-        batch_size,
-        global_parameters,
         theta,
         datasize,
-        mu,
+        global_parameters,
     ):
 
         # 收集数据
@@ -260,8 +242,8 @@ class Client(object):
         # 训练
         loss_list = []
         self.net.load_state_dict(global_parameters, strict=True)
-        dataloader = DataLoader(self.data, batch_size=batch_size, shuffle=True)
-        for epoch in range(num_epoch):
+        dataloader = DataLoader(self.data, batch_size=self.batch_size, shuffle=True)
+        for epoch in range(self.num_epoch):
             for batch in dataloader:
                 data, label = batch
                 data = data.to(self.dev)
@@ -269,48 +251,107 @@ class Client(object):
                 pred = self.net(data)
                 loss = self.criterion(pred, label)
 
-                prox_term = 0
-                for name, w in self.net.named_parameters():
-                    # 修改loss某些部分作为标杆，注意detach
-                    # 服务器与客户端参数为字典是引用，注意clone
-                    w_g = global_parameters[name].to(self.dev)
-                    prox_term += (
-                        (w - w_g.detach()) ** 2
-                    ).sum()  # 不仅更新错误，而且污染全局参数
-                loss += (mu / 2) * prox_term
+                proximal_term = 0.0
+                for name, param in self.net.named_parameters():
+                    global_param = global_parameters[name].to(param.device)
+                    proximal_term += (param - global_param.detach()).pow(2).sum()
 
-                loss_list.append(loss.cpu().detach())
+                loss += (self.mu / 2) * proximal_term
 
                 self.optim.zero_grad()
                 loss.backward()
                 self.optim.step()
+                loss_list.append(loss.item())
         new_loss = sum(loss_list) / len(loss_list)
 
         return deepcopy(self.net.state_dict()), new_loss
 
+    def local_update_dyn(
+        self,
+        t,
+        k,
+        theta,
+        datasize,
+        global_parameters,
+        prev_grads,
+        feddyn_alpha,
+    ):
+        # 收集数据
+        ## 初始化：类多，量大，照顾到后面有的不更新
+        if t == 0:
+            datasize = int(datasize)
+            self.init_data(t, k, datasize)  # t=0用0-7
+        ## 每轮增一类，用完就全量
+        else:
+            # print('origin', len(self.data))
+            self.discard_data(theta)
+            # print('decay', len(self.data))
+            # increment = int(datasize - theta * len(self.data)) 串联了呀
+            increment = int(datasize - len(self.data))  # t=1收集好了8
+            self.collect_data(t, k, increment)
+            # print('accumu', len(self.data))
+            # print('res_data_1:{}, res_data_2:{}, theta:{}, increment:{}, increment_next:{}'.format(datasize, len(self.data), theta, increment, increment_next))
+
+        # 训练
+        par_flat = torch.cat(
+            [
+                global_parameters[name].detach().to(param.device).view(-1)
+                for name, param in self.net.named_parameters()
+            ]
+        )
+
+        loss_list = []
+        self.net.load_state_dict(global_parameters, strict=True)
+        dataloader = DataLoader(self.data, batch_size=self.batch_size, shuffle=True)
+        for epoch in range(self.num_epoch):
+            for batch in dataloader:
+                data, label = batch
+                data = data.to(self.dev)
+                label = label.to(self.dev)
+                pred = self.net(data)
+                loss = self.criterion(pred, label)
+
+                # 三个变量 curr_params, prev_grads, par_flat
+                curr_params = torch.cat(
+                    [param.reshape(-1) for param in self.net.parameters()]
+                )
+                lin_penalty = torch.sum(curr_params * prev_grads)
+
+                norm_penalty = (feddyn_alpha / 2.0) * torch.linalg.norm(
+                    curr_params - par_flat, 2
+                ) ** 2
+
+                loss = loss - lin_penalty + norm_penalty
+
+                self.optim.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(
+                    parameters=self.net.parameters(), max_norm=10
+                )
+                self.optim.step()
+                loss_list.append(loss.item())
+
+        new_loss = sum(loss_list) / len(loss_list)
+        cur_flat = torch.cat(
+            [param.detach().reshape(-1) for param in self.net.parameters()]
+        )
+        prev_grads -= feddyn_alpha * (cur_flat - par_flat)  # ht
+        return deepcopy(self.net.state_dict()), new_loss, prev_grads
+
 
 class Client_Group(object):
-    def __init__(
-        self,
-        dev,
-        num_client,
-        dataset_name,
-        num_class,
-        num_init_class,
-        dirichlet,
-        net_name,
-        learning_rate,
-    ):
-        self.dev = dev
-        self.num_client = num_client
+    def __init__(self, args):
+        self.args = args
+        self.dev = torch.device(args.device)
+        self.num_client = args.num_client
         self.clients = []
         self.scales = []
-        self.dataset_name = dataset_name
-        self.num_class = num_class
-        self.num_init_class = num_init_class
-        self.dirichlet = dirichlet
-        self.net_name = net_name
-        self.learning_rate = learning_rate
+        self.dataset_name = args.dataset_name
+        self.num_class = args.num_class
+        self.init_num_class = args.init_num_class
+        self.dirichlet = args.dirichlet
+        self.net_name = args.net_name
+        self.learning_rate = args.learning_rate
         self.dataset_allocation()
 
     def load_mnist(self):
@@ -601,7 +642,7 @@ class Client_Group(object):
             num_local_target_idcs = int(len(target_idcs) / num_client)
             for k in range(num_client):
                 client_idcs[k].append(
-                    np.random.choice(target_idcs, num_local_target_idcs)
+                    np.random.choice(target_idcs, num_local_target_idcs, replace=False)
                 )
                 target_idcs = list(set(target_idcs) - set(client_idcs[k][-1]))
         return client_idcs
@@ -649,16 +690,7 @@ class Client_Group(object):
                 local_label = train_label[client_idcs[k][target]]
                 local_dataset = Local_Dataset(local_data, local_label, train_trans)
                 local_dataset_list.append(local_dataset)
-            client = Client(
-                self.dataset_name,
-                local_dataset_list,
-                self.num_class,
-                self.num_init_class,
-                self.dirichlet,
-                self.dev,
-                self.net_name,
-                self.learning_rate,
-            )
+            client = Client(local_dataset_list, self.args)
             self.clients.append(client)
 
         # 划分测试集

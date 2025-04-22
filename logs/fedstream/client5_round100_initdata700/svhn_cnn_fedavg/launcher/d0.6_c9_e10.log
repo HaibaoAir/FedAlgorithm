@@ -1,0 +1,35 @@
+Running FedStream with: Dir=0.6, Init_Class=9, Epoch=10
+Using downloaded and verified file: ../data/train_32x32.mat
+Using downloaded and verified file: ../data/test_32x32.mat
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 759, in <module>
+    alg = FedStream(args)
+          ^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 86, in __init__
+    self.alg = FedAvg_Server(args)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 39, in __init__
+    self.init_data_net()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 46, in init_data_net
+    self.client_group = Client_Group(self.args)
+                        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 372, in __init__
+    self.dataset_allocation()
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 683, in dataset_allocation
+    self.load_SVHN()
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 511, in load_SVHN
+    test_dataset = torchvision.datasets.SVHN(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/datasets/svhn.py", line 79, in __init__
+    loaded_mat = sio.loadmat(os.path.join(self.root, self.filename))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/io/matlab/_mio.py", line 227, in loadmat
+    matfile_dict = MR.get_variables(variable_names)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/io/matlab/_mio5.py", line 330, in get_variables
+    res = self.read_var_array(hdr, process)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/io/matlab/_mio5.py", line 290, in read_var_array
+    return self._matrix_reader.array_from_header(header, process)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

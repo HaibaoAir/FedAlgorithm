@@ -1,0 +1,34 @@
+Running FedStream with: Dir=0.6, Init_Class=6, Epoch=10
+Using downloaded and verified file: ../data/train_32x32.mat
+Using downloaded and verified file: ../data/test_32x32.mat
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 759, in <module>
+    alg = FedStream(args)
+          ^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 86, in __init__
+    self.alg = FedAvg_Server(args)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 39, in __init__
+    self.init_data_net()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 46, in init_data_net
+    self.client_group = Client_Group(self.args)
+                        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 372, in __init__
+    self.dataset_allocation()
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 716, in dataset_allocation
+    client = Client(local_dataset_list, self.args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 87, in __init__
+    self.net = SVHN_CNN()
+               ^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/../model/SVHN.py", line 30, in __init__
+    nn.Linear(8 * 8 * 128, 256),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/linear.py", line 103, in __init__
+    self.reset_parameters()
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/linear.py", line 109, in reset_parameters
+    init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/init.py", line 459, in kaiming_uniform_
+    return tensor.uniform_(-bound, bound, generator=generator)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

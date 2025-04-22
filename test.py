@@ -32,6 +32,9 @@ import torchvision.transforms as transforms
 import numpy as np
 
 a = [[1, 2], [3, 4]]
+
+print(a[:][-1])
+exit(0)
 print(np.array(a)[:, 0])
 exit(0)
 

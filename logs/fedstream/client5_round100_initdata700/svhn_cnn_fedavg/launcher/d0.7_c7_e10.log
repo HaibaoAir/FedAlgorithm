@@ -1,0 +1,38 @@
+Running FedStream with: Dir=0.7, Init_Class=7, Epoch=10
+Using downloaded and verified file: ../data/train_32x32.mat
+Using downloaded and verified file: ../data/test_32x32.mat
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 759, in <module>
+    alg = FedStream(args)
+          ^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 86, in __init__
+    self.alg = FedAvg_Server(args)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 39, in __init__
+    self.init_data_net()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 46, in init_data_net
+    self.client_group = Client_Group(self.args)
+                        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 372, in __init__
+    self.dataset_allocation()
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 716, in dataset_allocation
+    client = Client(local_dataset_list, self.args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 102, in __init__
+    self.net.to(self.dev)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1173, in to
+    return self._apply(convert)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 779, in _apply
+    module._apply(fn)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 779, in _apply
+    module._apply(fn)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 804, in _apply
+    param_applied = fn(param)
+                    ^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1159, in convert
+    return t.to(
+           ^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/cuda/__init__.py", line 293, in _lazy_init
+    torch._C._cuda_init()
+KeyboardInterrupt

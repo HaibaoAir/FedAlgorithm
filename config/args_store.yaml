@@ -1,0 +1,66 @@
+# 配置fmnist+lr+fedavg
+dataset: svhn
+num_class: 10
+init_num_class: None
+dirichlet: None
+
+model: cnn
+num_epoch: 20
+batch_size: 64
+learning_rate: 0.01
+eval_freq: 5
+
+alg: fedavg
+mu: 0.01
+
+# 配置fedstream
+mode: train
+num_client: 5
+num_sample: 5
+num_round: 50
+init_data_lower: 700
+init_data_upper: 800
+path_prefix: ../logs/fedstream
+
+delta: 1
+psi: 1
+alpha: 1.0e-3
+beta: 1.0e-7
+sigma: 0.75
+kappa_1: 1
+kappa_2: 1
+kappa_3: 1.0e-2
+kappa_4: 1.0e-2
+gamma: 1.0e-4 # 求解过程中的gamma
+new_gamma: 5.0e-4 # 实际绘图中的gamma，得保证损失成本和最低
+
+fix_eps_1: 1.0e-2
+fix_eps_2: 20
+fix_eps_3: 1
+fix_max_iter: 10000000
+
+# 一阶段
+reward_lb: 1 # 缩小搜索范围
+reward_ub: 200
+theta_lb: 0
+theta_ub: 1
+n_calls: 200 # 增加迭代次数，默认都100
+base_estimator: GP
+noise: gaussian
+acq_func: EI
+xi: 0.01 # 降低采集函数探索能力，默认为0.01
+random_state: 42
+
+# 二阶段
+# 初期警报变多
+# 后期可能不严格收敛
+# reward_lb: 50 # 缩小搜索范围
+# reward_ub: 70
+# theta_lb: 0.45
+# theta_ub: 0.55
+# n_calls: 100 # 增加迭代次数，默认都100
+# base_estimator: GP
+# noise: gaussian
+# acq_func: EI
+# xi: 0.005 # 降低采集函数探索能力，默认为0.01
+# random_state: 42

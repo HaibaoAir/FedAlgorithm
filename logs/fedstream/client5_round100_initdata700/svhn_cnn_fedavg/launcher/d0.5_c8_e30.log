@@ -1,0 +1,13 @@
+Running FedStream with: Dir=0.5, Init_Class=8, Epoch=30
+Using downloaded and verified file: ../data/train_32x32.mat
+Using downloaded and verified file: ../data/test_32x32.mat
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 759, in <module>
+    alg = FedStream(args)
+          ^^^^^^^^^^^^^^^
+object address  : 0x77900f9ede00
+object refcount : 2
+object type     : 0x878d80
+object type name: AttributeError
+object repr     : AttributeError("module 'torch.optim' has no attribute 'adam'")
+lost sys.stderr

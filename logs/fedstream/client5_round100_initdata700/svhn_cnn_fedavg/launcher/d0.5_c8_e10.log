@@ -1,0 +1,24 @@
+Running FedStream with: Dir=0.5, Init_Class=8, Epoch=10
+Using downloaded and verified file: ../data/train_32x32.mat
+Using downloaded and verified file: ../data/test_32x32.mat
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 759, in <module>
+    alg = FedStream(args)
+          ^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 86, in __init__
+    self.alg = FedAvg_Server(args)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 39, in __init__
+    self.init_data_net()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 46, in init_data_net
+    self.client_group = Client_Group(self.args)
+                        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 372, in __init__
+    self.dataset_allocation()
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 697, in dataset_allocation
+    client_idcs = self.split_data(  # 是个矩阵
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 664, in split_data
+    target_idcs = list(set(target_idcs) - set(client_idcs[k][-1]))
+                       ^^^^^^^^^^^^^^^^
+KeyboardInterrupt

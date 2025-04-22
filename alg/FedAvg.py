@@ -13,6 +13,7 @@ from skopt.space import Real
 from tqdm import tqdm
 import argparse
 import yaml
+import time
 
 sys.path.append("../")
 from Clients import Client_Group
@@ -26,38 +27,24 @@ from model.TinyImageNet import TinyImageNet_ResNet18
 
 class Server(object):
     def __init__(self, args):
-        # 初始化客户端
-        self.dev = (
-            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        )
-        self.num_client = args["num_client"]
-        self.num_sample = args["num_sample"]
-        self.dataset_name = args["dataset"]
-        self.num_class = args["num_class"]
-        self.init_num_class = args["init_num_class"]
-        self.dirichlet = args["dirichlet"]
-        self.net_name = args["model"]
-        self.learning_rate = args["learning_rate"]
+        self.args = args
+        # 服务器持有测试集和测试用网络
+        self.num_client = args.num_client
+        self.num_sample = args.num_sample
+        self.dataset_name = args.dataset_name
+        self.num_class = args.num_class
+        self.dev = torch.device(args.device)
+
+        self.net_name = args.net_name
+        self.learning_rate = args.learning_rate
         self.init_data_net()
 
-        # 训练超参数
-        self.num_round = args["num_round"]
-        self.num_epoch = args["num_epoch"]
-        self.batch_size = args["batch_size"]
-        self.eval_freq = args["eval_freq"]
-        self.path_prefix = args["path_prefix"]
+        # 再加上通讯轮数
+        self.num_round = args.num_round
+        self.eval_freq = args.eval_freq
 
     def init_data_net(self):
-        self.client_group = Client_Group(
-            self.dev,
-            self.num_client,
-            self.dataset_name,
-            self.num_class,
-            self.init_num_class,
-            self.dirichlet,
-            self.net_name,
-            self.learning_rate,
-        )
+        self.client_group = Client_Group(self.args)
         self.test_data_list = self.client_group.test_data_list
 
         # 定义net
@@ -91,12 +78,12 @@ class Server(object):
             else:
                 raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "cifar100":
-            if self.net_name == "cnn":
+            if self.net_name == "resnet":
                 self.net = Cifar100_ResNet18()
             else:
                 raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "tinyimagenet":
-            if self.net_name == "cnn":
+            if self.net_name == "resnet":
                 self.net = TinyImageNet_ResNet18()
             else:
                 raise NotImplementedError("{}".format(self.net_name))
@@ -105,7 +92,7 @@ class Server(object):
 
         self.net.to(self.dev)
 
-    def run(self, data_matrix, theta, **kwargs):
+    def run(self, theta, data_matrix):
         # 初始化数据和网络
         self.init_data_net()
         global_parameter = {}
@@ -121,17 +108,16 @@ class Server(object):
         accuracy_list = []
         # 训练
         for t in tqdm(range(self.num_round)):
+            a = time.time()
             next_global_parameter = {}
             global_loss = 0
             for k in range(self.num_client):
                 result = self.client_group.clients[k].local_update_avg(
                     t,
                     k,
-                    self.num_epoch,
-                    self.batch_size,
-                    global_parameter,
                     theta,
                     data_matrix[k][t],
+                    global_parameter,
                 )
                 local_parameter = result[0]
                 for item in local_parameter.items():
@@ -156,7 +142,8 @@ class Server(object):
             # 求global_parameters和global_loss_list
             global_parameter = next_global_parameter
             global_loss_list.append(global_loss)
-
+            b = time.time()
+            print("round time = {}".format(b - a))
             # 验证
             if t % self.eval_freq == 0 or t == self.num_round - 1:
                 correct = 0
