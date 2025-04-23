@@ -1,0 +1,79 @@
+Running FedStream with: Dir=0.5, Init_Class=10, Epoch=20
+Files already downloaded and verified
+Files already downloaded and verified
+has read
+Files already downloaded and verified
+Files already downloaded and verified
+  0%|          | 0/100 [00:00<?, ?it/s]  1%|          | 1/100 [01:52<3:05:56, 112.70s/it]  1%|          | 1/100 [02:51<4:42:36, 171.28s/it]
+5 154 [8 3 7 5 4]
+5 140 [1 6 3 4 5]
+5 150 [3 9 2 1 6]
+5 152 [4 1 7 8 0]
+5 154 [9 8 7 4 1]
+5 138 [8 3 7 5 4]
+5 132 [1 6 3 4 5]
+5 137 [3 9 2 1 6]
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 770, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 733, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedDyn.py", line 134, in run
+    ].local_update_dyn(
+      ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 290, in local_update_dyn
+    pred = self.net(data)
+           ^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/../model/cifar100.py", line 26, in forward
+    return self.model(x)
+           ^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/models/resnet.py", line 285, in forward
+    return self._forward_impl(x)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/models/resnet.py", line 273, in _forward_impl
+    x = self.layer1(x)
+        ^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/container.py", line 217, in forward
+    input = module(input)
+            ^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/models/resnet.py", line 151, in forward
+    out = self.bn2(out)
+          ^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/batchnorm.py", line 175, in forward
+    return F.batch_norm(
+           ^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/functional.py", line 2507, in batch_norm
+    _verify_batch_size(input.size())
+                       ^^^^^^^^^^^^
+KeyboardInterrupt

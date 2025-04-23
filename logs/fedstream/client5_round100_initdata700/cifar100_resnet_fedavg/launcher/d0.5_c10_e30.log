@@ -1,0 +1,36 @@
+Running FedStream with: Dir=0.5, Init_Class=10, Epoch=30
+Files already downloaded and verified
+Files already downloaded and verified
+has read
+Files already downloaded and verified
+Files already downloaded and verified
+  0%|          | 0/100 [00:00<?, ?it/s]  1%|          | 1/100 [01:31<2:31:39, 91.92s/it]  2%|▏         | 2/100 [03:48<3:12:51, 118.07s/it]  2%|▏         | 2/100 [05:30<4:30:17, 165.49s/it]
+5 154 [8 3 7 5 4]
+5 140 [1 6 3 4 5]
+5 150 [3 9 2 1 6]
+5 152 [4 1 7 8 0]
+5 154 [9 8 7 4 1]
+round time = 91.2099838256836
+5 138 [8 3 7 5 4]
+5 132 [1 6 3 4 5]
+5 137 [3 9 2 1 6]
+5 137 [4 1 7 8 0]
+5 138 [9 8 7 4 1]
+round time = 136.38503861427307
+5 152 [8 3 7 5 4]
+5 148 [1 6 3 4 5]
+5 151 [3 9 2 1 6]
+5 151 [4 1 7 8 0]
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 770, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 733, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 105, in run
+    result = self.client_group.clients[k].local_update_avg(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 197, in local_update_avg
+    loss_list.append(loss.item())
+                     ^^^^^^^^^^^
+KeyboardInterrupt

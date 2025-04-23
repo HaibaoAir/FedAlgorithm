@@ -10,6 +10,7 @@ def args_parser():
     parser.add_argument("--num_class", type=int, default=10, help="class num")
     parser.add_argument("--init_num_class", type=int, default=7, help="init class num")
     parser.add_argument("--dirichlet", type=float, default=0.7, help="non-iid rate")
+    parser.add_argument("--mode", type=bool, default=True, help="if data is updated")
 
     parser.add_argument("--net_name", type=str, default="cnn", help="net name")
     parser.add_argument("--num_epoch", type=int, default=10, help="client epoch")

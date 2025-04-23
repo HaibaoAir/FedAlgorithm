@@ -1,0 +1,44 @@
+Running FedStream with: Dir=0.8, Init_Class=10, Epoch=20
+Files already downloaded and verified
+Files already downloaded and verified
+has read
+Files already downloaded and verified
+Files already downloaded and verified
+  0%|          | 0/100 [00:00<?, ?it/s]  1%|          | 1/100 [02:27<4:02:45, 147.13s/it]  1%|          | 1/100 [02:49<4:39:08, 169.18s/it]
+8 96 [8 3 7 5 4 1 2 6]
+8 88 [1 6 3 4 5 9 7 2]
+8 94 [3 9 2 1 6 5 8 4]
+8 95 [4 1 7 8 0 9 3 5]
+8 96 [9 8 7 4 1 2 5 3]
+round time = 146.4009816646576
+8 70 [8 3 7 5 4 1 2 6]
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 770, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 733, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 105, in run
+    result = self.client_group.clients[k].local_update_avg(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 206, in local_update_avg
+    self.optim.zero_grad()
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/_compile.py", line 24, in inner
+    return torch._dynamo.disable(fn, recursive)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/_dynamo/decorators.py", line 50, in disable
+    return DisableContext()(fn)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/_dynamo/eval_frame.py", line 410, in __call__
+    (filename is None or trace_rules.check(fn))
+                         ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/_dynamo/trace_rules.py", line 3378, in check
+    return check_verbose(obj, is_inlined_call).skipped
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/_dynamo/trace_rules.py", line 3343, in check_verbose
+    if isinstance(
+       ^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/_dynamo/variables/base.py", line 129, in __instancecheck__
+    if type.__instancecheck__(
+       ^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

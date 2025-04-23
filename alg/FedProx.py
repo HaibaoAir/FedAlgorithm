@@ -20,7 +20,7 @@ from model.mnist import MNIST_LR, MNIST_MLP, MNIST_CNN
 from model.fmnist import FMNIST_LR, FMNIST_MLP, FMNIST_CNN
 from model.cifar10 import Cifar10_CNN
 from model.SVHN import SVHN_CNN
-from model.cifar100 import Cifar100_ResNet18
+from model.cifar100 import Cifar100_ResNet50
 from model.TinyImageNet import TinyImageNet_ResNet18
 
 
@@ -77,12 +77,12 @@ class Server(object):
             else:
                 raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "cifar100":
-            if self.net_name == "cnn":
-                self.net = Cifar100_ResNet18()
+            if self.net_name == "resnet":
+                self.net = Cifar100_ResNet50()
             else:
                 raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "tinyimagenet":
-            if self.net_name == "cnn":
+            if self.net_name == "resnet":
                 self.net = TinyImageNet_ResNet18()
             else:
                 raise NotImplementedError("{}".format(self.net_name))

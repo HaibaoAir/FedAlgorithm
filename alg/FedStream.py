@@ -32,6 +32,8 @@ class FedStream(object):
         self.dirichlet = args.dirichlet
         self.init_num_class = args.init_num_class
         self.num_epoch = args.num_epoch
+        self.mode = args.mode
+        self.suffix = "_basic" if not self.mode else ""
 
         self.data_origin_init = [
             random.randint(self.init_data_lb, self.init_data_ub)
@@ -506,13 +508,14 @@ class FedStream(object):
         )
         path_5 = (
             self.path_prefix
-            + "/client{}_round{}_initdata{}/{}_{}_{}/cost/d{}_c{}_e{}.png".format(
+            + "/client{}_round{}_initdata{}/{}_{}_{}/cost{}/d{}_c{}_e{}.png".format(
                 self.num_client,
                 self.num_round,
                 self.init_data_lb,
                 self.dataset_name,
                 self.net_name,
                 self.alg_name,
+                self.suffix,
                 self.dirichlet,
                 self.init_num_class,
                 self.num_epoch,
@@ -561,13 +564,14 @@ class FedStream(object):
             )
             path_6 = (
                 self.path_prefix
-                + "/client{}_round{}_initdata{}/{}_{}_{}/loss/d{}_c{}_e{}".format(
+                + "/client{}_round{}_initdata{}/{}_{}_{}/loss{}/d{}_c{}_e{}".format(
                     self.num_client,
                     self.num_round,
                     self.init_data_lb,
                     self.dataset_name,
                     self.net_name,
                     self.alg_name,
+                    self.suffix,
                     self.dirichlet,
                     self.init_num_class,
                     self.num_epoch,
@@ -612,13 +616,14 @@ class FedStream(object):
             )
             path_7 = (
                 self.path_prefix
-                + "/client{}_round{}_initdata{}/{}_{}_{}/acc/d{}_c{}_e{}".format(
+                + "/client{}_round{}_initdata{}/{}_{}_{}/acc{}/d{}_c{}_e{}".format(
                     self.num_client,
                     self.num_round,
                     self.init_data_lb,
                     self.dataset_name,
                     self.net_name,
                     self.alg_name,
+                    self.suffix,
                     self.dirichlet,
                     self.init_num_class,
                     self.num_epoch,
@@ -674,7 +679,7 @@ class FedStream(object):
         hist_acc_matrix = []
 
         # scenarios = [[reward, theta], [0.0, 1.0]]
-        scenarios = [[reward, 0.5], [reward, 0.8]]
+        scenarios = [[reward, 0.5]]
         for idx in range(len(scenarios)):
             new_reward = scenarios[idx][0]
             new_theta = min(max(0.05, scenarios[idx][1]), 1)

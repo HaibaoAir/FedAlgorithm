@@ -10,33 +10,35 @@ client = config["num_client"]
 round = config["num_round"]
 initdata = config["init_data_lower"]
 
+# # 参数全家桶
+dataset_list = ["mnist", "fmnist", "svhn", "cifar10"]
+net_list = ["lr", "lr", "cnn", "cnn"]
 alg_list = ["fedavg", "fedprox", "feddyn"]
-dataset_list = ["cifar10"]
-net_list = ["cnn"]
 dirichlet_list = [0.5, 0.8, 1]
 init_num_class_list = [10]
 num_epoch_list = [20]
+mode = False
 
-# # 参数组合
-# alg_list = ["fedavg"]
-# dataset_list = ["cifar10"]
-# net_list = ["cnn"]
+# dataset_list = ["cifar100"]
+# net_list = ["resnet"]
+# alg_list = ["fedavg", "fedprox", "feddyn"]
 # dirichlet_list = [0.5, 0.8, 1]
 # init_num_class_list = [10]
-# num_epoch_list = [20, 30]
+# num_epoch_list = [20]
 
 # 控制最大同时运行的进程数
-MAX_PARALLEL = 20
+MAX_PARALLEL = 18
 process_pool = []
 
 
 # 启动一个实验
 def launch(alg, dataset, net, dirichlet, init_num_class, num_epoch, env):
     # 命令
-    cmd = f"python FedStream.py --alg_name {alg} --dataset_name {dataset} --net_name {net} --dirichlet {dirichlet} --init_num_class {init_num_class} --num_epoch {num_epoch}"
+    cmd = f"python FedStream.py --alg_name {alg} --dataset_name {dataset} --net_name {net} --dirichlet {dirichlet} --init_num_class {init_num_class} --num_epoch {num_epoch} --mode {mode}"
 
     # 路径
-    path_0 = "../logs/fedstream/client{}_round{}_initdata{}/{}_{}_{}/launcher/d{}_c{}_e{}.log".format(
+    suffix = suffix = "_basic" if not mode else ""
+    path_0 = "../logs/fedstream/client{}_round{}_initdata{}/{}_{}_{}/launcher{}/d{}_c{}_e{}.log".format(
         client,
         round,
         initdata,
@@ -62,10 +64,11 @@ def launch(alg, dataset, net, dirichlet, init_num_class, num_epoch, env):
 # 遍历所有参数组合
 gpu_list = [0]
 count = 0
-for alg in alg_list:
-    for i in range(len(dataset_list)):
-        dataset = dataset_list[i]
-        net = net_list[i]
+
+for i in range(len(dataset_list)):
+    dataset = dataset_list[i]
+    net = net_list[i]
+    for alg in alg_list:
         for dirichlet in dirichlet_list:
             for init_num_class in init_num_class_list:
                 for num_epoch in num_epoch_list:

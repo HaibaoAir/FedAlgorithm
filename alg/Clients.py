@@ -13,11 +13,11 @@ from copy import deepcopy
 import time
 
 sys.path.append("../")
-from model.mnist import MNIST_LR, MNIST_MLP, MNIST_CNN
-from model.fmnist import FMNIST_LR, FMNIST_MLP, FMNIST_CNN
+from model.mnist import MNIST_LR
+from model.fmnist import FMNIST_LR
 from model.cifar10 import Cifar10_CNN
 from model.SVHN import SVHN_CNN
-from model.cifar100 import Cifar100_ResNet18
+from model.cifar100 import Cifar100_ResNet50
 from model.TinyImageNet import TinyImageNet_ResNet18
 
 seed = 10
@@ -51,6 +51,7 @@ class Client(object):
         self.dirichlet = args.dirichlet
         self.own_class = None
         self.data = None
+        self.mode = args.mode
 
         self.dev = torch.device(args.device)
         self.num_epoch = args.num_epoch
@@ -65,19 +66,11 @@ class Client(object):
         if self.dataset_name == "mnist":
             if self.net_name == "lr":
                 self.net = MNIST_LR()
-            elif self.net_name == "mlp":
-                self.net = MNIST_MLP()
-            elif self.net_name == "cnn":
-                self.net = MNIST_CNN()
             else:
                 raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "fmnist":
             if self.net_name == "lr":
                 self.net = FMNIST_LR()
-            elif self.net_name == "mlp":
-                self.net = FMNIST_MLP()
-            elif self.net_name == "cnn":
-                self.net = FMNIST_CNN()
             else:
                 raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "cifar10":
@@ -91,12 +84,12 @@ class Client(object):
             else:
                 raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "cifar100":
-            if self.net_name == "cnn":
-                self.net = Cifar100_ResNet18()
+            if self.net_name == "resnet":
+                self.net = Cifar100_ResNet50()
             else:
                 raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "tinyimagenet":
-            if self.net_name == "cnn":
+            if self.net_name == "resnet":
                 self.net = TinyImageNet_ResNet18()
             else:
                 raise NotImplementedError("{}".format(self.net_name))
@@ -156,6 +149,32 @@ class Client(object):
                 self.data = ConcatDataset([self.data, newdata])
                 self.datasource_list[tau] = Subset(self.datasource_list[tau], idcs)
 
+    def data_update(self, t, k, theta, datasize):
+        # 收集数据
+        ## 初始化：类多，量大，照顾到后面有的不更新
+        if t == 0:
+            datasize = int(datasize)
+            self.init_data(t, k, datasize)  # t=0用0-7
+        ## 每轮增一类，用完就全量
+        else:
+            # print('origin', len(self.data))
+            self.discard_data(theta)
+            # print('decay', len(self.data))
+            # increment = int(datasize - theta * len(self.data)) 串联了呀
+            increment = int(datasize - len(self.data))  # t=1收集好了8
+            self.collect_data(t, k, increment)
+            # print('accumu', len(self.data))
+            # print('res_data_1:{}, res_data_2:{}, theta:{}, increment:{}, increment_next:{}'.format(datasize, len(self.data), theta, increment, increment_next))
+
+    def data_static(self):
+        self.data = ConcatDataset(self.datasource_list[: self.init_num_class])
+
+    def data_mode(self, t, k, theta, datasize):
+        if self.mode == True:
+            self.data_update(t, k, theta, datasize)
+        else:
+            self.data_static()
+
     def local_update_avg(
         self,
         t,
@@ -165,36 +184,17 @@ class Client(object):
         global_parameters,
     ):
 
-        # 收集数据
-        ## 初始化：类多，量大，照顾到后面有的不更新
-        if t == 0:
-            datasize = int(datasize)
-            self.init_data(t, k, datasize)  # t=0用0-7
-        ## 每轮增一类，用完就全量
-        else:
-            a = time.time()
-            # print('origin', len(self.data))
-            self.discard_data(theta)
-            # print('decay', len(self.data))
-            # increment = int(datasize - theta * len(self.data)) 串联了呀
-            b = time.time()
-            increment = int(datasize - len(self.data))  # t=1收集好了8
-            self.collect_data(t, k, increment)
-            # print('accumu', len(self.data))
-            # print('res_data_1:{}, res_data_2:{}, theta:{}, increment:{}, increment_next:{}'.format(datasize, len(self.data), theta, increment, increment_next))
-            c = time.time()
-            print(
-                "client {}: discard {}, collect {}, sum {}".format(
-                    k, b - a, c - b, c - a
-                )
-            )
-        if t == 0:
-            self.count_matrix = []
+        # 更新数据
+        self.data_mode(t, k, theta, datasize)
 
         # 训练
         loss_list = []
         self.net.load_state_dict(global_parameters, strict=True)
-        dataloader = DataLoader(self.data, batch_size=self.batch_size, shuffle=True)
+        dataloader = DataLoader(
+            self.data,
+            batch_size=self.batch_size,
+            shuffle=True,
+        )
         for epoch in range(self.num_epoch):
             for batch in dataloader:
                 data, label = batch
@@ -221,28 +221,16 @@ class Client(object):
     ):
 
         # 收集数据
-        ## 初始化：类多，量大，照顾到后面有的不更新
-        if t == 0:
-            datasize = int(datasize)
-            self.init_data(t, k, datasize)  # t=0用0-7
-        ## 每轮增一类，用完就全量
-        else:
-            # print('origin', len(self.data))
-            self.discard_data(theta)
-            # print('decay', len(self.data))
-            # increment = int(datasize - theta * len(self.data)) 串联了呀
-            increment = int(datasize - len(self.data))  # t=1收集好了8
-            self.collect_data(t, k, increment)
-            # print('accumu', len(self.data))
-            # print('res_data_1:{}, res_data_2:{}, theta:{}, increment:{}, increment_next:{}'.format(datasize, len(self.data), theta, increment, increment_next))
-
-        if t == 0:
-            self.count_matrix = []
+        self.data_mode(t, k, theta, datasize)
 
         # 训练
         loss_list = []
         self.net.load_state_dict(global_parameters, strict=True)
-        dataloader = DataLoader(self.data, batch_size=self.batch_size, shuffle=True)
+        dataloader = DataLoader(
+            self.data,
+            batch_size=self.batch_size,
+            shuffle=True,
+        )
         for epoch in range(self.num_epoch):
             for batch in dataloader:
                 data, label = batch
@@ -277,20 +265,7 @@ class Client(object):
         feddyn_alpha,
     ):
         # 收集数据
-        ## 初始化：类多，量大，照顾到后面有的不更新
-        if t == 0:
-            datasize = int(datasize)
-            self.init_data(t, k, datasize)  # t=0用0-7
-        ## 每轮增一类，用完就全量
-        else:
-            # print('origin', len(self.data))
-            self.discard_data(theta)
-            # print('decay', len(self.data))
-            # increment = int(datasize - theta * len(self.data)) 串联了呀
-            increment = int(datasize - len(self.data))  # t=1收集好了8
-            self.collect_data(t, k, increment)
-            # print('accumu', len(self.data))
-            # print('res_data_1:{}, res_data_2:{}, theta:{}, increment:{}, increment_next:{}'.format(datasize, len(self.data), theta, increment, increment_next))
+        self.data_mode(t, k, theta, datasize)
 
         # 训练
         par_flat = torch.cat(
@@ -302,7 +277,11 @@ class Client(object):
 
         loss_list = []
         self.net.load_state_dict(global_parameters, strict=True)
-        dataloader = DataLoader(self.data, batch_size=self.batch_size, shuffle=True)
+        dataloader = DataLoader(
+            self.data,
+            batch_size=self.batch_size,
+            shuffle=True,
+        )
         for epoch in range(self.num_epoch):
             for batch in dataloader:
                 data, label = batch

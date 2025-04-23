@@ -1,0 +1,75 @@
+Running FedStream with: Dir=1.0, Init_Class=10, Epoch=20
+Files already downloaded and verified
+Files already downloaded and verified
+has read
+Files already downloaded and verified
+Files already downloaded and verified
+  0%|          | 0/100 [00:00<?, ?it/s]  0%|          | 0/100 [01:39<?, ?it/s]
+10 77 [8 3 7 5 4 1 2 6 0 9]
+10 70 [1 6 3 4 5 9 7 2 0 8]
+10 75 [3 9 2 1 6 5 8 4 0 7]
+10 76 [4 1 7 8 0 9 3 5 2 6]
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 770, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 733, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 105, in run
+    result = self.client_group.clients[k].local_update_avg(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 203, in local_update_avg
+    pred = self.net(data)
+           ^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/../model/cifar100.py", line 26, in forward
+    return self.model(x)
+           ^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/models/resnet.py", line 285, in forward
+    return self._forward_impl(x)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/models/resnet.py", line 274, in _forward_impl
+    x = self.layer2(x)
+        ^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/container.py", line 217, in forward
+    input = module(input)
+            ^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/models/resnet.py", line 154, in forward
+    out = self.conv3(out)
+          ^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/conv.py", line 460, in forward
+    return self._conv_forward(input, self.weight, self.bias)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/conv.py", line 456, in _conv_forward
+    return F.conv2d(input, weight, bias, self.stride,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 32.00 MiB. GPU 

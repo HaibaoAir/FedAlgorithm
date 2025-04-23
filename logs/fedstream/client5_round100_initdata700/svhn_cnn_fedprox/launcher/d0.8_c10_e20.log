@@ -1,0 +1,37 @@
+Running FedStream with: Dir=0.8, Init_Class=10, Epoch=20
+Using downloaded and verified file: ../data/train_32x32.mat
+Using downloaded and verified file: ../data/test_32x32.mat
+has read
+Using downloaded and verified file: ../data/train_32x32.mat
+Using downloaded and verified file: ../data/test_32x32.mat
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 770, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 733, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedProx.py", line 96, in run
+    self.init_data_net()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedProx.py", line 46, in init_data_net
+    self.client_group = Client_Group(self.args)
+                        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 334, in __init__
+    self.dataset_allocation()
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 645, in dataset_allocation
+    self.load_SVHN()
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 473, in load_SVHN
+    test_dataset = torchvision.datasets.SVHN(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/datasets/svhn.py", line 79, in __init__
+    loaded_mat = sio.loadmat(os.path.join(self.root, self.filename))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/io/matlab/_mio.py", line 227, in loadmat
+    matfile_dict = MR.get_variables(variable_names)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/io/matlab/_mio5.py", line 330, in get_variables
+    res = self.read_var_array(hdr, process)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/io/matlab/_mio5.py", line 290, in read_var_array
+    return self._matrix_reader.array_from_header(header, process)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

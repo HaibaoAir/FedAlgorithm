@@ -11,17 +11,15 @@ import matplotlib.pyplot as plt
 from skopt import gp_minimize
 from skopt.space import Real
 from tqdm import tqdm
-import argparse
-import yaml
 import time
 
 sys.path.append("../")
 from Clients import Client_Group
-from model.mnist import MNIST_LR, MNIST_MLP, MNIST_CNN
-from model.fmnist import FMNIST_LR, FMNIST_MLP, FMNIST_CNN
-from model.cifar10 import Cifar10_CNN
+from model.mnist import MNIST_LR
+from model.fmnist import FMNIST_LR
 from model.SVHN import SVHN_CNN
-from model.cifar100 import Cifar100_ResNet18
+from model.cifar10 import Cifar10_CNN
+from model.cifar100 import Cifar100_ResNet50
 from model.TinyImageNet import TinyImageNet_ResNet18
 
 
@@ -52,19 +50,11 @@ class Server(object):
         if self.dataset_name == "mnist":
             if self.net_name == "lr":
                 self.net = MNIST_LR()
-            elif self.net_name == "mlp":
-                self.net = MNIST_MLP()
-            elif self.net_name == "cnn":
-                self.net = MNIST_CNN()
             else:
                 raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "fmnist":
             if self.net_name == "lr":
                 self.net = FMNIST_LR()
-            elif self.net_name == "mlp":
-                self.net = FMNIST_MLP()
-            elif self.net_name == "cnn":
-                self.net = FMNIST_CNN()
             else:
                 raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "cifar10":
@@ -79,7 +69,7 @@ class Server(object):
                 raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "cifar100":
             if self.net_name == "resnet":
-                self.net = Cifar100_ResNet18()
+                self.net = Cifar100_ResNet50()
             else:
                 raise NotImplementedError("{}".format(self.net_name))
         elif self.dataset_name == "tinyimagenet":

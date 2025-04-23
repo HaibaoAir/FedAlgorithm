@@ -1,0 +1,26 @@
+Running FedStream with: Dir=0.5, Init_Class=10, Epoch=20
+has read
+  0%|          | 0/100 [00:00<?, ?it/s]  0%|          | 0/100 [00:08<?, ?it/s]
+5 154 [3 9 2 4 0]
+5 140 [9 3 6 1 2]
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 770, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 733, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedProx.py", line 113, in run
+    result = self.client_group.clients[k].local_update_prox(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 249, in local_update_prox
+    self.optim.zero_grad()
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/_compile.py", line 24, in inner
+    return torch._dynamo.disable(fn, recursive)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/_dynamo/decorators.py", line 50, in disable
+    return DisableContext()(fn)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/_dynamo/eval_frame.py", line 362, in __call__
+    isinstance(getattr(fn, "__self__", None), _LazyGraphModule)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
