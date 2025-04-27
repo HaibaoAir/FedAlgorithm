@@ -6,11 +6,12 @@ import torch.nn.functional as F
 import torchvision
 from torchvision import transforms
 from torch.utils.data import Dataset, Subset, ConcatDataset, DataLoader
-from matplotlib import pyplot as plt
+from torch.cuda.amp import autocast, GradScaler
 import random
 import math
-from copy import deepcopy
 import time
+from copy import deepcopy
+
 
 sys.path.append("../")
 from model.mnist import MNIST_LR
@@ -57,6 +58,8 @@ class Client(object):
         self.num_epoch = args.num_epoch
         self.batch_size = args.batch_size
         self.learning_rate = args.learning_rate
+        self.momentum = args.momentum
+        self.weight_decay = args.weight_decay
         self.dev = torch.device(args.device)
 
         self.mu = args.mu
@@ -97,8 +100,6 @@ class Client(object):
             raise NotImplementedError("{}".format(self.net_name))
         self.net.to(self.dev)
         self.criterion = F.cross_entropy
-        # self.optim = torch.optim.SGD(self.net.parameters(), self.learning_rate)
-        self.optim = torch.optim.Adam(self.net.parameters(), lr=1e-3, weight_decay=1e-4)
 
         self.mu = args.mu
 
@@ -170,10 +171,33 @@ class Client(object):
         self.data = ConcatDataset(self.datasource_list[: self.init_num_class])
 
     def data_mode(self, t, k, theta, datasize):
-        if self.mode == True:
+        if self.mode == 1:
             self.data_update(t, k, theta, datasize)
         else:
-            self.data_static()
+            if self.data == None:
+                self.data_static()
+
+    def build_components(self, global_params):
+        self.net.load_state_dict(global_params, strict=True)
+        self.net.train()
+
+        self.optim = torch.optim.SGD(
+            self.net.parameters(),
+            lr=self.learning_rate,
+            momentum=self.momentum,
+            weight_decay=self.weight_decay,
+        )  # 更适配fedprox和feddyn，有助于他们发挥
+
+        self.scheduler = torch.optim.lr_scheduler.StepLR(
+            self.optim, step_size=30, gamma=0.1
+        )
+
+        self.dataloader = DataLoader(
+            self.data,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=2,
+        )
 
     def local_update_avg(
         self,
@@ -181,35 +205,38 @@ class Client(object):
         k,
         theta,
         datasize,
-        global_parameters,
+        global_params,
     ):
-
-        # 更新数据
         self.data_mode(t, k, theta, datasize)
+        self.build_components(global_params)
 
-        # 训练
+        scaler = GradScaler()
         loss_list = []
-        self.net.load_state_dict(global_parameters, strict=True)
-        dataloader = DataLoader(
-            self.data,
-            batch_size=self.batch_size,
-            shuffle=True,
-        )
+        self.net.train()
+
         for epoch in range(self.num_epoch):
-            for batch in dataloader:
+            for batch in self.dataloader:
                 data, label = batch
                 data = data.to(self.dev)
                 label = label.to(self.dev)
-                pred = self.net(data)
-                loss = self.criterion(pred, label)
+
+                with autocast():
+                    pred = self.net(data)
+                    loss = self.criterion(pred, label)
 
                 self.optim.zero_grad()
-                loss.backward()
-                self.optim.step()
-                loss_list.append(loss.item())
-        new_loss = sum(loss_list) / len(loss_list)
+                scaler.scale(loss).backward()
+                scaler.step(self.optim)
+                scaler.update()
 
-        return deepcopy(self.net.state_dict()), new_loss
+                loss_list.append(loss.item())
+
+            self.scheduler.step()
+
+        new_loss = sum(loss_list) / len(loss_list)
+        return {
+            k: v.detach().cpu().clone() for k, v in self.net.state_dict().items()
+        }, new_loss
 
     def local_update_prox(
         self,
@@ -217,42 +244,45 @@ class Client(object):
         k,
         theta,
         datasize,
-        global_parameters,
+        global_params,
     ):
-
-        # 收集数据
         self.data_mode(t, k, theta, datasize)
+        self.build_components(global_params)
 
-        # 训练
+        scaler = GradScaler()
         loss_list = []
-        self.net.load_state_dict(global_parameters, strict=True)
-        dataloader = DataLoader(
-            self.data,
-            batch_size=self.batch_size,
-            shuffle=True,
-        )
+        self.net.train()
+
         for epoch in range(self.num_epoch):
-            for batch in dataloader:
+            for batch in self.dataloader:
                 data, label = batch
                 data = data.to(self.dev)
                 label = label.to(self.dev)
-                pred = self.net(data)
-                loss = self.criterion(pred, label)
 
-                proximal_term = 0.0
-                for name, param in self.net.named_parameters():
-                    global_param = global_parameters[name].to(param.device)
-                    proximal_term += (param - global_param.detach()).pow(2).sum()
+                with autocast():
+                    pred = self.net(data)
+                    loss = self.criterion(pred, label)
 
-                loss += (self.mu / 2) * proximal_term
+                    proximal_term = 0.0
+                    for name, param in self.net.named_parameters():
+                        global_param = global_params[name]
+                        proximal_term += (param - global_param.detach()).pow(2).sum()
+
+                    loss += (self.mu / 2) * proximal_term
 
                 self.optim.zero_grad()
-                loss.backward()
-                self.optim.step()
-                loss_list.append(loss.item())
-        new_loss = sum(loss_list) / len(loss_list)
+                scaler.scale(loss).backward()
+                scaler.step(self.optim)
+                scaler.update()
 
-        return deepcopy(self.net.state_dict()), new_loss
+                loss_list.append(loss.item())
+
+            self.scheduler.step()
+
+        new_loss = sum(loss_list) / len(loss_list)
+        return {
+            k: v.detach().cpu().clone() for k, v in self.net.state_dict().items()
+        }, new_loss
 
     def local_update_dyn(
         self,
@@ -260,62 +290,59 @@ class Client(object):
         k,
         theta,
         datasize,
-        global_parameters,
+        global_params,
         prev_grads,
         feddyn_alpha,
     ):
-        # 收集数据
         self.data_mode(t, k, theta, datasize)
+        self.build_components(global_params)
 
-        # 训练
-        par_flat = torch.cat(
-            [
-                global_parameters[name].detach().to(param.device).view(-1)
-                for name, param in self.net.named_parameters()
-            ]
-        )
-
+        scaler = GradScaler()
+        par_flat = torch.cat([param.reshape(-1) for param in global_params.values()])
         loss_list = []
-        self.net.load_state_dict(global_parameters, strict=True)
-        dataloader = DataLoader(
-            self.data,
-            batch_size=self.batch_size,
-            shuffle=True,
-        )
+        self.net.train()
+
         for epoch in range(self.num_epoch):
-            for batch in dataloader:
+            for batch in self.dataloader:
                 data, label = batch
                 data = data.to(self.dev)
                 label = label.to(self.dev)
-                pred = self.net(data)
-                loss = self.criterion(pred, label)
 
-                # 三个变量 curr_params, prev_grads, par_flat
-                curr_params = torch.cat(
-                    [param.reshape(-1) for param in self.net.parameters()]
-                )
-                lin_penalty = torch.sum(curr_params * prev_grads)
+                with autocast():
+                    pred = self.net(data)
+                    loss = self.criterion(pred, label)
 
-                norm_penalty = (feddyn_alpha / 2.0) * torch.linalg.norm(
-                    curr_params - par_flat, 2
-                ) ** 2
+                    curr_params = torch.cat(
+                        [param.reshape(-1) for param in self.net.parameters()]
+                    )
+                    lin_penalty = torch.sum(curr_params * prev_grads)
 
-                loss = loss - lin_penalty + norm_penalty
+                    norm_penalty = (feddyn_alpha / 2.0) * torch.linalg.norm(
+                        curr_params - par_flat.detach(), 2
+                    ) ** 2
+
+                    loss = loss - lin_penalty + norm_penalty
 
                 self.optim.zero_grad()
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(
-                    parameters=self.net.parameters(), max_norm=10
-                )
-                self.optim.step()
+                scaler.scale(loss).backward()
+                scaler.step(self.optim)
+                scaler.update()
+
                 loss_list.append(loss.item())
+
+            self.scheduler.step()
 
         new_loss = sum(loss_list) / len(loss_list)
         cur_flat = torch.cat(
             [param.detach().reshape(-1) for param in self.net.parameters()]
         )
         prev_grads -= feddyn_alpha * (cur_flat - par_flat)  # ht
-        return deepcopy(self.net.state_dict()), new_loss, prev_grads
+
+        return (
+            {k: v.detach().cpu().clone() for k, v in self.net.state_dict().items()},
+            new_loss,
+            prev_grads,
+        )
 
 
 class Client_Group(object):

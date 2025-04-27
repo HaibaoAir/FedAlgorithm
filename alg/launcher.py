@@ -3,36 +3,9 @@ from subprocess import Popen
 import time
 import yaml
 
-# 套取基本信息以访问路径
-with open("../config/args.yaml") as f:
-    config = yaml.safe_load(f)
-client = config["num_client"]
-round = config["num_round"]
-initdata = config["init_data_lower"]
-
-# # 参数全家桶
-dataset_list = ["mnist", "fmnist", "svhn", "cifar10"]
-net_list = ["lr", "lr", "cnn", "cnn"]
-alg_list = ["fedavg", "fedprox", "feddyn"]
-dirichlet_list = [0.5, 0.8, 1]
-init_num_class_list = [10]
-num_epoch_list = [20]
-mode = False
-
-# dataset_list = ["cifar100"]
-# net_list = ["resnet"]
-# alg_list = ["fedavg", "fedprox", "feddyn"]
-# dirichlet_list = [0.5, 0.8, 1]
-# init_num_class_list = [10]
-# num_epoch_list = [20]
-
-# 控制最大同时运行的进程数
-MAX_PARALLEL = 18
-process_pool = []
-
 
 # 启动一个实验
-def launch(alg, dataset, net, dirichlet, init_num_class, num_epoch, env):
+def launch(mode, alg, dataset, net, dirichlet, init_num_class, num_epoch, env):
     # 命令
     cmd = f"python FedStream.py --alg_name {alg} --dataset_name {dataset} --net_name {net} --dirichlet {dirichlet} --init_num_class {init_num_class} --num_epoch {num_epoch} --mode {mode}"
 
@@ -45,6 +18,7 @@ def launch(alg, dataset, net, dirichlet, init_num_class, num_epoch, env):
         dataset,
         net,
         alg,
+        suffix,
         dirichlet,
         init_num_class,
         num_epoch,
@@ -61,42 +35,86 @@ def launch(alg, dataset, net, dirichlet, init_num_class, num_epoch, env):
         )
 
 
-# 遍历所有参数组合
-gpu_list = [0]
+# 套取基本信息以访问路径
+with open("../config/args.yaml") as f:
+    config = yaml.safe_load(f)
+client = config["num_client"]
+round = config["num_round"]
+initdata = config["init_data_lower"]
+
+# 参数全家桶
+task_list = [
+    # [
+    #     [1],
+    #     ["mnist", "lr", 10],
+    #     ["fedavg", "fedprox", "feddyn"],
+    #     [0.5, 0.8, 1],
+    #     [8, 10],
+    #     [20],
+    # ],
+    # [[1], ["fmnist", "lr", 10], ["fedavg", "fedprox", "feddyn"], [1], [10], [20]],
+    # [[1], ["svhn", "cnn", 10], ["fedavg", "fedprox", "feddyn"], [1], [10], [20]],
+    [
+        [0, 1],
+        ["cifar10", "cnn", 10],
+        ["fedavg", "fedprox", "feddyn"],
+        [0.1],
+        [10],
+        [5],
+    ],
+    # [
+    #     [1],
+    #     ["cifar100", "resnet", 100],  #
+    #     ["fedavg", "fedprox", "feddyn"],
+    #     [1],
+    #     [100],
+    #     [20],
+    # ],
+]
+
+# 其他参数
+gpu_list = [1, 2]
 count = 0
 
-for i in range(len(dataset_list)):
-    dataset = dataset_list[i]
-    net = net_list[i]
-    for alg in alg_list:
-        for dirichlet in dirichlet_list:
-            for init_num_class in init_num_class_list:
-                for num_epoch in num_epoch_list:
-                    # 设置GPU
-                    gpu_id = gpu_list[count % len(gpu_list)]
-                    env = os.environ.copy()
-                    env["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
-                    count += 1
+MAX_PARALLEL = 12
+process_pool = []
 
-                    # 启动实验
-                    p = launch(
-                        alg,
-                        dataset,
-                        net,
-                        dirichlet,
-                        init_num_class,
-                        num_epoch,
-                        env,
-                    )
-                    process_pool.append(p)
 
-                    # 限制最大并发
-                    while len(process_pool) >= MAX_PARALLEL:
-                        time.sleep(2)
-                        process_pool = [
-                            p for p in process_pool if p.poll() is None
-                        ]  # 只保留未结束的
+# 遍历所有参数组合
+for task in task_list:
+    for mode in task[0]:
+        dataset_name = task[1][0]
+        net_name = task[1][1]
+        num_class = task[1][2]
+        for alg_name in task[2]:
+            for dirichlet in task[3]:
+                for init_num_class in task[4]:
+                    for num_epoch in task[5]:
+                        # 设置GPU
+                        gpu_id = gpu_list[count % len(gpu_list)]
+                        env = os.environ.copy()
+                        env["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
+                        count += 1
 
+                        # 启动实验
+                        p = launch(
+                            mode,
+                            alg_name,
+                            dataset_name,
+                            net_name,
+                            dirichlet,
+                            init_num_class,
+                            num_epoch,
+                            env,
+                        )
+                        process_pool.append(p)
+
+                        # 限制最大并发
+                        while len(process_pool) >= MAX_PARALLEL:
+                            time.sleep(2)
+                            process_pool = [
+                                p for p in process_pool if p.poll() is None
+                            ]  # 只保留未结束的
 
 # 等所有实验完成
 for p in process_pool:

@@ -4,14 +4,11 @@ import sys
 import random
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import ConcatDataset, DataLoader
-import matplotlib.pyplot as plt
-from skopt import gp_minimize
-from skopt.space import Real
 from tqdm import tqdm
 import time
+from multiprocessing import Process, Manager
+
 
 sys.path.append("../")
 from Clients import Client_Group
@@ -85,9 +82,10 @@ class Server(object):
     def run(self, theta, data_matrix):
         # 初始化数据和网络
         self.init_data_net()
-        global_parameter = {}
-        for key, var in self.net.state_dict().items():
-            global_parameter[key] = var.clone()
+
+        # 初始化全局参数
+        global_params = {k: v.clone() for k, v in self.net.state_dict().items()}
+
         # 计算聚合权重
         rate_matrix = np.stack(
             [data_matrix[:, t] / sum(data_matrix[:, t]) for t in range(self.num_round)]
@@ -98,8 +96,8 @@ class Server(object):
         accuracy_list = []
         # 训练
         for t in tqdm(range(self.num_round)):
-            a = time.time()
-            next_global_parameter = {}
+
+            next_global_params = {}
             global_loss = 0
             for k in range(self.num_client):
                 result = self.client_group.clients[k].local_update_avg(
@@ -107,38 +105,32 @@ class Server(object):
                     k,
                     theta,
                     data_matrix[k][t],
-                    global_parameter,
+                    global_params,
                 )
-                local_parameter = result[0]
-                for item in local_parameter.items():
-                    if item[0] not in next_global_parameter.keys():
-                        next_global_parameter[item[0]] = (
+                local_params = result[0]
+                for item in local_params.items():
+                    if item[0] not in next_global_params.keys():
+                        next_global_params[item[0]] = (
                             rate_matrix[k][t] * item[1].clone()
                         )
                     else:
-                        next_global_parameter[item[0]] += (
+                        next_global_params[item[0]] += (
                             rate_matrix[k][t] * item[1].clone()
                         )
-                # print(
-                #     local_parameter["conv_block.0.weight"].data_ptr()
-                #     == next_global_parameter["conv_block.0.weight"].data_ptr()
-                # )
-                # exit(0)
-                # 不会污染第一个本地模型
 
                 local_loss = result[1]
                 global_loss += rate_matrix[k][t] * local_loss
 
-            # 求global_parameters和global_loss_list
-            global_parameter = next_global_parameter
+            # 求global_paramss和global_loss_list
+            global_params = next_global_params
             global_loss_list.append(global_loss)
-            b = time.time()
-            print("round time = {}".format(b - a))
+
             # 验证
             if t % self.eval_freq == 0 or t == self.num_round - 1:
                 correct = 0
                 total = 0
-                self.net.load_state_dict(global_parameter)
+                self.net.load_state_dict(global_params)
+                self.net.eval()
                 with torch.no_grad():
                     # 固定哦
                     test_dataloader = DataLoader(

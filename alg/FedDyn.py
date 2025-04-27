@@ -104,9 +104,9 @@ class Server(object):
 
         # 初始化数据和网络
         self.init_data_net()
-        global_parameter = {}
+        global_params = {}
         for key, var in self.net.state_dict().items():
-            global_parameter[key] = var.clone()
+            global_params[key] = var.clone()
         # 计算聚合权重
         rate_matrix = np.stack(
             [data_matrix[:, t] / sum(data_matrix[:, t]) for t in range(self.num_round)]
@@ -126,21 +126,21 @@ class Server(object):
         }
 
         for t in tqdm(range(self.num_round)):
-            local_parameters_list = []
+            local_params_list = []
             train_loss = 0
             for k in range(self.num_client):
-                local_parameters, loss, prev_grads = self.client_group.clients[
+                local_params, loss, prev_grads = self.client_group.clients[
                     k
                 ].local_update_dyn(
                     t,
                     k,
                     theta,
                     data_matrix[k][t],
-                    global_parameter,
+                    global_params,
                     prev_grads_list[k],
                     self.feddyn_alpha,
                 )
-                local_parameters_list.append(local_parameters)
+                local_params_list.append(local_params)
                 train_loss += loss
                 prev_grads_list[k] = prev_grads
 
@@ -152,34 +152,30 @@ class Server(object):
                 * 1
                 / self.num_client
                 * sum(
-                    local_parameters[key] - old_params
-                    for local_parameters in local_parameters_list
+                    local_params[key] - old_params for local_params in local_params_list
                 )
-                for (key, prev_h), old_params in zip(
-                    h.items(), global_parameter.values()
-                )
+                for (key, prev_h), old_params in zip(h.items(), global_params.values())
             }
 
             # 计算新的全局参数
-            new_parameters = {
+            new_params = {
                 key: (1 / self.num_client)
-                * sum(
-                    local_parameters[key] for local_parameters in local_parameters_list
-                )
-                for key in global_parameter.keys()
+                * sum(local_params[key] for local_params in local_params_list)
+                for key in global_params.keys()
             }
-            new_parameters = {
+            new_params = {
                 key: params - (1 / self.feddyn_alpha) * h_params
-                for (key, params), h_params in zip(new_parameters.items(), h.values())
+                for (key, params), h_params in zip(new_params.items(), h.values())
             }
-            # self.net.load_state_dict(new_parameters)
-            global_parameter = {key: val.clone() for key, val in new_parameters.items()}
+            # self.net.load_state_dict(new_params)
+            global_params = {key: val.clone() for key, val in new_params.items()}
 
             # 验证
             if t % self.eval_freq == 0 or t == self.num_round - 1:
                 correct = 0
                 total = 0
-                self.net.load_state_dict(global_parameter)
+                self.net.load_state_dict(global_params)
+                self.net.eval()
                 with torch.no_grad():
                     # 固定哦
                     test_dataloader = DataLoader(

@@ -1,0 +1,48 @@
+Running FedStream with: Dir=1.0, Init_Class=8, Epoch=20
+has read
+  0%|          | 0/100 [00:00<?, ?it/s]  1%|          | 1/100 [04:09<6:51:16, 249.26s/it]  2%|▏         | 2/100 [08:15<6:44:37, 247.73s/it]  3%|▎         | 3/100 [12:20<6:38:02, 246.21s/it]  4%|▍         | 4/100 [16:21<6:30:43, 244.20s/it]  5%|▌         | 5/100 [20:24<6:25:50, 243.69s/it]  6%|▌         | 6/100 [24:31<6:23:47, 244.98s/it]  6%|▌         | 6/100 [26:28<6:54:42, 264.71s/it]
+round time = 246.88359570503235
+round time = 246.6536066532135
+round time = 244.41228485107422
+round time = 241.1099989414215
+round time = 242.79719281196594
+round time = 245.15161609649658
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 775, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 738, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 105, in run
+    result = self.client_group.clients[k].local_update_avg(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 199, in local_update_avg
+    for batch in dataloader:
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 631, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 675, in _next_data
+    data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/_utils/fetch.py", line 51, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/_utils/fetch.py", line 51, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+            ~~~~~~~~~~~~^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataset.py", line 348, in __getitem__
+    return self.datasets[dataset_idx][sample_idx]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 37, in __getitem__
+    data = self.trans(self.local_data[index])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/transforms/transforms.py", line 95, in __call__
+    img = t(img)
+          ^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/transforms/transforms.py", line 137, in __call__
+    return F.to_tensor(pic)
+           ^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/transforms/functional.py", line 168, in to_tensor
+    img = torch.from_numpy(np.array(pic, mode_to_nptype.get(pic.mode, np.uint8), copy=True))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

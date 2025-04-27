@@ -1,0 +1,801 @@
+Running FedStream with: Dir=1.0, Init_Class=10, Epoch=5
+Files already downloaded and verified
+Files already downloaded and verified
+has read
+Files already downloaded and verified
+Files already downloaded and verified
+  0%|          | 0/100 [00:00<?, ?it/s]=== [Client 2] subprocess launched ===
+=== [Client 4] subprocess launched ===
+=== [Client 0] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 1] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+  1%|          | 1/100 [00:55<1:31:38, 55.54s/it]terminate called without an active exception
+=== [Client 2] subprocess launched ===
+=== [Client 1] subprocess launched ===
+=== [Client 0] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+  2%|▏         | 2/100 [01:47<1:27:22, 53.50s/it]terminate called without an active exception
+=== [Client 0] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 1] subprocess launched ===
+=== [Client 2] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 3] subprocess launched ===
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+  3%|▎         | 3/100 [02:39<1:25:15, 52.74s/it]terminate called without an active exception
+=== [Client 2] subprocess launched ===
+=== [Client 0] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 3] subprocess launched ===
+=== [Client 1] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+  4%|▍         | 4/100 [03:30<1:23:30, 52.20s/it]terminate called without an active exception
+=== [Client 0] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 1] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 2] subprocess launched ===
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+  5%|▌         | 5/100 [04:22<1:22:17, 51.98s/it]terminate called without an active exception
+=== [Client 0] subprocess launched ===
+=== [Client 1] subprocess launched ===
+=== [Client 3] subprocess launched ===
+=== [Client 2] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+  6%|▌         | 6/100 [05:17<1:23:03, 53.02s/it]terminate called without an active exception
+=== [Client 1] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 2] subprocess launched ===
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 0] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+  7%|▋         | 7/100 [06:10<1:22:10, 53.02s/it]terminate called without an active exception
+=== [Client 1] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+=== [Client 2] subprocess launched ===
+=== [Client 0] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+  8%|▊         | 8/100 [07:02<1:20:55, 52.77s/it]terminate called without an active exception
+=== [Client 0] subprocess launched ===
+=== [Client 2] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 1] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+  9%|▉         | 9/100 [07:54<1:19:37, 52.50s/it]terminate called without an active exception
+=== [Client 3] subprocess launched ===
+=== [Client 1] subprocess launched ===
+=== [Client 2] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 0] subprocess launched ===
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 10%|█         | 10/100 [08:46<1:18:38, 52.43s/it]terminate called without an active exception
+=== [Client 0] subprocess launched ===
+=== [Client 2] subprocess launched ===
+=== [Client 3] subprocess launched ===
+=== [Client 1] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 11%|█         | 11/100 [09:41<1:18:51, 53.16s/it]terminate called without an active exception
+=== [Client 3] subprocess launched ===
+=== [Client 1] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 0] subprocess launched ===
+=== [Client 2] subprocess launched ===
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 12%|█▏        | 12/100 [10:33<1:17:25, 52.79s/it]terminate called without an active exception
+=== [Client 2] subprocess launched ===
+=== [Client 1] subprocess launched ===
+=== [Client 0] subprocess launched ===
+=== [Client 4] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 13%|█▎        | 13/100 [11:25<1:16:17, 52.62s/it]terminate called without an active exception
+=== [Client 0] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 3] subprocess launched ===
+=== [Client 2] subprocess launched ===
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 1] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 14%|█▍        | 14/100 [12:18<1:15:22, 52.58s/it]terminate called without an active exception
+=== [Client 0] subprocess launched ===
+=== [Client 1] subprocess launched ===
+=== [Client 3] subprocess launched ===
+=== [Client 2] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 15%|█▌        | 15/100 [13:10<1:14:17, 52.44s/it]terminate called without an active exception
+=== [Client 1] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 0] subprocess launched ===
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 2] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 16%|█▌        | 16/100 [14:05<1:14:29, 53.20s/it]terminate called without an active exception
+=== [Client 0] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+=== [Client 1] subprocess launched ===
+=== [Client 3] subprocess launched ===
+=== [Client 2] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 17%|█▋        | 17/100 [14:55<1:12:20, 52.29s/it]terminate called without an active exception
+=== [Client 1] subprocess launched ===
+=== [Client 2] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 0] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+ 18%|█▊        | 18/100 [15:46<1:10:59, 51.95s/it]terminate called without an active exception
+=== [Client 1] subprocess launched ===
+=== [Client 0] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 2] subprocess launched ===
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 19%|█▉        | 19/100 [16:37<1:09:43, 51.65s/it]terminate called without an active exception
+=== [Client 2] subprocess launched ===
+=== [Client 0] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 1] subprocess launched ===
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 20%|██        | 20/100 [17:30<1:09:10, 51.88s/it]terminate called without an active exception
+=== [Client 2] subprocess launched ===
+=== [Client 4] subprocess launched ===
+=== [Client 1] subprocess launched ===
+=== [Client 0] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 21%|██        | 21/100 [18:25<1:09:40, 52.91s/it]terminate called without an active exception
+=== [Client 0] subprocess launched ===
+=== [Client 3] subprocess launched ===
+=== [Client 2] subprocess launched ===
+=== [Client 1] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 22%|██▏       | 22/100 [19:17<1:08:25, 52.63s/it]terminate called without an active exception
+=== [Client 2] subprocess launched ===
+=== [Client 1] subprocess launched ===
+=== [Client 4] subprocess launched ===
+=== [Client 0] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 23%|██▎       | 23/100 [20:09<1:07:23, 52.51s/it]terminate called without an active exception
+=== [Client 2] subprocess launched ===
+=== [Client 3] subprocess launched ===
+=== [Client 1] subprocess launched ===
+=== [Client 0] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 24%|██▍       | 24/100 [21:01<1:06:13, 52.28s/it]terminate called without an active exception
+=== [Client 1] subprocess launched ===
+=== [Client 0] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 2] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 25%|██▌       | 25/100 [21:53<1:05:11, 52.16s/it]terminate called without an active exception
+=== [Client 4] subprocess launched ===
+=== [Client 2] subprocess launched ===
+=== [Client 1] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 0] subprocess launched ===
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 26%|██▌       | 26/100 [22:47<1:05:00, 52.71s/it]terminate called without an active exception
+=== [Client 1] subprocess launched ===
+=== [Client 0] subprocess launched ===
+=== [Client 3] subprocess launched ===
+=== [Client 4] subprocess launched ===
+=== [Client 2] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 27%|██▋       | 27/100 [23:39<1:04:08, 52.71s/it]terminate called without an active exception
+=== [Client 0] subprocess launched ===
+=== [Client 1] subprocess launched ===
+=== [Client 4] subprocess launched ===
+=== [Client 2] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 28%|██▊       | 28/100 [24:32<1:03:04, 52.56s/it]terminate called without an active exception
+=== [Client 2] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 3] subprocess launched ===
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 0] subprocess launched ===
+=== [Client 1] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 29%|██▉       | 29/100 [25:22<1:01:29, 51.97s/it]terminate called without an active exception
+=== [Client 2] subprocess launched ===
+=== [Client 0] subprocess launched ===
+=== [Client 3] subprocess launched ===
+=== [Client 1] subprocess launched ===
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 30%|███       | 30/100 [26:14<1:00:39, 51.99s/it]terminate called without an active exception
+=== [Client 0] subprocess launched ===
+=== [Client 1] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+=== [Client 3] subprocess launched ===
+=== [Client 2] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+[Device] CUDA available: True
+ 31%|███       | 31/100 [27:10<1:00:58, 53.03s/it]terminate called without an active exception
+=== [Client 0] subprocess launched ===
+=== [Client 2] subprocess launched ===
+=== [Client 1] subprocess launched ===
+[Device] CUDA available: True
+=== [Client 4] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+=== [Client 3] subprocess launched ===
+[Device] CUDA available: True
+[Device] CUDA available: True
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 14, in <module>
+    from FedAvg import Server as FedAvg_Server
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 14, in <module>
+    from Clients_Static import Client, run_client_avg_static  # 用新的Clients_Static
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'Clients_Static'
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 14, in <module>
+    from FedAvg import Server as FedAvg_Server
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 14, in <module>
+    from Clients_Static import Client, run_client_avg_static  # 用新的Clients_Static
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'Clients_Static'
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 14, in <module>
+    from FedAvg import Server as FedAvg_Server
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 14, in <module>
+    from Clients_Static import Client, run_client_avg_static  # 用新的Clients_Static
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'Clients_Static'
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 14, in <module>
+    from FedAvg import Server as FedAvg_Server
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 14, in <module>
+    from Clients_Static import Client, run_client_avg_static  # 用新的Clients_Static
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'Clients_Static'
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 14, in <module>
+    from FedAvg import Server as FedAvg_Server
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 14, in <module>
+    from Clients_Static import Client, run_client_avg_static  # 用新的Clients_Static
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'Clients_Static'
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+Traceback (most recent call last):
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+  File "<string>", line 1, in <module>
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+    exitcode = _main(fd, parent_sentinel)
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 14, in <module>
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+    from FedAvg import Server as FedAvg_Server
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 14, in <module>
+    from Clients_Static import Client, run_client_avg_static  # 用新的Clients_Static
+    _fixup_main_from_path(data['init_main_from_path'])
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+ModuleNotFoundError: No module named 'Clients_Static'
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 14, in <module>
+    from FedAvg import Server as FedAvg_Server
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 14, in <module>
+    from Clients_Static import Client, run_client_avg_static  # 用新的Clients_Static
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'Clients_Static'
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 1, in <module>
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+    prepare(preparation_data)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+    _fixup_main_from_path(data['init_main_from_path'])
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+    main_content = runpy.run_path(main_path,
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 88, in _run_code
+  File "<frozen runpy>", line 291, in run_path
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 14, in <module>
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 14, in <module>
+    from FedAvg import Server as FedAvg_Server
+    from FedAvg import Server as FedAvg_Server
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 14, in <module>
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 14, in <module>
+    from Clients_Static import Client, run_client_avg_static  # 用新的Clients_Static
+    from Clients_Static import Client, run_client_avg_static  # 用新的Clients_Static
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'Clients_Static'
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'Clients_Static'
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 14, in <module>
+    from FedAvg import Server as FedAvg_Server
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 14, in <module>
+    from Clients_Static import Client, run_client_avg_static  # 用新的Clients_Static
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'Clients_Static'
+[Server] Client 0 failed. Log:
+Traceback (most recent call last):
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1133, in _try_get_data
+    data = self._data_queue.get(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/queues.py", line 113, in get
+    if not self._poll(timeout):
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 257, in poll
+    return self._poll(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 440, in _poll
+    r = wait([self], timeout)
+        ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 948, in wait
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/selectors.py", line 415, in select
+    fd_event_list = self._selector.poll(timeout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/_utils/signal_handling.py", line 66, in handler
+    _error_if_any_worker_fails()
+RuntimeError: DataLoader worker (pid 1446174) exited unexpectedly with exit code 1. Details are lost due to multiprocessing. Rerunning with num_workers=0 may give better error trace.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 53, in run_client_avg
+    state, loss = client.local_update_avg(t, k, theta, datasize, global_param)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 274, in local_update_avg
+    for batch in self.dataloader:
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 631, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1329, in _next_data
+    idx, data = self._get_data()
+                ^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1295, in _get_data
+    success, data = self._try_get_data()
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1146, in _try_get_data
+    raise RuntimeError(f'DataLoader worker (pid(s) {pids_str}) exited unexpectedly') from e
+RuntimeError: DataLoader worker (pid(s) 1446174) exited unexpectedly
+
+[Server] Client 1 failed. Log:
+Traceback (most recent call last):
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1133, in _try_get_data
+    data = self._data_queue.get(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/queues.py", line 113, in get
+    if not self._poll(timeout):
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 257, in poll
+    return self._poll(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 440, in _poll
+    r = wait([self], timeout)
+        ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 948, in wait
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/selectors.py", line 415, in select
+    fd_event_list = self._selector.poll(timeout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/_utils/signal_handling.py", line 66, in handler
+    _error_if_any_worker_fails()
+RuntimeError: DataLoader worker (pid 1446144) exited unexpectedly with exit code 1. Details are lost due to multiprocessing. Rerunning with num_workers=0 may give better error trace.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 53, in run_client_avg
+    state, loss = client.local_update_avg(t, k, theta, datasize, global_param)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 274, in local_update_avg
+    for batch in self.dataloader:
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 631, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1329, in _next_data
+    idx, data = self._get_data()
+                ^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1295, in _get_data
+    success, data = self._try_get_data()
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1146, in _try_get_data
+    raise RuntimeError(f'DataLoader worker (pid(s) {pids_str}) exited unexpectedly') from e
+RuntimeError: DataLoader worker (pid(s) 1446144) exited unexpectedly
+
+[Server] Client 2 failed. Log:
+Traceback (most recent call last):
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1133, in _try_get_data
+    data = self._data_queue.get(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/queues.py", line 113, in get
+    if not self._poll(timeout):
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 257, in poll
+    return self._poll(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 440, in _poll
+    r = wait([self], timeout)
+        ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 948, in wait
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/selectors.py", line 415, in select
+    fd_event_list = self._selector.poll(timeout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/_utils/signal_handling.py", line 66, in handler
+    _error_if_any_worker_fails()
+RuntimeError: DataLoader worker (pid 1446140) exited unexpectedly with exit code 1. Details are lost due to multiprocessing. Rerunning with num_workers=0 may give better error trace.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 53, in run_client_avg
+    state, loss = client.local_update_avg(t, k, theta, datasize, global_param)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 274, in local_update_avg
+    for batch in self.dataloader:
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 631, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1329, in _next_data
+    idx, data = self._get_data()
+                ^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1295, in _get_data
+    success, data = self._try_get_data()
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1146, in _try_get_data
+    raise RuntimeError(f'DataLoader worker (pid(s) {pids_str}) exited unexpectedly') from e
+RuntimeError: DataLoader worker (pid(s) 1446140) exited unexpectedly
+
+[Server] Client 3 failed. Log:
+Traceback (most recent call last):
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1133, in _try_get_data
+    data = self._data_queue.get(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/queues.py", line 113, in get
+    if not self._poll(timeout):
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 257, in poll
+    return self._poll(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 440, in _poll
+    r = wait([self], timeout)
+        ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 948, in wait
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/selectors.py", line 415, in select
+    fd_event_list = self._selector.poll(timeout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/_utils/signal_handling.py", line 66, in handler
+    _error_if_any_worker_fails()
+RuntimeError: DataLoader worker (pid 1446169) exited unexpectedly with exit code 1. Details are lost due to multiprocessing. Rerunning with num_workers=0 may give better error trace.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 53, in run_client_avg
+    state, loss = client.local_update_avg(t, k, theta, datasize, global_param)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 274, in local_update_avg
+    for batch in self.dataloader:
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 631, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1329, in _next_data
+    idx, data = self._get_data()
+                ^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1295, in _get_data
+    success, data = self._try_get_data()
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1146, in _try_get_data
+    raise RuntimeError(f'DataLoader worker (pid(s) {pids_str}) exited unexpectedly') from e
+RuntimeError: DataLoader worker (pid(s) 1446169) exited unexpectedly
+
+ 31%|███       | 31/100 [27:31<1:01:16, 53.28s/it]
+[Server] Client 4 failed. Log:
+Traceback (most recent call last):
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1133, in _try_get_data
+    data = self._data_queue.get(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/queues.py", line 113, in get
+    if not self._poll(timeout):
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 257, in poll
+    return self._poll(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 440, in _poll
+    r = wait([self], timeout)
+        ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 948, in wait
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/selectors.py", line 415, in select
+    fd_event_list = self._selector.poll(timeout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/_utils/signal_handling.py", line 66, in handler
+    _error_if_any_worker_fails()
+RuntimeError: DataLoader worker (pid 1446166) exited unexpectedly with exit code 1. Details are lost due to multiprocessing. Rerunning with num_workers=0 may give better error trace.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 53, in run_client_avg
+    state, loss = client.local_update_avg(t, k, theta, datasize, global_param)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 274, in local_update_avg
+    for batch in self.dataloader:
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 631, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1329, in _next_data
+    idx, data = self._get_data()
+                ^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1295, in _get_data
+    success, data = self._try_get_data()
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1146, in _try_get_data
+    raise RuntimeError(f'DataLoader worker (pid(s) {pids_str}) exited unexpectedly') from e
+RuntimeError: DataLoader worker (pid(s) 1446166) exited unexpectedly
+
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 779, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 738, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 152, in run
+AttributeError: 'int' object has no attribute 'item'

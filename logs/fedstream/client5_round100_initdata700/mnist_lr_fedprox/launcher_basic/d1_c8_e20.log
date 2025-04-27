@@ -1,0 +1,23 @@
+Running FedStream with: Dir=1.0, Init_Class=8, Epoch=20
+has read
+  0%|          | 0/100 [00:00<?, ?it/s]  1%|          | 1/100 [04:21<7:11:42, 261.64s/it]  2%|▏         | 2/100 [08:39<7:03:25, 259.24s/it]  3%|▎         | 3/100 [12:57<6:58:11, 258.68s/it]  4%|▍         | 4/100 [17:15<6:53:21, 258.35s/it]  5%|▌         | 5/100 [21:33<6:48:55, 258.27s/it]  6%|▌         | 6/100 [25:49<6:43:41, 257.68s/it]  6%|▌         | 6/100 [26:27<6:54:26, 264.54s/it]
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 775, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 738, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedProx.py", line 113, in run
+    result = self.client_group.clients[k].local_update_prox(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 235, in local_update_prox
+    for batch in dataloader:
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 627, in __next__
+    with torch.autograd.profiler.record_function(self._profile_name):
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/autograd/profiler.py", line 605, in __enter__
+    self.record = torch.ops.profiler._record_function_enter_new(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/_ops.py", line 854, in __call__
+    return self_._op(*args, **(kwargs or {}))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

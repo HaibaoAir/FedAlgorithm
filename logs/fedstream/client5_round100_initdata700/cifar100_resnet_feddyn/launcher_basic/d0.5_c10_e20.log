@@ -1,0 +1,102 @@
+Running FedStream with: Dir=0.5, Init_Class=10, Epoch=20
+Files already downloaded and verified
+Files already downloaded and verified
+has read
+Files already downloaded and verified
+Files already downloaded and verified
+  0%|          | 0/100 [00:00<?, ?it/s]  1%|          | 1/100 [08:12<13:32:33, 492.46s/it]  2%|▏         | 2/100 [16:06<13:07:03, 481.88s/it]  3%|▎         | 3/100 [23:42<12:39:23, 469.73s/it]  4%|▍         | 4/100 [31:16<12:21:33, 463.47s/it]  5%|▌         | 5/100 [38:50<12:08:37, 460.18s/it]  6%|▌         | 6/100 [46:24<11:57:54, 458.24s/it]  7%|▋         | 7/100 [54:00<11:48:51, 457.33s/it]  8%|▊         | 8/100 [1:01:33<11:39:16, 456.05s/it]  9%|▉         | 9/100 [1:09:07<11:30:47, 455.47s/it] 10%|█         | 10/100 [1:16:43<11:23:27, 455.63s/it] 11%|█         | 11/100 [1:24:21<11:16:40, 456.18s/it] 12%|█▏        | 12/100 [1:31:53<11:07:09, 454.88s/it] 13%|█▎        | 13/100 [1:39:26<10:58:40, 454.26s/it] 14%|█▍        | 14/100 [1:47:02<10:51:56, 454.84s/it] 15%|█▌        | 15/100 [1:54:37<10:44:29, 454.94s/it] 16%|█▌        | 16/100 [2:02:13<10:37:29, 455.35s/it] 17%|█▋        | 17/100 [2:09:48<10:29:29, 455.05s/it] 18%|█▊        | 18/100 [2:17:24<10:22:28, 455.47s/it] 19%|█▉        | 19/100 [2:24:58<10:14:26, 455.14s/it] 20%|██        | 20/100 [2:32:32<10:06:07, 454.59s/it] 21%|██        | 21/100 [2:40:07<9:59:00, 454.94s/it]  22%|██▏       | 22/100 [2:47:40<9:50:41, 454.38s/it] 23%|██▎       | 23/100 [2:55:14<9:42:37, 453.99s/it] 24%|██▍       | 24/100 [3:02:53<9:36:56, 455.49s/it] 25%|██▌       | 25/100 [3:10:29<9:29:47, 455.83s/it] 26%|██▌       | 26/100 [3:18:05<9:22:08, 455.79s/it] 27%|██▋       | 27/100 [3:25:37<9:13:13, 454.70s/it] 28%|██▊       | 28/100 [3:33:07<9:03:56, 453.28s/it] 29%|██▉       | 29/100 [3:40:44<8:57:35, 454.31s/it] 30%|███       | 30/100 [3:48:20<8:50:33, 454.77s/it] 31%|███       | 31/100 [3:55:53<8:42:30, 454.35s/it] 32%|███▏      | 32/100 [4:03:25<8:34:09, 453.67s/it] 33%|███▎      | 33/100 [4:10:59<8:26:41, 453.76s/it] 34%|███▍      | 34/100 [4:18:33<8:19:04, 453.70s/it] 35%|███▌      | 35/100 [4:26:04<8:10:48, 453.05s/it] 36%|███▌      | 36/100 [4:33:38<8:03:27, 453.24s/it] 37%|███▋      | 37/100 [4:41:53<8:09:01, 465.74s/it] 38%|███▊      | 38/100 [4:50:33<8:18:09, 482.09s/it]Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 14, in <module>
+    from FedAvg import Server as FedAvg_Server
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 14, in <module>
+    from Clients import Client_Group, run_client_avg
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 65
+    finally:
+    ^^^^^^^
+SyntaxError: invalid syntax
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 14, in <module>
+    from FedAvg import Server as FedAvg_Server
+  File "/home/kemove/lt/FedAlgorithm/alg/FedAvg.py", line 14, in <module>
+    from Clients import Client_Group, run_client_avg
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 65
+    finally:
+    ^^^^^^^
+SyntaxError: invalid syntax
+ 38%|███▊      | 38/100 [4:56:59<8:04:33, 468.92s/it]
+Traceback (most recent call last):
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1133, in _try_get_data
+    data = self._data_queue.get(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/queues.py", line 113, in get
+    if not self._poll(timeout):
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 257, in poll
+    return self._poll(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 440, in _poll
+    r = wait([self], timeout)
+        ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/multiprocessing/connection.py", line 948, in wait
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/selectors.py", line 415, in select
+    fd_event_list = self._selector.poll(timeout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/_utils/signal_handling.py", line 66, in handler
+    _error_if_any_worker_fails()
+RuntimeError: DataLoader worker (pid 927460) exited unexpectedly with exit code 1. Details are lost due to multiprocessing. Rerunning with num_workers=0 may give better error trace.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 779, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 738, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedDyn.py", line 134, in run
+    ].local_update_dyn(
+      ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 345, in local_update_dyn
+    datasize,
+        ^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 631, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1329, in _next_data
+    idx, data = self._get_data()
+                ^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1295, in _get_data
+    success, data = self._try_get_data()
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1146, in _try_get_data
+    raise RuntimeError(f'DataLoader worker (pid(s) {pids_str}) exited unexpectedly') from e
+RuntimeError: DataLoader worker (pid(s) 927460) exited unexpectedly

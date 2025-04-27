@@ -1,0 +1,144 @@
+Running FedStream with: Dir=0.5, Init_Class=10, Epoch=20
+Using downloaded and verified file: ../data/train_32x32.mat
+Using downloaded and verified file: ../data/test_32x32.mat
+has read
+Using downloaded and verified file: ../data/train_32x32.mat
+Using downloaded and verified file: ../data/test_32x32.mat
+  0%|          | 0/100 [00:00<?, ?it/s]  1%|          | 1/100 [00:55<1:31:18, 55.34s/it]  2%|▏         | 2/100 [01:53<1:32:59, 56.94s/it]  3%|▎         | 3/100 [03:05<1:43:14, 63.86s/it]  4%|▍         | 4/100 [04:25<1:52:41, 70.43s/it]  5%|▌         | 5/100 [05:52<2:00:24, 76.05s/it]  6%|▌         | 6/100 [07:32<2:11:56, 84.22s/it]  7%|▋         | 7/100 [09:05<2:15:20, 87.32s/it]  8%|▊         | 8/100 [10:41<2:17:54, 89.94s/it]  9%|▉         | 9/100 [12:17<2:19:08, 91.74s/it] 10%|█         | 10/100 [13:53<2:19:51, 93.24s/it] 11%|█         | 11/100 [15:39<2:23:57, 97.05s/it] 12%|█▏        | 12/100 [17:16<2:22:27, 97.13s/it] 13%|█▎        | 13/100 [18:53<2:20:35, 96.96s/it] 14%|█▍        | 14/100 [20:30<2:19:15, 97.16s/it] 15%|█▌        | 15/100 [22:07<2:17:36, 97.14s/it] 16%|█▌        | 16/100 [23:50<2:18:28, 98.91s/it] 16%|█▌        | 16/100 [23:58<2:05:49, 89.88s/it]
+5 154 [7 4 8 2 0]
+5 140 [0 5 2 3 1]
+5 150 [0 6 8 5 4]
+5 152 [5 0 2 8 4]
+5 154 [8 7 2 9 6]
+5 111 [7 4 8 2 0]
+5 112 [0 5 2 3 1]
+5 112 [0 6 8 5 4]
+5 111 [5 0 2 8 4]
+5 111 [8 7 2 9 6]
+5 133 [7 4 8 2 0]
+5 132 [0 5 2 3 1]
+5 132 [0 6 8 5 4]
+5 133 [5 0 2 8 4]
+5 133 [8 7 2 9 6]
+5 145 [7 4 8 2 0]
+5 145 [0 5 2 3 1]
+5 145 [0 6 8 5 4]
+5 145 [5 0 2 8 4]
+5 145 [8 7 2 9 6]
+5 150 [7 4 8 2 0]
+5 151 [0 5 2 3 1]
+5 151 [0 6 8 5 4]
+5 151 [5 0 2 8 4]
+5 150 [8 7 2 9 6]
+5 153 [7 4 8 2 0]
+5 153 [0 5 2 3 1]
+5 153 [0 6 8 5 4]
+5 153 [5 0 2 8 4]
+5 153 [8 7 2 9 6]
+5 154 [7 4 8 2 0]
+5 154 [0 5 2 3 1]
+5 154 [0 6 8 5 4]
+5 154 [5 0 2 8 4]
+5 154 [8 7 2 9 6]
+5 155 [7 4 8 2 0]
+5 154 [0 5 2 3 1]
+5 154 [0 6 8 5 4]
+5 154 [5 0 2 8 4]
+5 155 [8 7 2 9 6]
+5 154 [7 4 8 2 0]
+5 155 [0 5 2 3 1]
+5 155 [0 6 8 5 4]
+5 155 [5 0 2 8 4]
+5 154 [8 7 2 9 6]
+5 155 [7 4 8 2 0]
+5 154 [0 5 2 3 1]
+5 154 [0 6 8 5 4]
+5 154 [5 0 2 8 4]
+5 155 [8 7 2 9 6]
+5 154 [7 4 8 2 0]
+5 155 [0 5 2 3 1]
+5 155 [0 6 8 5 4]
+5 155 [5 0 2 8 4]
+5 154 [8 7 2 9 6]
+5 155 [7 4 8 2 0]
+5 155 [0 5 2 3 1]
+5 155 [0 6 8 5 4]
+5 155 [5 0 2 8 4]
+5 155 [8 7 2 9 6]
+5 155 [7 4 8 2 0]
+5 154 [0 5 2 3 1]
+5 154 [0 6 8 5 4]
+5 154 [5 0 2 8 4]
+5 155 [8 7 2 9 6]
+5 154 [7 4 8 2 0]
+5 155 [0 5 2 3 1]
+5 155 [0 6 8 5 4]
+5 155 [5 0 2 8 4]
+5 154 [8 7 2 9 6]
+5 155 [7 4 8 2 0]
+5 154 [0 5 2 3 1]
+5 154 [0 6 8 5 4]
+5 154 [5 0 2 8 4]
+5 155 [8 7 2 9 6]
+5 154 [7 4 8 2 0]
+5 155 [0 5 2 3 1]
+5 155 [0 6 8 5 4]
+5 155 [5 0 2 8 4]
+5 154 [8 7 2 9 6]
+5 155 [7 4 8 2 0]
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 775, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 738, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedDyn.py", line 134, in run
+    ].local_update_dyn(
+      ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 287, in local_update_dyn
+    )
+     
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 631, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 675, in _next_data
+    data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/_utils/fetch.py", line 51, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/_utils/fetch.py", line 51, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+            ~~~~~~~~~~~~^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataset.py", line 348, in __getitem__
+    return self.datasets[dataset_idx][sample_idx]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataset.py", line 348, in __getitem__
+    return self.datasets[dataset_idx][sample_idx]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataset.py", line 411, in __getitem__
+    return self.dataset[self.indices[idx]]
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataset.py", line 411, in __getitem__
+    return self.dataset[self.indices[idx]]
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataset.py", line 411, in __getitem__
+    return self.dataset[self.indices[idx]]
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  [Previous line repeated 14 more times]
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 37, in __getitem__
+    data = self.trans(self.local_data[index])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/transforms/transforms.py", line 95, in __call__
+    img = t(img)
+          ^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/transforms/transforms.py", line 234, in __call__
+    return F.to_pil_image(pic, self.mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/transforms/functional.py", line 324, in to_pil_image
+    return Image.fromarray(npimg, mode=mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/PIL/Image.py", line 3150, in fromarray
+    obj = obj.tobytes()
+          ^^^^^^^^^^^^^
+KeyboardInterrupt

@@ -1,0 +1,8 @@
+Running FedStream with: Dir=1.0, Init_Class=10, Epoch=3
+Files already downloaded and verified
+Files already downloaded and verified
+has read
+Files already downloaded and verified
+Files already downloaded and verified
+  0%|          | 0/100 [00:00<?, ?it/s]  0%|          | 0/100 [00:14<?, ?it/s]
+load_time:0.0004, train_time:0.0068

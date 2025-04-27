@@ -758,6 +758,10 @@ class FedStream(object):
 
 if __name__ == "__main__":
 
+    import multiprocessing as mp
+
+    mp.set_start_method("spawn", force=True)
+
     sys.setrecursionlimit(3000)
     # 设置随机种子
     seed = 10

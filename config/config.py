@@ -10,12 +10,14 @@ def args_parser():
     parser.add_argument("--num_class", type=int, default=10, help="class num")
     parser.add_argument("--init_num_class", type=int, default=7, help="init class num")
     parser.add_argument("--dirichlet", type=float, default=0.7, help="non-iid rate")
-    parser.add_argument("--mode", type=bool, default=True, help="if data is updated")
+    parser.add_argument("--mode", type=int, default=1, help="if data is updated")
 
     parser.add_argument("--net_name", type=str, default="cnn", help="net name")
     parser.add_argument("--num_epoch", type=int, default=10, help="client epoch")
-    parser.add_argument("--batch_size", type=int, default=64, help="client batch_size")
-    parser.add_argument("--learning_rate", type=float, default=0.01, help="lr")
+    parser.add_argument("--batch_size", type=int, default=128, help="client batch_size")
+    parser.add_argument("--learning_rate", type=float, default=0.05, help="lr")
+    parser.add_argument("--momentum", type=float, default=0.9, help="momentum")
+    parser.add_argument("--weight_decay", type=float, default=5e-4, help="weight_decay")
     parser.add_argument("--eval_freq", type=int, default=5, help="eval frequency")
     parser.add_argument(
         "--path_prefix",

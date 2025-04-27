@@ -1,0 +1,152 @@
+Running FedStream with: Dir=0.8, Init_Class=10, Epoch=20
+Using downloaded and verified file: ../data/train_32x32.mat
+Using downloaded and verified file: ../data/test_32x32.mat
+has read
+Using downloaded and verified file: ../data/train_32x32.mat
+Using downloaded and verified file: ../data/test_32x32.mat
+  0%|          | 0/100 [00:00<?, ?it/s]  1%|          | 1/100 [00:58<1:36:15, 58.34s/it]  2%|▏         | 2/100 [02:01<1:39:36, 60.99s/it]  3%|▎         | 3/100 [03:18<1:50:22, 68.27s/it]  4%|▍         | 4/100 [04:46<2:01:57, 76.22s/it]  5%|▌         | 5/100 [06:19<2:10:28, 82.40s/it]  6%|▌         | 6/100 [08:06<2:21:44, 90.47s/it]  7%|▋         | 7/100 [09:47<2:25:33, 93.91s/it]  8%|▊         | 8/100 [11:29<2:28:14, 96.68s/it]  9%|▉         | 9/100 [13:13<2:29:51, 98.81s/it] 10%|█         | 10/100 [14:55<2:30:03, 100.04s/it] 11%|█         | 11/100 [16:49<2:34:44, 104.32s/it] 12%|█▏        | 12/100 [18:35<2:33:23, 104.58s/it] 13%|█▎        | 13/100 [20:18<2:30:54, 104.08s/it] 14%|█▍        | 14/100 [22:03<2:29:35, 104.37s/it] 15%|█▌        | 15/100 [23:49<2:28:52, 105.09s/it] 15%|█▌        | 15/100 [24:59<2:21:39, 100.00s/it]
+8 96 [7 4 8 2 0 1 5 6]
+8 88 [0 5 2 3 1 7 4 6]
+8 94 [0 6 8 5 4 7 1 2]
+8 95 [5 0 2 8 4 6 7 3]
+8 96 [8 7 2 9 6 4 5 0]
+8 70 [7 4 8 2 0 1 5 6]
+8 69 [0 5 2 3 1 7 4 6]
+8 69 [0 6 8 5 4 7 1 2]
+8 69 [5 0 2 8 4 6 7 3]
+8 70 [8 7 2 9 6 4 5 0]
+8 83 [7 4 8 2 0 1 5 6]
+8 83 [0 5 2 3 1 7 4 6]
+8 83 [0 6 8 5 4 7 1 2]
+8 83 [5 0 2 8 4 6 7 3]
+8 83 [8 7 2 9 6 4 5 0]
+8 90 [7 4 8 2 0 1 5 6]
+8 90 [0 5 2 3 1 7 4 6]
+8 90 [0 6 8 5 4 7 1 2]
+8 90 [5 0 2 8 4 6 7 3]
+8 90 [8 7 2 9 6 4 5 0]
+8 94 [7 4 8 2 0 1 5 6]
+8 94 [0 5 2 3 1 7 4 6]
+8 94 [0 6 8 5 4 7 1 2]
+8 94 [5 0 2 8 4 6 7 3]
+8 94 [8 7 2 9 6 4 5 0]
+8 96 [7 4 8 2 0 1 5 6]
+8 96 [0 5 2 3 1 7 4 6]
+8 96 [0 6 8 5 4 7 1 2]
+8 96 [5 0 2 8 4 6 7 3]
+8 96 [8 7 2 9 6 4 5 0]
+8 96 [7 4 8 2 0 1 5 6]
+8 96 [0 5 2 3 1 7 4 6]
+8 96 [0 6 8 5 4 7 1 2]
+8 96 [5 0 2 8 4 6 7 3]
+8 96 [8 7 2 9 6 4 5 0]
+8 96 [7 4 8 2 0 1 5 6]
+8 96 [0 5 2 3 1 7 4 6]
+8 96 [0 6 8 5 4 7 1 2]
+8 96 [5 0 2 8 4 6 7 3]
+8 96 [8 7 2 9 6 4 5 0]
+8 97 [7 4 8 2 0 1 5 6]
+8 97 [0 5 2 3 1 7 4 6]
+8 97 [0 6 8 5 4 7 1 2]
+8 97 [5 0 2 8 4 6 7 3]
+8 97 [8 7 2 9 6 4 5 0]
+8 96 [7 4 8 2 0 1 5 6]
+8 96 [0 5 2 3 1 7 4 6]
+8 96 [0 6 8 5 4 7 1 2]
+8 96 [5 0 2 8 4 6 7 3]
+8 96 [8 7 2 9 6 4 5 0]
+8 97 [7 4 8 2 0 1 5 6]
+8 97 [0 5 2 3 1 7 4 6]
+8 97 [0 6 8 5 4 7 1 2]
+8 97 [5 0 2 8 4 6 7 3]
+8 97 [8 7 2 9 6 4 5 0]
+8 96 [7 4 8 2 0 1 5 6]
+8 96 [0 5 2 3 1 7 4 6]
+8 96 [0 6 8 5 4 7 1 2]
+8 96 [5 0 2 8 4 6 7 3]
+8 96 [8 7 2 9 6 4 5 0]
+8 97 [7 4 8 2 0 1 5 6]
+8 97 [0 5 2 3 1 7 4 6]
+8 97 [0 6 8 5 4 7 1 2]
+8 97 [5 0 2 8 4 6 7 3]
+8 97 [8 7 2 9 6 4 5 0]
+8 96 [7 4 8 2 0 1 5 6]
+8 96 [0 5 2 3 1 7 4 6]
+8 96 [0 6 8 5 4 7 1 2]
+8 96 [5 0 2 8 4 6 7 3]
+8 96 [8 7 2 9 6 4 5 0]
+8 97 [7 4 8 2 0 1 5 6]
+8 97 [0 5 2 3 1 7 4 6]
+8 97 [0 6 8 5 4 7 1 2]
+8 97 [5 0 2 8 4 6 7 3]
+8 97 [8 7 2 9 6 4 5 0]
+8 96 [7 4 8 2 0 1 5 6]
+8 96 [0 5 2 3 1 7 4 6]
+8 96 [0 6 8 5 4 7 1 2]
+8 96 [5 0 2 8 4 6 7 3]
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 775, in <module>
+    alg.online_train()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 738, in online_train
+    global_loss_list, accuracy_list = self.alg.run(
+                                      ^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedProx.py", line 113, in run
+    result = self.client_group.clients[k].local_update_prox(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 236, in local_update_prox
+    )
+     
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 631, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 675, in _next_data
+    data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/_utils/fetch.py", line 51, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/_utils/fetch.py", line 51, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+            ~~~~~~~~~~~~^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataset.py", line 348, in __getitem__
+    return self.datasets[dataset_idx][sample_idx]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataset.py", line 348, in __getitem__
+    return self.datasets[dataset_idx][sample_idx]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataset.py", line 348, in __getitem__
+    return self.datasets[dataset_idx][sample_idx]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  [Previous line repeated 4 more times]
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataset.py", line 411, in __getitem__
+    return self.dataset[self.indices[idx]]
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataset.py", line 411, in __getitem__
+    return self.dataset[self.indices[idx]]
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/utils/data/dataset.py", line 411, in __getitem__
+    return self.dataset[self.indices[idx]]
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  [Previous line repeated 13 more times]
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 37, in __getitem__
+    data = self.trans(self.local_data[index])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/transforms/transforms.py", line 95, in __call__
+    img = t(img)
+          ^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/transforms/transforms.py", line 277, in forward
+    return F.normalize(tensor, self.mean, self.std, self.inplace)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/transforms/functional.py", line 350, in normalize
+    return F_t.normalize(tensor, mean=mean, std=std, inplace=inplace)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torchvision/transforms/_functional_tensor.py", line 918, in normalize
+    mean = torch.as_tensor(mean, dtype=dtype, device=tensor.device)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

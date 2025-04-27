@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 7, in <module>
+    from skopt import gp_minimize
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/skopt/__init__.py", line 21, in <module>
+    from . import (
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/skopt/acquisition.py", line 6, in <module>
+    from scipy.stats import norm
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/stats/__init__.py", line 606, in <module>
+    from ._stats_py import *
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/stats/_stats_py.py", line 50, in <module>
+    from . import _mstats_basic as mstats_basic
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/stats/_mstats_basic.py", line 45, in <module>
+    from scipy._lib._bunch import _make_tuple_bunch
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1057, in get_code
+  File "<frozen importlib._bootstrap_external>", line 675, in _validate_timestamp_pyc
+KeyboardInterrupt

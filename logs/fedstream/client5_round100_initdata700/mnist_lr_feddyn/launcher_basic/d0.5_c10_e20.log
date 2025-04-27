@@ -1,0 +1,24 @@
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 7, in <module>
+    from skopt import gp_minimize
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/skopt/__init__.py", line 21, in <module>
+    from . import (
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/skopt/acquisition.py", line 6, in <module>
+    from scipy.stats import norm
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/stats/__init__.py", line 609, in <module>
+    from ._morestats import *
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/stats/_morestats.py", line 3894, in <module>
+    @_axis_nan_policy_factory(
+     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/stats/_axis_nan_policy.py", line 608, in axis_nan_policy_decorator
+    doc = FunctionDoc(axis_nan_policy_wrapper)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/_lib/_docscrape.py", line 570, in __init__
+    NumpyDocString.__init__(self, doc, config)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/_lib/_docscrape.py", line 142, in __init__
+    docstring = textwrap.dedent(docstring).split('\n')
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/textwrap.py", line 435, in dedent
+    text = _whitespace_only_re.sub('', text)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

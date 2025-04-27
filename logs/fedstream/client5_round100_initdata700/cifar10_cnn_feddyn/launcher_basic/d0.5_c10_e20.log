@@ -1,0 +1,40 @@
+Running FedStream with: Dir=0.5, Init_Class=10, Epoch=20
+Files already downloaded and verified
+Files already downloaded and verified
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 774, in <module>
+    alg = FedStream(args)
+          ^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 92, in __init__
+    self.alg = FedDyn_Server(args)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/FedDyn.py", line 35, in __init__
+    self.init_data_net()
+  File "/home/kemove/lt/FedAlgorithm/alg/FedDyn.py", line 44, in init_data_net
+    self.client_group = Client_Group(self.args)
+                        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 335, in __init__
+    self.dataset_allocation()
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 673, in dataset_allocation
+    client = Client(local_dataset_list, self.args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/lt/FedAlgorithm/alg/Clients.py", line 98, in __init__
+    self.net.to(self.dev)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1173, in to
+    return self._apply(convert)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 779, in _apply
+    module._apply(fn)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 779, in _apply
+    module._apply(fn)
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 804, in _apply
+    param_applied = fn(param)
+                    ^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1159, in convert
+    return t.to(
+           ^^^^^
+RuntimeError: CUDA error: out of memory
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1.
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+

@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/home/kemove/lt/FedAlgorithm/alg/FedStream.py", line 7, in <module>
+    from skopt import gp_minimize
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/skopt/__init__.py", line 21, in <module>
+    from . import (
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/skopt/acquisition.py", line 6, in <module>
+    from scipy.stats import norm
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/stats/__init__.py", line 609, in <module>
+    from ._morestats import *
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/site-packages/scipy/stats/_morestats.py", line 3360, in <module>
+    FlignerResult = namedtuple('FlignerResult', ('statistic', 'pvalue'))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kemove/anaconda3/envs/test/lib/python3.11/collections/__init__.py", line 436, in namedtuple
+    __new__ = eval(code, namespace)
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 0, in <module>
+KeyboardInterrupt
